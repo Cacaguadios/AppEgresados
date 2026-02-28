@@ -1,0 +1,239 @@
+/* =============================================
+   SHARED CSS - Componentes compartidos
+   ============================================= */
+
+/* ===== Notification Cards ===== */
+.utp-notification-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 25px;
+}
+
+.utp-notification-title{
+  color: #121212;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.utp-notification-desc{
+  color: #757575;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.utp-notification-time{
+  color: #757575;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  display: block;
+}
+
+@media (max-width: 575.98px){
+  .utp-notification-card{ padding: 16px; }
+  .utp-notification-title{ font-size: 15px; }
+}
+
+/* ===== Password Strength ===== */
+.utp-password-strength{ max-width: 300px; }
+
+.utp-strength-text{
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.utp-strength-bar{
+  width: 100%;
+  height: 6px;
+  background: #E0E0E0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.utp-strength-fill{
+  height: 100%;
+  background: #ff3333;
+  border-radius: 3px;
+  transition: width .2s ease, background-color .2s ease;
+}
+
+/* ===== Info Notice ===== */
+.utp-info-notice{
+  background: rgba(0, 76, 235, 0.06);
+  border: 1px solid rgba(0, 76, 235, 0.20);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.utp-info-notice.danger{
+  background: rgba(255, 51, 51, 0.08);
+  border: 1px solid rgba(255, 51, 51, 0.20);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.utp-info-notice.danger i{ color: #FF3333; }
+
+/* ===== Toast Notification (shared override) ===== */
+.utp-toast{
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 16px 20px;
+  z-index: 9999;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform .3s ease, opacity .3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+}
+
+.utp-toast.show{
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.utp-toast-icon{
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.utp-toast-icon.success{ background: rgba(0, 194, 71, 0.15); color: #00C247; }
+.utp-toast-icon.error{ background: rgba(255, 51, 51, 0.15); color: #FF3333; }
+.utp-toast-icon i{ font-size: 18px; }
+
+.utp-toast-message,
+.utp-toast span{
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #121212;
+}
+
+@media (max-width: 575.98px){
+  .utp-toast{
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    min-width: auto;
+  }
+}
+
+/* ===== Infobox (variantes de color) ===== */
+.utp-infobox{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 24px;
+}
+
+.utp-infobox-title{
+  color: #121212;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.utp-infobox-desc{
+  color: #757575;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  margin: 8px 0 0 0;
+}
+
+/* Card Placeholder */
+.utp-card-placeholder{
+  padding: 33px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+}
+
+/* ===== Modal Backdrop ===== */
+.modal-backdrop{
+  background-color: rgba(0, 0, 0, 0.50) !important;
+}
+
+.utp-modal-lg{ max-width: 512px; }
+
+.modal.show .modal-dialog{
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn{
+  from{ opacity: 0; transform: translateY(-20px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Button Variants ===== */
+.btn-utp-outline{
+  background: #FAFAFA;
+  border: 1px solid #E0E0E0;
+  border-radius: 20px;
+  color: #121212;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.btn-utp-outline:hover{
+  background: #F0F0F0;
+  border-color: #D0D0D0;
+  color: #121212;
+}
+
+.btn-utp-green{
+  background: #00853E;
+  border: 1px solid #00853E;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 24px;
+}
+
+.btn-utp-green:hover{
+  background: #006b32;
+  border-color: #006b32;
+  color: #fff;
+}
+
+.btn-utp-outline-danger{
+  background: #FAFAFA;
+  border: 1px solid #FF3333;
+  border-radius: 20px;
+  color: #FF3333;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 24px;
+}
+
+.btn-utp-outline-danger:hover{
+  background: rgba(255, 51, 51, 0.08);
+  border-color: #FF3333;
+  color: #FF3333;
+}
+
+/* ===== Responsive Modals ===== */
+@media (max-width: 767.98px){
+  .utp-modal-lg{
+    max-width: calc(100% - 32px);
+    margin: 16px;
+  }
+}

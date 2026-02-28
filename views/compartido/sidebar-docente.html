@@ -1,0 +1,47 @@
+<!-- Sidebar: Navegación del Docente -->
+<aside class="utp-sidebar">
+  <div class="utp-sidebar-inner">
+    <!-- Toggle móvil -->
+    <div class="d-md-none mb-2">
+      <button class="btn btn-light w-100 utp-sidebar-toggle" type="button"
+              data-bs-toggle="collapse" data-bs-target="#sidebarNav"
+              aria-expanded="false" aria-controls="sidebarNav">
+        <i class="bi bi-list me-2"></i> Menú
+      </button>
+    </div>
+
+    <nav class="collapse d-md-block" id="sidebarNav">
+      <a class="utp-navitem" href="{BASE}inicio.php" data-page="inicio">
+        <i class="bi bi-house"></i>
+        <span>Inicio</span>
+      </a>
+      <a class="utp-navitem" href="{BASE}publicar-oferta.php" data-page="publicar-oferta">
+        <i class="bi bi-plus-circle"></i>
+        <span>Nueva Oferta</span>
+      </a>
+      <a class="utp-navitem" href="{BASE}mis-ofertas.php" data-page="mis-ofertas">
+        <i class="bi bi-briefcase"></i>
+        <span>Mis Ofertas</span>
+      </a>
+      <a class="utp-navitem" href="{BASE}postulantes.php" data-page="postulantes">
+        <i class="bi bi-people"></i>
+        <span>Postulantes</span>
+      </a>
+      <a class="utp-navitem" href="{BASE}directorio.php" data-page="directorio">
+        <i class="bi bi-person-lines-fill"></i>
+        <span>Directorio</span>
+      </a>
+      <a class="utp-navitem" href="{BASE}perfil.php" data-page="perfil">
+        <i class="bi bi-person"></i>
+        <span>Mi Perfil</span>
+      </a>
+
+      <div class="utp-nav-divider"></div>
+
+      <button class="utp-navitem danger w-100 text-start" type="button" data-link="logout">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Cerrar sesión</span>
+      </button>
+    </nav>
+  </div>
+</aside>

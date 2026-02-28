@@ -1,0 +1,110 @@
+/* =============================================
+   ADMIN CSS - Estilos del rol Administrador
+   (Contenido completo - incluye dashboard,
+    moderación, verificación, seguimiento, usuarios)
+   ============================================= */
+
+/* ===== Page Title ===== */
+.utp-page-title{ color: #121212; font-size: 36px; font-weight: 700; line-height: 40px; margin: 0; }
+.utp-page-subtitle{ color: #757575; font-size: 18px; font-weight: 400; line-height: 28px; margin: 0; }
+
+.utp-priority-badge{ display: inline-flex; align-items: center; color: #7A1501; font-size: 14px; font-weight: 600; line-height: 20px; }
+.utp-actioncard-priority{ border-left: 3px solid #FFE16A; }
+
+@media (max-width: 767.98px){
+  .utp-page-title{ font-size: 28px; line-height: 34px; }
+  .utp-page-subtitle{ font-size: 16px; line-height: 24px; }
+}
+
+@media (max-width: 575.98px){
+  .utp-page-title{ font-size: 24px; line-height: 30px; }
+  .utp-page-subtitle{ font-size: 15px; line-height: 22px; }
+  .utp-actioncard{ padding: 16px; }
+}
+
+/* ===== Stat Card ===== */
+.utp-stat-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 24px;
+}
+.utp-stat-card-inner{ display: flex; align-items: center; gap: 12px; }
+
+/* ===== Table Card ===== */
+.utp-table-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  overflow: hidden;
+}
+
+.utp-table{ margin: 0; }
+.utp-table thead{ background: #F5F5F5; }
+.utp-table thead th{ color: #121212; font-size: 14px; font-weight: 600; line-height: 20px; padding: 16px; border-bottom: 1px solid #E0E0E0; white-space: nowrap; }
+.utp-table tbody td{ padding: 16px; vertical-align: middle; border-bottom: 1px solid #E0E0E0; font-size: 14px; line-height: 20px; }
+.utp-table tbody tr:last-child td{ border-bottom: none; }
+
+.utp-offer-id{ color: #121212; font-size: 14px; font-family: 'Cousine', monospace; font-weight: 700; background: transparent; padding: 0; }
+.utp-offer-title{ color: #121212; font-size: 16px; font-weight: 500; line-height: 24px; }
+
+/* Role & Status Badges */
+.utp-role-badge{ display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 14px; font-size: 12px; font-weight: 500; line-height: 16px; }
+.utp-role-badge.docente{ background: rgba(122, 21, 1, 0.10); color: #7A1501; }
+.utp-role-badge.ti{ background: rgba(0, 76, 235, 0.10); color: #004CEB; }
+.utp-role-badge.egresado{ background: rgba(0, 133, 62, 0.10); color: #00853E; }
+
+.utp-status-badge.pending{ background: rgba(255, 225, 106, 0.30); border: 1px solid #FFE16A; color: #7A1501; }
+.utp-status-badge.approved{ background: rgba(0, 194, 71, 0.10); border: 1px solid rgba(0, 194, 71, 0.20); color: #00C247; }
+.utp-status-badge.rejected{ background: rgba(255, 51, 51, 0.10); border: 1px solid rgba(255, 51, 51, 0.20); color: #FF3333; }
+
+/* Mobile Cards */
+.utp-mobile-offer-card{ background: #fff; border-bottom: 1px solid #E0E0E0; padding: 16px; }
+.utp-mobile-offer-card:first-child{ border-radius: 20px 20px 0 0; }
+.utp-mobile-offer-card:last-child{ border-bottom: none; border-radius: 0 0 20px 20px; }
+.utp-mobile-offer-card:only-child{ border-radius: 20px; }
+
+/* ===== Verificación Tabs ===== */
+.utp-verif-tabs{
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+}
+
+.utp-verif-tab{
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 16px; border: none; border-radius: 20px;
+  background: transparent; color: #121212;
+  font-size: 14px; font-weight: 500; line-height: 20px;
+  cursor: pointer; transition: all 0.15s ease;
+}
+.utp-verif-tab:hover{ background: rgba(0, 0, 0, 0.03); }
+.utp-verif-tab.active{
+  background: #fff;
+  box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.10), 0px 1px 3px rgba(0, 0, 0, 0.10);
+}
+
+.utp-verif-tab-badge{
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 2px 8px;
+  background: #FFE16A; border-radius: 14px;
+  color: #7A1501; font-size: 12px; font-weight: 500; line-height: 16px;
+}
+
+@media (max-width: 991.98px){
+  .utp-verif-tabs{ width: 100%; }
+  .utp-verif-tab{ flex: 1; justify-content: center; padding: 6px 12px; font-size: 13px; }
+}
+
+/* ===== Responsive breakpoint overrides ===== */
+@media (min-width: 1050px){
+  .d-lg-block-verif{ display: block !important; }
+  .d-lg-none-verif{ display: none !important; }
+}
+
+@media (min-width: 1220px){
+  .d-lg-block-mod{ display: block !important; }
+  .d-lg-none-mod{ display: none !important; }
+}

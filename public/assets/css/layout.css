@@ -1,0 +1,115 @@
+/* ===== Layout CSS ===== */
+/* Estructura principal: sidebar, topbar, content wrapper */
+
+/* ===== Loading State ===== */
+body:not(.utp-ready) .utp-sidebar,
+body:not(.utp-ready) .utp-topbar,
+body:not(.utp-ready) .utp-content {
+  opacity: 0;
+}
+
+body.utp-ready .utp-sidebar,
+body.utp-ready .utp-topbar,
+body.utp-ready .utp-content {
+  opacity: 1;
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Skeleton placeholders mientras cargan los componentes */
+#utp-topbar-container:empty,
+#utp-sidebar-container:empty {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: utp-skeleton 1.5s infinite;
+}
+
+#utp-topbar-container:empty {
+  min-height: 65px;
+}
+
+#utp-sidebar-container:empty {
+  min-height: 100%;
+}
+
+@keyframes utp-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== Background ===== */
+.bg-soft { background: #FAFAFA; }
+
+/* ===== Topbar ===== */
+.utp-topbar{
+  background: rgba(255,255,255,0.80);
+  border-bottom: 1px solid rgba(0,0,0,0.10);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 12px 0;
+}
+
+/* ===== Sidebar ===== */
+.utp-sidebar{
+  width: 256px;
+  background: #fff;
+  border-right: 1px solid rgba(0,0,0,0.10);
+  position: sticky;
+  top: 65px; /* altura del topbar */
+  height: calc(100vh - 65px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.utp-sidebar-inner{ padding: 16px; }
+
+.utp-sidebar-toggle{
+  border-radius: 12px;
+  border: 1px solid #E0E0E0;
+}
+
+/* ===== Content Area ===== */
+.utp-content{ 
+  background: #FAFAFA;
+  min-height: calc(100vh - 65px);
+}
+
+/* ===== Typography ===== */
+.utp-h1{
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 40px;
+  color: #121212;
+  margin: 0;
+}
+
+.utp-subtitle{
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  color: #757575;
+}
+
+.utp-h2{
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  color: #121212;
+}
+
+/* ===== Divider ===== */
+.utp-divider{
+  border: none;
+  border-top: 1px solid #E0E0E0;
+  margin: 0;
+}
+
+/* ===== Responsive Layout ===== */
+@media (max-width: 767.98px){
+  .utp-sidebar{ 
+    width: 100%; 
+    position: static; 
+    height: auto;
+    top: 0;
+  }
+}

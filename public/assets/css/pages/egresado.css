@@ -1,0 +1,403 @@
+/* =============================================
+   EGRESADO CSS - Estilos del rol Egresado
+   ============================================= */
+
+/* ===== Job Offers Page ===== */
+.utp-filter-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 25px;
+}
+
+.utp-results-count{
+  color: #757575;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.utp-results-count strong{ color: #121212; font-weight: 600; }
+
+.utp-job-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 24px;
+}
+
+.utp-job-title{
+  color: #121212;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+  margin: 0;
+}
+
+@media (max-width: 575.98px){
+  .utp-filter-card{ padding: 16px; }
+  .utp-job-card{ padding: 16px; }
+  .utp-job-title{ font-size: 18px; }
+}
+
+/* ===== Job Offer Detail Page ===== */
+.utp-back-link{
+  color: #121212;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-decoration: none;
+  transition: opacity .12s ease;
+}
+.utp-back-link:hover{ color: #121212; opacity: 0.7; }
+.utp-back-link i{ font-size: 16px; }
+
+.utp-detail-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 32px;
+}
+
+.utp-detail-title{
+  color: #121212;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 36px;
+  margin: 0;
+}
+
+.utp-detail-company{
+  color: #757575;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+}
+
+.utp-detail-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.utp-meta-item{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #121212;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.utp-meta-item i{ color: #757575; font-size: 16px; }
+
+.utp-detail-salary{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #121212;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.utp-detail-salary i{ color: var(--utp-green); font-size: 20px; }
+
+.utp-section-title{
+  color: #121212;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  margin: 0;
+}
+
+.utp-detail-text{
+  color: #757575;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 26px;
+  margin: 0;
+}
+
+.utp-check-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.utp-check-list li{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #121212;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.utp-check-list li i{ font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.utp-check-list.green li i{ color: var(--utp-green); }
+.utp-check-list.blue li i{ color: #004CEB; }
+
+.utp-applied-card{
+  background: rgba(0, 76, 235, 0.10);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.utp-applied-icon{ display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; }
+.utp-applied-icon i{ color: #004CEB; font-size: 48px; }
+.utp-applied-title{ color: #121212; font-size: 16px; font-weight: 600; line-height: 24px; margin: 0; }
+.utp-applied-text{ color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; margin: 0; }
+
+.utp-info-card-title{ color: #121212; font-size: 16px; font-weight: 600; line-height: 24px; margin: 0; }
+
+.utp-info-item{ display: flex; flex-direction: column; gap: 4px; }
+.utp-info-label{ color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; }
+.utp-info-value{ color: #121212; font-size: 14px; font-weight: 500; line-height: 20px; }
+
+@media (max-width: 991.98px){
+  .utp-detail-title{ font-size: 24px; line-height: 30px; }
+  .utp-detail-company{ font-size: 16px; line-height: 24px; }
+  .utp-detail-meta{ gap: 16px; }
+}
+
+@media (max-width: 575.98px){
+  .utp-detail-card{ padding: 20px; }
+  .utp-detail-title{ font-size: 22px; line-height: 28px; }
+  .utp-section-title{ font-size: 20px; line-height: 28px; }
+  .utp-detail-meta{ flex-direction: column; gap: 8px; }
+}
+
+/* ===== My Applications Page ===== */
+.utp-stat-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.utp-stat-icon{
+  width: 36px; height: 36px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.utp-stat-icon i{ font-size: 20px; }
+.utp-stat-icon.blue{ background: rgba(0, 76, 235, 0.10); color: #004CEB; }
+.utp-stat-icon.yellow{ background: rgba(255, 225, 106, 0.30); color: var(--utp-red); }
+.utp-stat-icon.green{ background: rgba(0, 194, 71, 0.10); color: #00C247; }
+.utp-stat-icon.gray{ background: transparent; color: #9E9E9E; }
+
+.utp-stat-info{ display: flex; flex-direction: column; }
+.utp-stat-number{ color: #121212; font-size: 24px; font-weight: 700; line-height: 32px; }
+.utp-stat-label{ color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; }
+
+.utp-application-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 24px;
+}
+
+.utp-app-title{ color: #121212; font-size: 20px; font-weight: 600; line-height: 28px; margin: 0; }
+.utp-app-company{ color: #757575; font-size: 16px; font-weight: 400; line-height: 24px; }
+
+.utp-app-badge{
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 14px;
+  font-size: 12px; font-weight: 500; line-height: 16px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.utp-app-badge.yellow{ background: #FFE16A; color: #121212; }
+.utp-app-badge.green{ background: #00C247; color: #fff; }
+.utp-app-badge.gray{ background: #9E9E9E; color: #fff; }
+.utp-app-badge.blue{ background: #004CEB; color: #fff; }
+
+.utp-app-status{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 500; line-height: 24px;
+}
+.utp-app-status i{ font-size: 20px; }
+.utp-app-status.yellow{ color: #FFE16A; }
+.utp-app-status.green{ color: #00C247; }
+.utp-app-status.gray{ color: #9E9E9E; }
+.utp-app-status.blue{ color: #004CEB; }
+
+.utp-app-date{ display: flex; align-items: center; gap: 8px; color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; }
+.utp-app-date i{ font-size: 16px; }
+
+.utp-match-bar{ background: #F5F5F5; border-radius: 20px; padding: 12px; }
+.utp-match-label{ color: #121212; font-size: 14px; font-weight: 500; line-height: 20px; }
+
+.utp-app-info-box{
+  background: rgba(0, 76, 235, 0.10);
+  border: 1px solid rgba(0, 76, 235, 0.20);
+  border-radius: 20px; padding: 17px;
+  color: #004CEB; font-size: 14px; font-weight: 500; line-height: 20px;
+}
+
+@media (max-width: 575.98px){
+  .utp-stat-card{ padding: 12px; }
+  .utp-stat-number{ font-size: 20px; line-height: 28px; }
+  .utp-stat-label{ font-size: 12px; }
+  .utp-application-card{ padding: 16px; }
+  .utp-app-title{ font-size: 18px; line-height: 24px; }
+}
+
+/* ===== Profile Page ===== */
+.utp-verified-badge{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: 14px;
+  background: #00C247; color: #fff;
+  font-size: 14px; font-weight: 500; line-height: 20px;
+}
+
+.utp-profile-hint{ color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; }
+
+.utp-tabs-wrapper{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.utp-tabs{
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 5px; gap: 0;
+  min-width: max-content;
+}
+
+.utp-tab{
+  padding: 4px 8px; border-radius: 20px;
+  border: none; background: transparent;
+  color: #121212; font-size: 14px; font-weight: 500; line-height: 20px;
+  cursor: pointer; white-space: nowrap;
+  transition: background-color .12s ease, box-shadow .12s ease;
+}
+.utp-tab:hover{ background: rgba(0, 0, 0, 0.04); }
+.utp-tab.active{ background: #fff; box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.10), 0px 1px 3px rgba(0, 0, 0, 0.10); }
+
+.utp-profile-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 32px;
+}
+
+.utp-subsection-title{ color: #121212; font-size: 16px; font-weight: 600; line-height: 24px; margin: 0; }
+
+@media (max-width: 767.98px){
+  .utp-tabs{ width: 100%; }
+  .utp-tab{ flex: 1; text-align: center; font-size: 13px; padding: 4px 6px; }
+}
+
+@media (max-width: 575.98px){
+  .utp-profile-card{ padding: 20px; }
+  .utp-verified-badge{ font-size: 13px; padding: 3px 10px; }
+}
+
+/* ===== Skills ===== */
+.utp-skills-container{ display: flex; flex-wrap: wrap; gap: 8px; }
+
+.utp-skill-chip{
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; background: rgba(122, 21, 1, 0.08);
+  border-radius: 20px; color: #7A1501;
+  font-size: 14px; font-weight: 500; line-height: 20px;
+}
+
+.utp-skill-remove{
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; padding: 0;
+  border: none; background: transparent;
+  color: #7A1501; font-size: 16px; font-weight: 600;
+  cursor: pointer; border-radius: 50%;
+  transition: background-color .12s ease;
+}
+.utp-skill-remove:hover{ background: rgba(122, 21, 1, 0.15); }
+
+/* ===== Followup/Seguimiento Page ===== */
+.utp-privacy-notice{
+  background: rgba(255, 225, 106, 0.30);
+  border: 1px solid #FFE16A;
+  border-radius: 20px; padding: 17px;
+}
+
+.utp-privacy-icon{ color: var(--utp-red); font-size: 20px; flex-shrink: 0; }
+.utp-privacy-title{ color: var(--utp-red); font-size: 16px; font-weight: 600; line-height: 24px; margin: 0; }
+.utp-privacy-desc{ color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; margin: 0; }
+
+.utp-visibility-tag{
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 14px;
+  font-size: 12px; font-weight: 500; line-height: 16px;
+  white-space: nowrap;
+}
+.utp-visibility-tag.green{ border: 1px solid #00C247; color: #00C247; background: transparent; }
+.utp-visibility-tag.red{ border: 1px solid #FF3333; color: #FF3333; background: transparent; }
+
+.utp-followup-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 32px;
+}
+
+.utp-toggle-row{
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px; background: #F5F5F5;
+  border-radius: 20px; gap: 16px;
+}
+
+.utp-toggle-info{ display: flex; flex-direction: column; gap: 4px; }
+.utp-toggle-title{ color: #121212; font-size: 16px; font-weight: 500; line-height: 24px; }
+.utp-toggle-desc{ color: #757575; font-size: 14px; font-weight: 400; line-height: 20px; }
+
+.utp-benefit-chip{
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 12px; background: #fff;
+  border: 2px solid #E0E0E0; border-radius: 20px;
+  color: #757575; font-size: 14px; font-weight: 500; line-height: 20px;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.utp-benefit-chip:hover{ border-color: #BDBDBD; }
+.utp-benefit-chip.active{ background: rgba(0, 133, 62, 0.10); border-color: var(--utp-green); color: var(--utp-green); }
+
+.utp-tech-display{
+  background: #F5F5F5; border: 1px solid #E0E0E0;
+  border-radius: 20px; padding: 17px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+
+.utp-tech-chip{
+  display: inline-flex; align-items: center;
+  padding: 6px 12px; background: rgba(122, 21, 1, 0.10);
+  border-radius: 14px; color: var(--utp-red);
+  font-size: 12px; font-weight: 500; line-height: 16px;
+}
+
+.utp-disabled-section{ opacity: 0.6; }
+
+.utp-last-update{
+  display: flex; align-items: center; gap: 8px;
+  color: #757575; font-size: 14px; font-weight: 400; line-height: 20px;
+}
+.utp-last-update i{ font-size: 16px; }
+
+@media (max-width: 767.98px){
+  .utp-followup-card{ padding: 20px; }
+  .utp-toggle-row{ flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 575.98px){
+  .utp-privacy-notice{ padding: 12px; }
+  .utp-privacy-title{ font-size: 15px; }
+  .utp-toggle-title{ font-size: 15px; }
+  .utp-benefit-chip{ padding: 12px 10px; font-size: 13px; }
+}

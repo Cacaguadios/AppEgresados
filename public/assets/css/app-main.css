@@ -1,0 +1,56 @@
+/* ===== CSS Imports ===== */
+/* Import principal - carga todos los módulos CSS */
+
+/* Importar en orden correcto para evitar conflicts */
+@import url('./theme.css');
+@import url('./layout.css');
+@import url('./forms.css');
+@import url('./components.css');
+@import url('./pages.css');
+@import url('./auth.css');
+@import url('./utilities.css');
+
+/* Estilos globales adicionales si son necesarios */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #121212;
+  background-color: #fff;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--utp-red);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(122, 21, 1, 0.2);
+  color: #121212;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

@@ -1,0 +1,170 @@
+/* =============================================
+   DOCENTE CSS - Estilos del rol Docente
+   ============================================= */
+
+/* ===== Form Card (Publicar Oferta) ===== */
+.utp-form-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 32px;
+}
+
+.utp-form-card-title{
+  color: #121212; font-size: 24px; font-weight: 600;
+  line-height: 32px; margin: 0 0 32px 0;
+}
+
+.utp-form-card-subtitle{
+  color: #121212; font-size: 16px; font-weight: 600;
+  line-height: 24px; margin: 0 0 24px 0;
+}
+
+.utp-tips-list{ list-style: none; padding: 0; margin: 0; }
+.utp-tips-list li{
+  color: #757575; font-size: 14px; font-weight: 400;
+  line-height: 20px; padding: 4px 0;
+}
+
+@media (max-width: 767.98px){
+  .utp-form-card{ padding: 20px; }
+  .utp-form-card-title{ font-size: 20px; margin-bottom: 24px; }
+}
+
+/* ===== Postulantes ===== */
+.utp-postulantes-list{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px; align-items: start;
+}
+
+@media (max-width: 991.98px){
+  .utp-postulantes-list{ grid-template-columns: 1fr; }
+}
+
+.utp-postulante-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+.utp-postulante-header{ display: flex; align-items: flex-start; gap: 16px; }
+
+.utp-useravatar-lg{
+  width: 64px; height: 64px;
+  font-size: 20px; font-weight: 700; flex-shrink: 0;
+}
+
+.utp-postulante-info{ flex: 1; min-width: 0; }
+.utp-postulante-name{ font-size: 18px; font-weight: 600; line-height: 28px; color: #121212; margin: 0 0 4px 0; }
+.utp-postulante-matricula{ font-size: 14px; font-weight: 400; line-height: 20px; color: #757575; margin: 0 0 8px 0; }
+.utp-postulante-badges{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+
+.utp-badge-status{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 14px;
+  font-size: 12px; font-weight: 500; line-height: 16px;
+}
+
+.utp-badge-validado{ background: rgba(255, 225, 106, 0.30); border: 1px solid #FFE16A; color: var(--utp-red); }
+.utp-badge-postulado{ background: rgba(0, 76, 235, 0.10); border: 1px solid rgba(0, 76, 235, 0.20); color: #004CEB; }
+.utp-badge-seleccionado{ background: rgba(0, 194, 71, 0.10); border: 1px solid rgba(0, 194, 71, 0.20); color: #00C247; }
+.utp-badge-cumple{ background: transparent; border: 1px solid #00C247; color: #00C247; }
+.utp-badge-nocumple{ background: transparent; border: 1px solid #FF3333; color: #FF3333; }
+
+.utp-postulante-oferta{ font-size: 12px; font-weight: 400; line-height: 16px; color: #757575; margin: 0; }
+
+.utp-postulante-skills{ display: flex; flex-direction: column; gap: 8px; }
+.utp-skill-label{ font-size: 12px; font-weight: 600; line-height: 16px; color: #757575; }
+.utp-postulante-chips{ display: flex; flex-wrap: wrap; gap: 8px; }
+
+.utp-postulante-actions{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding-top: 16px; border-top: 1px solid #E0E0E0;
+}
+
+.utp-postulante-cv{ text-align: center; }
+
+.utp-link-cv{
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--utp-red); font-size: 14px; font-weight: 500;
+  text-decoration: none; padding: 6px 12px; border-radius: 14px;
+  transition: background .15s ease;
+}
+.utp-link-cv:hover{ background: rgba(122, 21, 1, 0.05); color: var(--utp-red); }
+
+.utp-navitem.multiline{ min-height: 72px; padding-top: 12px; padding-bottom: 12px; }
+.utp-navitem.multiline span{ white-space: normal; line-height: 1.4; }
+
+@media (max-width: 767.98px){
+  .utp-postulante-card{ padding: 16px; }
+  .utp-postulante-header{ flex-direction: column; align-items: center; text-align: center; }
+  .utp-postulante-badges{ justify-content: center; }
+  .utp-postulante-actions{ justify-content: center; }
+  .utp-postulante-chips{ justify-content: center; }
+  .utp-skill-label{ text-align: center; display: block; }
+}
+
+/* ===== Contact Modal ===== */
+.utp-contact-user{
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px; background: #F5F5F5; border-radius: 20px;
+}
+
+.utp-useravatar-md{ width: 48px; height: 48px; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+.utp-contact-user-info{ display: flex; flex-direction: column; }
+.utp-contact-name{ font-size: 16px; font-weight: 600; line-height: 24px; color: #121212; }
+.utp-contact-matricula{ font-size: 14px; font-weight: 400; line-height: 20px; color: #757575; }
+
+.utp-contact-fields{ display: flex; flex-direction: column; gap: 12px; }
+.utp-contact-field{
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 17px; background: #fff;
+  border-radius: 20px; border: 1px solid #E0E0E0;
+}
+.utp-contact-label{ font-size: 12px; font-weight: 600; line-height: 16px; color: #757575; }
+.utp-contact-value{ font-size: 16px; font-weight: 500; line-height: 24px; color: #121212; }
+
+/* ===== Directorio de Egresados ===== */
+.utp-directorio-list{ display: flex; flex-direction: column; gap: 0; }
+
+.utp-egresado-card{
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+.utp-egresado-header{ display: flex; align-items: flex-start; gap: 16px; }
+
+.utp-avatar-green{
+  background: linear-gradient(180deg, #00853E 0%, #00753A 100%);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; flex-shrink: 0;
+}
+.utp-avatar-md{ width: 56px; height: 56px; font-size: 18px; line-height: 28px; }
+
+.utp-egresado-info{ flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.utp-egresado-name{ font-size: 18px; font-weight: 600; line-height: 28px; color: #121212; margin: 0; }
+.utp-egresado-gen,
+.utp-egresado-esp{ font-size: 14px; font-weight: 400; line-height: 20px; color: #757575; margin: 0; }
+
+.utp-egresado-skills{ display: flex; flex-direction: column; gap: 8px; }
+.utp-egresado-chips{ display: flex; flex-wrap: wrap; gap: 8px; }
+
+.utp-egresado-actions{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding-top: 16px; border-top: 1px solid #E0E0E0;
+}
+
+@media (max-width: 767.98px){
+  .utp-egresado-card{ padding: 16px; }
+  .utp-egresado-header{ flex-direction: column; align-items: center; text-align: center; }
+  .utp-egresado-info{ align-items: center; }
+  .utp-egresado-chips{ justify-content: center; }
+  .utp-egresado-actions{ flex-direction: column; }
+  .utp-egresado-actions .btn{ width: 100%; }
+}

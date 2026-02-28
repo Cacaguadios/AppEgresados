@@ -1,0 +1,24 @@
+:root{
+  --utp-red:#7b1501;   /* tu rojo */
+  --utp-green:#00853e; /* tu verde */
+  --bg:#fafafa;
+  --text:#121212;
+  --muted:#757575;
+
+  --radius-xl:24px;
+  --radius-lg:20px;
+  --shadow-xl: 0 25px 50px -12px rgba(0,0,0,.25);
+}
+
+html { height: 100%; }
+
+body{
+  min-height: 100%;
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+
+a{ text-decoration: none; }

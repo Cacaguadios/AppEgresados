@@ -1,0 +1,214 @@
+/* ===== Forms CSS ===== */
+/* Inputs, selects, textareas, switches y form groups */
+
+/* ===== Base Input ===== */
+.utp-input{
+  border-radius: 20px;
+  border: 1px solid #E0E0E0;
+  padding: 8px 16px;
+  height: auto;
+  font-size: 14px;
+  font-weight: 400;
+  color: #121212;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.utp-input::placeholder{
+  color: #757575;
+}
+
+.utp-input:focus{
+  border-color: rgba(122, 21, 1, 0.35);
+  box-shadow: 0 0 0 0.2rem rgba(122, 21, 1, 0.15);
+  outline: none;
+}
+
+/* ===== Disabled Input ===== */
+.utp-input-disabled{
+  width: 100%;
+  padding: 12px;
+  background: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 20px;
+  color: #121212;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  opacity: 0.5;
+}
+
+.utp-input-disabled.utp-curp{
+  font-family: 'Cousine', monospace;
+}
+
+/* ===== Labels ===== */
+.form-label{
+  color: #121212;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  margin-bottom: 8px;
+}
+
+.utp-label{
+  color: #121212;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+}
+
+/* ===== Form Group ===== */
+.utp-form-group{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== Field Hint ===== */
+.utp-field-hint{
+  color: #757575;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+/* ===== Search Input ===== */
+.utp-search-input{
+  padding-left: 48px !important;
+}
+
+.utp-search-icon{
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #757575;
+  font-size: 18px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ===== Select Dropdown ===== */
+.utp-select{
+  border-radius: 20px;
+  border: 1px solid #E0E0E0;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #121212;
+  height: 36px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.utp-select:focus{
+  border-color: rgba(122, 21, 1, 0.35);
+  box-shadow: 0 0 0 0.2rem rgba(122, 21, 1, 0.15);
+}
+
+/* ===== Textarea ===== */
+.utp-textarea{
+  border-radius: 20px;
+  border: 1px solid #E0E0E0;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #121212;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.utp-textarea::placeholder{
+  color: #757575;
+}
+
+.utp-textarea:focus{
+  border-color: rgba(122, 21, 1, 0.35);
+  box-shadow: 0 0 0 0.2rem rgba(122, 21, 1, 0.15);
+  outline: none;
+}
+
+/* ===== Toggle Password ===== */
+.utp-toggle-password{
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #757575;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.utp-toggle-password:hover{
+  color: #121212;
+}
+
+/* ===== Switch Toggle ===== */
+.utp-switch{
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.utp-switch input{
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.utp-switch-slider{
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #E0E0E0;
+  transition: .2s;
+  border-radius: 24px;
+}
+
+.utp-switch-slider:before{
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+  box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.10), 0px 10px 15px -3px rgba(0, 0, 0, 0.10);
+}
+
+.utp-switch input:checked + .utp-switch-slider{
+  background-color: var(--utp-green);
+}
+
+.utp-switch input:checked + .utp-switch-slider:before{
+  transform: translateX(20px);
+}
+
+/* ===== Dynamic List (for form builders) ===== */
+.utp-dynamic-list{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.utp-dynamic-item{
+  display: flex;
+  align-items: center;
+}
+
+.utp-dynamic-item .utp-input{
+  flex: 1;
+}

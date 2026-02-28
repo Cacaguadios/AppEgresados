@@ -1,0 +1,8 @@
+/* ===== Pages CSS ===== */
+/* Estilos específicos por página/sección */
+/* Reorganizado en archivos separados por rol */
+
+@import url('./pages/shared.css');
+@import url('./pages/egresado.css');
+@import url('./pages/docente.css');
+@import url('./pages/admin.css');
