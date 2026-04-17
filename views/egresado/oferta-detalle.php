@@ -52,8 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['postularse'])) {
             'mensaje'           => trim($_POST['mensaje_postulacion'] ?? ''),
         ]);
 
-        // Actualizar estado de vacante
-        $ofertaModel->updateVacancyStatus($ofertaId);
+        // Decrementar vacantes (se elimina automáticamente si llega a 0)
+        $ofertaEliminada = !$ofertaModel->decrementVacancies($ofertaId);
 
         // Notificar al creador de la oferta
         $notifModel = new Notificacion();
@@ -63,7 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['postularse'])) {
             $fullName
         );
 
-        header('Location: oferta-detalle.php?id=' . $ofertaId . '&postulado=1');
+        if ($ofertaEliminada) {
+            header('Location: ofertas.php?cupo_lleno=1');
+        } else {
+            // Actualizar estado de vacante
+            $ofertaModel->updateVacancyStatus($ofertaId);
+            header('Location: oferta-detalle.php?id=' . $ofertaId . '&postulado=1');
+        }
         exit;
     }
 }
@@ -297,10 +303,28 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
                       <span class="utp-info-label">Postulados</span>
                       <span class="utp-info-value"><?= $postulantesCount ?> candidato<?= $postulantesCount != 1 ? 's' : '' ?></span>
                     </div>
-                    <div class="utp-info-item">
-                      <span class="utp-info-label">Contacto</span>
-                      <span class="utp-info-value"><?= htmlspecialchars($oferta['contacto']) ?></span>
+                    <div class="utp-info-item mb-3">
+                      <span class="utp-info-label">Email de contacto</span>
+                      <span class="utp-info-value"><?= htmlspecialchars($oferta['contacto'] ?? '—') ?></span>
                     </div>
+                    <?php if (!empty($oferta['nombre_contacto'])): ?>
+                    <div class="utp-info-item mb-3">
+                      <span class="utp-info-label">Nombre del contacto</span>
+                      <span class="utp-info-value"><?= htmlspecialchars($oferta['nombre_contacto']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($oferta['puesto_contacto'])): ?>
+                    <div class="utp-info-item mb-3">
+                      <span class="utp-info-label">Puesto del contacto</span>
+                      <span class="utp-info-value"><?= htmlspecialchars($oferta['puesto_contacto']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($oferta['telefono_contacto'])): ?>
+                    <div class="utp-info-item">
+                      <span class="utp-info-label">Teléfono de contacto</span>
+                      <span class="utp-info-value"><?= htmlspecialchars($oferta['telefono_contacto']) ?></span>
+                    </div>
+                    <?php endif; ?>
                   </div>
                 </div>
               </div>

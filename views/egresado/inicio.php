@@ -56,6 +56,12 @@ if ($egresado) {
     }
     $perfilCompleto = round(($llenos / count($camposPerfil)) * 100);
 }
+
+// Obtener estado del recordatorio de actualización (cada 3 meses)
+$estadoRecordatorio = null;
+if ($egresado) {
+    $estadoRecordatorio = $egresadoModel->obtenerEstadoRecordatorio($_SESSION['usuario_id']);
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -81,7 +87,8 @@ if ($egresado) {
       fullName: <?= json_encode($fullName) ?>,
       initials: <?= json_encode($initials) ?>,
       currentPage: 'inicio',
-      requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
+      requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>,
+      estadoRecordatorio: <?= $estadoRecordatorio ? json_encode($estadoRecordatorio) : 'null' ?>
     };
   </script>
 
@@ -106,10 +113,10 @@ if ($egresado) {
             <!-- Encabezado -->
             <div class="mb-4">
               <h1 style="font-size:36px; font-weight:700; line-height:40px; color:#121212;">
-                ¡Hola, <?= htmlspecialchars($nombre) ?>!
+                Bienvenido de vuelta
               </h1>
               <p style="color:#757575; font-size:18px; line-height:28px; margin-top:8px;">
-                Bienvenido al Sistema de Egresados de la UTP
+                Aquí está un resumen de tu actividad
               </p>
             </div>
 
@@ -123,7 +130,8 @@ if ($egresado) {
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $ofertasDisponibles ?></div>
-                  <div style="color:#757575; font-size:14px;">Ofertas disponibles</div>
+                  <div style="color:#757575; font-size:14px;">Activas</div>
+                  <div style="color:#999; font-size:13px;">Ofertas disponibles</div>
                 </div>
               </div>
               <div class="col-6 col-lg-3">
@@ -134,7 +142,8 @@ if ($egresado) {
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $misPostulaciones ?></div>
-                  <div style="color:#757575; font-size:14px;">Mis postulaciones</div>
+                  <div style="color:#757575; font-size:14px;">Total</div>
+                  <div style="color:#999; font-size:13px;">Mis aplicaciones</div>
                 </div>
               </div>
               <div class="col-6 col-lg-3">
@@ -151,12 +160,13 @@ if ($egresado) {
               <div class="col-6 col-lg-3">
                 <div class="utp-card h-100">
                   <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="utp-miniicon red">
+                    <div class="utp-miniicon orange">
                       <i class="bi bi-person-badge"></i>
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $perfilCompleto ?>%</div>
-                  <div style="color:#757575; font-size:14px;">Perfil completo</div>
+                  <div style="color:#757575; font-size:14px;">Perfil</div>
+                  <div style="color:#999; font-size:13px;">Completado</div>
                 </div>
               </div>
             </div>
@@ -167,47 +177,81 @@ if ($egresado) {
                 Acciones rápidas
               </h2>
               <div class="row g-3">
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
                   <a class="utp-actioncard h-100" href="ofertas.php">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon green">
-                        <i class="bi bi-search"></i>
+                        <i class="bi bi-briefcase"></i>
                       </div>
                     </div>
                     <div class="utp-actiontitle">Explorar ofertas</div>
                     <div class="utp-actiondesc mt-1">Descubre nuevas oportunidades laborales</div>
                   </a>
                 </div>
-                <div class="col-12 col-md-4">
-                  <a class="utp-actioncard h-100" href="perfil.php">
+                <div class="col-12 col-md-6">
+                  <a class="utp-actioncard h-100" href="postulaciones.php">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon blue">
-                        <i class="bi bi-pencil-square"></i>
+                        <i class="bi bi-file-earmark"></i>
                       </div>
                     </div>
-                    <div class="utp-actiontitle">Completar perfil</div>
-                    <div class="utp-actiondesc mt-1">Mejora tu visibilidad ante empleadores</div>
+                    <div class="utp-actiontitle">Mis aplicaciones</div>
+                    <div class="utp-actiondesc mt-1">Revisa el estado de tus postulaciones</div>
                   </a>
                 </div>
-                <div class="col-12 col-md-4">
-                  <a class="utp-actioncard h-100" href="seguimiento.php">
+                <div class="col-12 col-md-6">
+                  <a class="utp-actioncard h-100" href="perfil.php">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon yellow">
+                        <i class="bi bi-person"></i>
+                      </div>
+                    </div>
+                    <div class="utp-actiontitle">Actualizar perfil</div>
+                    <div class="utp-actiondesc mt-1">Mantén tu CV y habilidades al día</div>
+                  </a>
+                </div>
+                <div class="col-12 col-md-6">
+                  <a class="utp-actioncard h-100" href="seguimiento.php">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                      <div class="utp-miniicon orange">
                         <i class="bi bi-graph-up"></i>
                       </div>
                     </div>
-                    <div class="utp-actiontitle">Mi seguimiento</div>
-                    <div class="utp-actiondesc mt-1">Actualiza tu situación laboral</div>
+                    <div class="utp-actiontitle">Formulario de seguimiento</div>
+                    <div class="utp-actiondesc mt-1">Comparte tu situación laboral actual (privado)</div>
                   </a>
                 </div>
               </div>
             </div>
+
+            <!-- Completa tu perfil -->
+            <?php if ($perfilCompleto < 100): ?>
+            <div class="utp-card utp-complete-profile-card" style="background:linear-gradient(135deg, #FFF8E7 0%, #FFEDCC 100%); border-left:4px solid #D97706;">
+              <div class="d-flex align-items-start gap-3">
+                <div class="utp-miniicon orange" style="flex-shrink:0;">
+                  <i class="bi bi-person-badge" style="font-size:20px;"></i>
+                </div>
+                <div style="flex:1;">
+                  <h3 style="font-size:16px; font-weight:600; color:#121212; margin:0;">Completa tu perfil</h3>
+                  <p style="color:#757575; font-size:14px; margin:4px 0 0 0;">
+                    Un perfil completo aumenta tus posibilidades de selección. Le falta <?= (100 - $perfilCompleto) ?>% para completarlo.
+                  </p>
+                </div>
+                <a href="perfil.php" class="btn btn-utp-red" style="flex-shrink:0; white-space:nowrap;">
+                  Completar ahora
+                </a>
+              </div>
+            </div>
+            <?php endif; ?>
 
           </div><!-- /utp-content -->
         </div><!-- /col -->
       </div><!-- /row -->
     </div><!-- /container -->
   </div><!-- /utp-layout -->
+
+  <!-- ===== Modal: Recordatorio actualizar información ===== -->
+  <?php require_once __DIR__ . '/../../views/components/modal-recordatorio-actualizacion.php'; ?>
 
   <!-- ===== Modal: Recordatorio de seguridad ===== -->
   <?php if ($requirePasswordChange): ?>
@@ -244,5 +288,14 @@ if ($egresado) {
   <script src="../../public/assets/js/shared/app.js"></script>
   <!-- Page -->
   <script src="../../public/assets/js/egresado/inicio.js"></script>
+  
+  <!-- Inicializar recordatorio de actualización -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.UTP_DATA && window.UTP_DATA.estadoRecordatorio) {
+        inicializarRecordatorio(window.UTP_DATA.estadoRecordatorio);
+      }
+    });
+  </script>
 </body>
 </html>

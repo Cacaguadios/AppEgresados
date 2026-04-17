@@ -53,28 +53,40 @@ class RegisterController {
         }
     }
 
-    /* ── Egresado: matrícula (10 dígitos) + CURP (18 caracteres) ── */
+    /* ── Egresado: matrícula, CURP y correo personal ── */
     private function validateEgresado($data) {
-        $matricula = strtoupper($data['matricula'] ?? '');
-        $curp      = strtoupper($data['curp'] ?? '');
-        $errors    = [];
+        $matricula = strtoupper(trim($data['matricula'] ?? ''));
+        $curp = strtoupper(trim($data['curp'] ?? ''));
+        $email = strtolower(trim($data['email'] ?? ''));
+        $errors = [];
 
-        // Matrícula
+        // Matrícula: 6-10 dígitos y debe comenzar con 23 o 24
         if (empty($matricula)) {
             $errors[] = 'La matrícula es requerida.';
-        } elseif (!preg_match('/^\d{10}$/', $matricula)) {
-            $errors[] = 'La matrícula debe tener exactamente 10 dígitos.';
+        } elseif (!preg_match('/^\d{6,10}$/', $matricula)) {
+            $errors[] = 'La matrícula debe tener 6-10 dígitos.';
+        } elseif (!preg_match('/^(23|24)/', $matricula)) {
+            $errors[] = 'La matrícula debe comenzar con 23 o 24.';
         } elseif ($this->usuarioModel->matriculaExists($matricula)) {
-            $errors[] = 'Esta matrícula ya fue registrada.';
+            $errors[] = 'Esta matrícula ya está registrada.';
         }
 
-        // CURP
+        // CURP: 18 caracteres
         if (empty($curp)) {
             $errors[] = 'El CURP es requerido.';
-        } elseif (!preg_match('/^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$/', $curp)) {
-            $errors[] = 'El CURP no tiene un formato válido.';
+        } elseif (!preg_match('/^[A-Z]{4}\d{6}[MH][A-Z]{5}[0-9A-Z]\d$/', $curp)) {
+            $errors[] = 'El CURP debe tener 18 caracteres válidos.';
         } elseif ($this->usuarioModel->curpExists($curp)) {
-            $errors[] = 'Este CURP ya fue registrado.';
+            $errors[] = 'Este CURP ya está registrado.';
+        }
+
+        // Email
+        if (empty($email)) {
+            $errors[] = 'El correo electrónico es requerido.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'El formato del correo electrónico no es válido.';
+        } elseif ($this->usuarioModel->emailExists($email)) {
+            $errors[] = 'Este correo electrónico ya fue registrado.';
         }
 
         if (!empty($errors)) {
@@ -83,7 +95,7 @@ class RegisterController {
 
         return [
             'success' => true,
-            'data'    => ['matricula' => $matricula, 'curp' => $curp]
+            'data'    => ['email' => $email, 'matricula' => $matricula, 'curp' => $curp]
         ];
     }
 
@@ -134,13 +146,20 @@ class RegisterController {
         // Generar credenciales
         $usuario  = $this->generateUsername($nombre, $apellidos);
         $password = $this->generatePassword();
-        $email    = $usuario . '@egresados.utp.edu.mx';
+        
+        // Para egresados, usar el email personal proporcionado en Step 2
+        if ($role === 'egresado' && !empty($verificacionData['email'])) {
+            $email = strtolower(trim($verificacionData['email']));
+        } else {
+            // Para otros roles, generar email automáticamente
+            $email = $usuario . '@egresados.utp.edu.mx';
 
-        // Verificar que no exista duplicado de email
-        if ($this->usuarioModel->emailExists($email)) {
-            $suffix = rand(10, 999);
-            $usuario = $usuario . $suffix;
-            $email   = $usuario . '@egresados.utp.edu.mx';
+            // Verificar que no exista duplicado de email
+            if ($this->usuarioModel->emailExists($email)) {
+                $suffix = rand(10, 999);
+                $usuario = $usuario . $suffix;
+                $email   = $usuario . '@egresados.utp.edu.mx';
+            }
         }
 
         // ── Insertar en tabla usuarios ──
@@ -161,22 +180,6 @@ class RegisterController {
                 'success' => false,
                 'message' => 'Error al crear el usuario. Intenta de nuevo.'
             ];
-        }
-
-        // ── Insertar en tabla egresados (solo si rol = egresado) ──
-        if ($role === 'egresado' && !empty($verificacionData)) {
-            try {
-                $this->usuarioModel->createEgresado(
-                    $idUsuario,
-                    $verificacionData['matricula'] ?? '',
-                    $verificacionData['curp']      ?? ''
-                );
-            } catch (\Exception $e) {
-                return [
-                    'success' => false,
-                    'message' => 'Error al vincular datos de egresado. Intenta de nuevo.'
-                ];
-            }
         }
 
         return [

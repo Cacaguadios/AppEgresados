@@ -17,6 +17,10 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
 $egresadoModel = new Egresado();
 $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
 
+// Calcular completitud de perfil
+$completitud = $egresadoModel->calcularCompletudinformacion($perfil);
+$porcentajeCompletitud = $completitud['porcentaje'] ?? 0;
+
 // Handle form submission
 $msgExito = '';
 $msgError = '';
@@ -34,9 +38,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
         ];
         $egresadoModel->updatePerfil($_SESSION['usuario_id'], $data);
         $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+        
+        // Recalcular completitud del perfil
+        $egresadoModel->actualizarCompletudinformacion($_SESSION['usuario_id']);
+        
         $msgExito = 'Perfil actualizado correctamente.';
     }
 }
+
+// Handle habilidades blandas submission
+$msgExitoHabilidades = '';
+$msgErrorHabilidades = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_habilidades'])) {
+    if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $msgErrorHabilidades = 'Token de seguridad inválido. Recarga la página.';
+    } else {
+        $habilidades = [];
+        if (!empty($_POST['habilidades_blandas'])) {
+            $habilidades = array_filter(array_map('trim', (array)$_POST['habilidades_blandas']));
+        }
+        $egresadoModel->updateHabilidadesBlandas($_SESSION['usuario_id'], $habilidades);
+        $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+        $msgExitoHabilidades = 'Habilidades blandas actualizadas correctamente.';
+    }
+}
+
+// Load habilidades blandas
+$habilidadesBlandas = $egresadoModel->getHabilidadesBlandas($_SESSION['usuario_id']);
 
 // Map gender enum to select
 $generoMap = ['M' => 'M', 'F' => 'F', 'Otro' => 'Otro'];
@@ -88,11 +116,34 @@ $curGenero = $perfil['genero'] ?? '';
                 </div>
               </div>
 
+              <!-- Completitud Alertas -->
+              <?php if ($porcentajeCompletitud < 100): ?>
+                <div class="alert <?= $porcentajeCompletitud >= 50 ? 'alert-warning' : 'alert-danger' ?> alert-dismissible fade show mb-4" role="alert">
+                  <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                      <i class="bi <?= $porcentajeCompletitud >= 50 ? 'bi-exclamation-triangle' : 'bi-info-circle' ?> me-2"></i>
+                      <strong>Completitud de perfil:</strong> Solo tienes el <strong><?= $porcentajeCompletitud ?>%</strong> de tu información completada.
+                      <p class="mb-0 mt-2 small">Completa tu perfil para mejorar tu visibilidad ante los empleadores y recibir mejores oportunidades.</p>
+                      <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: <?= $porcentajeCompletitud ?>%" aria-valuenow="<?= $porcentajeCompletitud ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              <?php else: ?>
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                  <i class="bi bi-check-circle me-2"></i>
+                  <strong>Perfil completo:</strong> Tienes el 100% de tu información completada. Excelente trabajo!
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              <?php endif; ?>
+
               <!-- Tab Navigation -->
               <div class="utp-tabs-wrapper mb-4">
                 <div class="utp-tabs" role="tablist">
                   <button class="utp-tab active" data-tab="personal" role="tab" aria-selected="true">Datos personales</button>
-                  <button class="utp-tab" data-tab="cv" role="tab" aria-selected="false">CV / Habilidades</button>
+                  <button class="utp-tab" data-tab="habilidades" role="tab" aria-selected="false">Habilidades</button>
                   <a class="utp-tab" href="seguimiento.php" style="text-decoration:none;">Seguimiento</a>
                   <a class="utp-tab" href="seguridad.php" style="text-decoration:none;">Seguridad</a>
                 </div>
@@ -208,11 +259,57 @@ $curGenero = $perfil['genero'] ?? '';
                 </div>
               </form>
 
-              <!-- Tab Content: CV (placeholder) -->
-              <div class="utp-profile-card d-none" id="tab-cv">
-                <h2 class="utp-section-title mb-4">CV / Habilidades</h2>
-                <p class="text-muted">Próximamente podrás subir tu CV y gestionar tus habilidades.</p>
-              </div>
+              <!-- Tab Content: Habilidades Blandas -->
+              <form method="POST" id="tab-habilidades" class="d-none">
+                <div class="utp-profile-card">
+                  <?= Security::csrfField() ?>
+                  <input type="hidden" name="guardar_habilidades" value="1">
+
+                  <?php if ($msgExitoHabilidades): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                      <i class="bi bi-check-circle me-2"></i><?= htmlspecialchars($msgExitoHabilidades) ?>
+                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                  <?php endif; ?>
+                  <?php if ($msgErrorHabilidades): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                      <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($msgErrorHabilidades) ?>
+                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                  <?php endif; ?>
+
+                  <h2 class="utp-section-title mb-4">Habilidades Blandas (Soft Skills)</h2>
+                  <p class="text-muted mb-4">Agrega habilidades blandas que demuestren tus capacidades interpersonales y de liderazgo.</p>
+
+                  <div class="utp-form-group mb-4">
+                    <label class="utp-label mb-2">Habilidades Blandas</label>
+                    <div id="soft-skills-container" class="d-flex flex-wrap gap-2 mb-3">
+                      <?php if (!empty($habilidadesBlandas)): ?>
+                        <?php foreach ($habilidadesBlandas as $skill): ?>
+                          <span class="utp-skill-chip-editable" data-skill="<?= htmlspecialchars($skill) ?>">
+                            <?= htmlspecialchars($skill) ?>
+                            <i class="bi bi-x ms-1" style="cursor:pointer;"></i>
+                          </span>
+                        <?php endforeach; ?>
+                      <?php endif; ?>
+                    </div>
+                    <input type="hidden" id="habilidades-blandas-input" name="habilidades_blandas[]" value="">
+                    <div class="input-group">
+                      <input type="text" id="soft-skill-input" class="form-control utp-input" placeholder="Escribe una habilidad y presiona Enter (ej: Liderazgo, Comunicación, Trabajo en equipo)">
+                      <button type="button" class="btn utp-btn-blue" id="add-soft-skill-btn">
+                        <i class="bi bi-plus-lg"></i> Agregar
+                      </button>
+                    </div>
+                    <small class="text-muted d-block mt-2">Ejemplos: Liderazgo, Comunicación, Trabajo en equipo, Resolución de problemas, Pensamiento crítico</small>
+                  </div>
+
+                  <!-- Save Button -->
+                  <button type="submit" class="btn utp-btn-green">
+                    <i class="bi bi-floppy me-2"></i>
+                    Guardar habilidades
+                  </button>
+                </div>
+              </form>
 
               <!-- Tab Content: Seguimiento redirect -->
 
@@ -228,6 +325,10 @@ $curGenero = $perfil['genero'] ?? '';
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../public/assets/js/shared/components-loader.js"></script>
   <script src="../../public/assets/js/shared/app.js"></script>
+  
+  <!-- Modal de Recordatorio de Actualización -->
+  <?php require_once __DIR__ . '/../compartido/modal-recordatorio-actualizacion.php'; ?>
+  
   <script>
     // Tab switching
     document.querySelectorAll('.utp-tab').forEach(function(tab) {
@@ -248,6 +349,73 @@ $curGenero = $perfil['genero'] ?? '';
         if (target) target.classList.remove('d-none');
       });
     });
+
+    // Soft Skills Management
+    const softSkillInput = document.getElementById('soft-skill-input');
+    const addSkillBtn = document.getElementById('add-soft-skill-btn');
+    const skillsContainer = document.getElementById('soft-skills-container');
+    const hiddenInput = document.getElementById('habilidades-blandas-input');
+
+    function updateHiddenInput() {
+      const skills = Array.from(document.querySelectorAll('.utp-skill-chip-editable')).map(el => el.dataset.skill);
+      const inputElements = Array.from(document.querySelectorAll('input[name="habilidades_blandas[]"]'));
+      inputElements.forEach(el => el.remove());
+      
+      skills.forEach(skill => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'habilidades_blandas[]';
+        input.value = skill;
+        document.getElementById('tab-habilidades').appendChild(input);
+      });
+    }
+
+    function addSkill(skill) {
+      if (!skill.trim()) return;
+      
+      const existing = Array.from(document.querySelectorAll('.utp-skill-chip-editable'))
+        .some(el => el.dataset.skill.toLowerCase() === skill.toLowerCase());
+      
+      if (existing) {
+        alert('Esta habilidad ya está agregada');
+        return;
+      }
+
+      const chip = document.createElement('span');
+      chip.className = 'utp-skill-chip-editable';
+      chip.dataset.skill = skill;
+      chip.innerHTML = `${skill}<i class="bi bi-x ms-1" style="cursor:pointer;"></i>`;
+      
+      chip.querySelector('i').addEventListener('click', function() {
+        chip.remove();
+        updateHiddenInput();
+      });
+
+      skillsContainer.appendChild(chip);
+      updateHiddenInput();
+      softSkillInput.value = '';
+    }
+
+    addSkillBtn.addEventListener('click', function() {
+      addSkill(softSkillInput.value);
+    });
+
+    softSkillInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addSkill(this.value);
+      }
+    });
+
+    // Delete existing skills on load
+    document.querySelectorAll('.utp-skill-chip-editable i').forEach(icon => {
+      icon.addEventListener('click', function() {
+        this.parentElement.remove();
+        updateHiddenInput();
+      });
+    });
+
+    updateHiddenInput();
   </script>
 </body>
 </html>

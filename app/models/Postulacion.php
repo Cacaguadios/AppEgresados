@@ -86,4 +86,32 @@ class Postulacion extends Database {
                 WHERE p.id = ?";
         return $this->fetchOne($sql, [$id]);
     }
+
+    /**
+     * Retirar postulación (marcar como retirada por el egresado)
+     */
+    public function retirar($id) {
+        $this->update('postulaciones',
+            [
+                'retirada' => 1,
+                'fecha_retiro' => date('Y-m-d H:i:s')
+            ],
+            ['id' => $id]
+        );
+    }
+
+    /**
+     * Obtener postulaciones activas de un egresado
+     */
+    public function getByEgresadoIdActivas($egresadoId) {
+        $sql = "SELECT p.*, 
+                       o.titulo, o.empresa, o.ubicacion, o.modalidad, o.habilidades AS oferta_habilidades,
+                       o.estado_vacante, o.vacantes, o.fecha_expiracion,
+                       o.salario_min, o.salario_max
+                FROM postulaciones p
+                JOIN ofertas o ON p.id_oferta = o.id
+                WHERE p.id_egresado = ? AND p.retirada = 0
+                ORDER BY p.fecha_postulacion DESC";
+        return $this->fetchAll($sql, [$egresadoId]);
+    }
 }

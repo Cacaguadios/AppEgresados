@@ -251,6 +251,80 @@
   .utp-app-title{ font-size: 18px; line-height: 24px; }
 }
 
+/* Badge Status Colors */
+.utp-badge-blue{
+  background: rgba(0, 76, 235, 0.10);
+  border: 1px solid rgba(0, 76, 235, 0.20);
+  color: #004CEB;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.utp-badge-yellow{
+  background: rgba(255, 225, 106, 0.30);
+  border: 1px solid rgba(255, 225, 106, 0.50);
+  color: #FFB800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.utp-badge-green{
+  background: rgba(0, 194, 71, 0.10);
+  border: 1px solid rgba(0, 194, 71, 0.20);
+  color: #00C247;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.utp-badge-gray{
+  background: rgba(158, 158, 158, 0.10);
+  border: 1px solid rgba(158, 158, 158, 0.20);
+  color: #9E9E9E;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+/* Skill Chips Small */
+.utp-skill-chip-sm{
+  background: rgba(0, 76, 235, 0.08);
+  color: #004CEB;
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
 /* ===== Profile Page ===== */
 .utp-verified-badge{
   display: inline-flex; align-items: center; gap: 4px;

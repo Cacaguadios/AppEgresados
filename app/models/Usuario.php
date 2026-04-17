@@ -95,6 +95,16 @@ class Usuario extends Database {
     }
 
     /**
+     * Marcar email como verificado (registro o recuperación)
+     */
+    public function markEmailAsVerified($id) {
+        return $this->update('usuarios', [
+            'email_verificado' => 1,
+            'email_verificado_registro' => date('Y-m-d H:i:s'),
+        ], ['id' => $id]);
+    }
+
+    /**
      * Email existe
      */
     public function emailExists($email) {
@@ -275,7 +285,7 @@ class Usuario extends Database {
      * ================================================================ */
 
     /**
-     * Obtener usuario por email institucional
+     * Obtener usuario por email de verificación (institucional para docentes, personal para egresados)
      */
     public function getByInstitutionalEmail($email) {
         $sql = "SELECT * FROM usuarios WHERE email_institucional = ?";
@@ -283,7 +293,7 @@ class Usuario extends Database {
     }
 
     /**
-     * Actualizar email institucional y marcar como verificado
+     * Actualizar email de verificación y marcar como verificado
      */
     public function updateInstitutionalEmail($userId, $email) {
         return $this->update('usuarios', [

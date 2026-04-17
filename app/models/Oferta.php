@@ -203,6 +203,27 @@ class Oferta extends Database {
     }
     
     /**
+     * Decrementar vacantes de una oferta
+     * Si llega a 0, elimina la oferta automáticamente
+     */
+    public function decrementVacancies($id) {
+        $oferta = $this->getById($id);
+        if (!$oferta) return false;
+
+        $nuevasVacantes = $oferta['vacantes'] - 1;
+
+        if ($nuevasVacantes <= 0) {
+            // Eliminar la oferta cuando se llena el cupo
+            $this->delete('ofertas', ['id' => $id]);
+            return true;
+        } else {
+            // Actualizar vacantes
+            $this->update('ofertas', ['vacantes' => $nuevasVacantes], ['id' => $id]);
+            return true;
+        }
+    }
+
+    /**
      * Actualizar estado de vacantes
      */
     public function updateVacancyStatus($id) {
@@ -210,12 +231,78 @@ class Oferta extends Database {
         $postulantes = $this->fetchOne($sql, [$id])['total'] ?? 0;
         
         $oferta = $this->getById($id);
+        if (!$oferta) return;
+        
         $estado = 'verde';
         
         if ($postulantes > 0) $estado = 'amarillo';
         if ($oferta['vacantes'] == 0) $estado = 'rojo';
         
         $this->update('ofertas', ['estado_vacante' => $estado], ['id' => $id]);
+    }
+
+    /**
+     * Dar de baja una oferta
+     */
+    public function setBaja($id, $motivo = null) {
+        $this->update('ofertas', 
+            [
+                'activo' => 0,
+                'fecha_baja' => date('Y-m-d H:i:s'),
+                'motivo_baja' => $motivo ?? null
+            ],
+            ['id' => $id]
+        );
+    }
+
+    /**
+     * Reactivar una oferta
+     */
+    public function setActiva($id) {
+        $this->update('ofertas', 
+            [
+                'activo' => 1,
+                'fecha_baja' => null,
+                'motivo_baja' => null
+            ],
+            ['id' => $id]
+        );
+    }
+
+    /**
+     * Editar oferta existente
+     */
+    public function edit($id, $data) {
+        $editables = ['titulo', 'empresa', 'ubicacion', 'modalidad', 'jornada', 
+                      'salario_min', 'salario_max', 'beneficios', 'habilidades', 
+                      'descripcion', 'requisitos', 'contacto', 'nombre_contacto', 
+                      'puesto_contacto', 'telefono_contacto', 'vacantes', 'fecha_expiracion'];
+        
+        $dataFiltrada = array_intersect_key($data, array_flip($editables));
+        
+        if (is_array($dataFiltrada['requisitos'] ?? null)) {
+            $dataFiltrada['requisitos'] = json_encode($dataFiltrada['requisitos']);
+        }
+        if (is_array($dataFiltrada['beneficios'] ?? null)) {
+            $dataFiltrada['beneficios'] = json_encode($dataFiltrada['beneficios']);
+        }
+        if (is_array($dataFiltrada['habilidades'] ?? null)) {
+            $dataFiltrada['habilidades'] = json_encode($dataFiltrada['habilidades']);
+        }
+        
+        $this->update('ofertas', $dataFiltrada, ['id' => $id]);
+    }
+
+    /**
+     * Obtener ofertas activas de un usuario
+     */
+    public function getByUserIdActive($id_usuario) {
+        $sql = "SELECT o.*,
+                       (SELECT COUNT(*) FROM postulaciones WHERE id_oferta = o.id) AS postulantes_count
+                FROM ofertas o
+                WHERE o.id_usuario_creador = ? AND o.activo = 1
+                ORDER BY o.fecha_creacion DESC";
+        return $this->fetchAll($sql, [$id_usuario]);
     }
 }
 ?>

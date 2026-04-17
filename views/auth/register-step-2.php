@@ -128,27 +128,15 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
             <div id="fieldsEgresado" class="d-block">
               <div class="mb-3">
                 <label class="form-label" style="font-size:14px; font-weight:500;">
-                  Matrícula UTP <span class="text-danger">*</span>
+                  Correo Electrónico Personal <span class="text-danger">*</span>
                 </label>
                 <input class="form-control auth-input"
-                       type="text"
-                       inputmode="numeric"
-                       name="matricula"
-                       placeholder="Ej: 2019010123"
+                       type="email"
+                       name="email"
+                       placeholder="tu.correo@ejemplo.com"
                        data-field="egresado"
                        required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label" style="font-size:14px; font-weight:500;">
-                  CURP <span class="text-danger">*</span>
-                </label>
-                <input class="form-control auth-input"
-                       type="text"
-                       name="curp"
-                       placeholder="18 caracteres"
-                       data-field="egresado"
-                       required />
-                <div class="auth-help mt-2">Usado para validar autenticidad</div>
+                <div class="auth-help mt-2">Usaremos este correo para verificación</div>
               </div>
             </div>
 
@@ -228,7 +216,7 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
       document.getElementById('fieldsTI').classList.add('d-none');
 
       // Remover required de todos los campos
-      document.querySelectorAll('input[name="matricula"], input[name="curp"], input[name="id_docente"], input[name="id_ti"]').forEach(input => {
+      document.querySelectorAll('input[name="email"], input[name="id_docente"], input[name="id_ti"]').forEach(input => {
         input.removeAttribute('required');
       });
 
@@ -238,8 +226,7 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
       // Mostrar y validar solo los del rol actual
       if (rol === 'egresado') {
         document.getElementById('fieldsEgresado').classList.remove('d-none');
-        document.querySelector('input[name="matricula"]').setAttribute('required', 'required');
-        document.querySelector('input[name="curp"]').setAttribute('required', 'required');
+        document.querySelector('input[name="email"]').setAttribute('required', 'required');
       } else if (rol === 'docente') {
         document.getElementById('fieldsDocente').classList.remove('d-none');
         document.querySelector('input[name="id_docente"]').setAttribute('required', 'required');

@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
+if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || $_SESSION['usuario_rol'] !== 'egresado') {
     header('Location: ../auth/login.php');
     exit;
 }
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crear Nueva Oferta - Docente UTP</title>
+  <title>Crear Nueva Oferta - Egresado UTP</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
 <body class="bg-soft">
   <script>
     window.UTP_DATA = {
-      role: 'docente', roleLabel: 'Docente',
+      role: 'egresado', roleLabel: 'Egresado',
       fullName: <?= json_encode($fullName) ?>,
       initials: <?= json_encode($initials) ?>,
       currentPage: 'publicar-oferta',
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
               <i class="bi bi-chevron-left"></i> Volver
             </a>
             <h1 class="utp-h1 mb-2">Crear Nueva Oferta</h1>
-            <p class="utp-subtitle mb-0">Publica una vacante para egresados UTP</p>
+            <p class="utp-subtitle mb-0">Publica una vacante para otras empresas o como referencia</p>
           </section>
 
           <?php if ($msgError): ?>
@@ -293,10 +293,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
               <article class="utp-form-card">
                 <h3 class="utp-form-card-subtitle">Consejos</h3>
                 <ul class="utp-tips-list">
-                  <li>✓ Sé claro y específico en los requisitos</li>
-                  <li>✓ Incluye el rango salarial para más postulaciones</li>
-                  <li>✓ Agrega beneficios atractivos</li>
-                  <li>✓ Especifica las tecnologías exactas</li>
+                  <li>Sé claro y específico en los requisitos</li>
+                  <li>Incluye el rango salarial para más postulaciones</li>
+                  <li>Agrega beneficios atractivos</li>
+                  <li>Especifica las tecnologías exactas</li>
                 </ul>
               </article>
             </div>

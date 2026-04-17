@@ -36,7 +36,7 @@ class VerificationController {
     }
 
     /* ================================================================
-     *  Validar email institucional según rol
+     *  Validar correo según rol (personal para egresados, institucional para docentes/TI)
      * ================================================================ */
     public function validateInstitutionalEmail($email, $role) {
         $email = strtolower(trim($email));
@@ -47,7 +47,8 @@ class VerificationController {
         }
 
         if (empty($email)) {
-            return ['success' => false, 'message' => 'El correo institucional es requerido.'];
+            $emailType = $role === 'egresado' ? 'El correo personal es requerido.' : 'El correo institucional es requerido.';
+            return ['success' => false, 'message' => $emailType];
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -139,13 +140,36 @@ class VerificationController {
     /* ================================================================
      *  Verificar email para registro (paso 4)
      * ================================================================ */
-    public function verifyRegistrationEmail($userId, $email) {
+    public function verifyRegistrationEmail($userId, $email, $codigo = '') {
         $email = strtolower(trim($email));
 
-        // Actualizar usuario con email institucional verificado
-        $this->usuarioModel->updateInstitutionalEmail($userId, $email);
+        // Actualizar usuario con email verificado
+        $this->usuarioModel->markEmailAsVerified($userId);
+
+        // Registrar en auditoría (si disponible)
+        $this->logEmailVerification($userId, $email, 'registro', $codigo);
 
         return ['success' => true];
+    }
+
+    /* ================================================================
+     *  Log de verificación de email (auditoría)
+     * ================================================================ */
+    private function logEmailVerification($userId, $email, $tipo, $codigo = '') {
+        try {
+            $data = [
+                'usuario_id' => $userId,
+                'email_verificado' => $email,
+                'tipo_verificacion' => $tipo,
+                'codigo_usado' => $codigo,
+                'ip_direccion' => $_SERVER['REMOTE_ADDR'] ?? null,
+                'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
+                'fecha_verificacion' => date('Y-m-d H:i:s'),
+            ];
+            $this->usuarioModel->insert('email_verification_log', $data);
+        } catch (Exception $e) {
+            // Log silenciosamente si hay error en auditoría
+        }
     }
 
     /* ================================================================
@@ -162,7 +186,7 @@ class VerificationController {
             return ['success' => false, 'message' => 'El formato del correo no es válido.'];
         }
 
-        // Verificar que el email exista como email institucional
+        // Verificar que el email exista como correo de verificación
         $usuario = $this->usuarioModel->getByInstitutionalEmail($email);
 
         if (!$usuario) {

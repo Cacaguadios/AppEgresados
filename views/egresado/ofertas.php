@@ -123,13 +123,15 @@ sort($allLocations);
               </p>
 
               <!-- Job Cards List -->
-              <section class="d-flex flex-column gap-3" id="jobCardsContainer">
+              <section class="row g-4" id="jobCardsContainer">
 
                 <?php if (empty($ofertas)): ?>
-                  <div class="utp-card text-center py-5">
-                    <i class="bi bi-briefcase" style="font-size:48px; color:#ccc;"></i>
-                    <h3 class="mt-3" style="color:#757575;">No hay ofertas disponibles</h3>
-                    <p class="text-muted">Vuelve más tarde para ver nuevas oportunidades.</p>
+                  <div class="col-12">
+                    <div class="utp-card text-center py-5">
+                      <i class="bi bi-briefcase" style="font-size:48px; color:#ccc;"></i>
+                      <h3 class="mt-3" style="color:#757575;">No hay ofertas disponibles</h3>
+                      <p class="text-muted">Vuelve más tarde para ver nuevas oportunidades.</p>
+                    </div>
                   </div>
                 <?php else: ?>
                   <?php foreach ($ofertas as $oferta):
@@ -143,6 +145,7 @@ sort($allLocations);
                     
                     $fechaPublicacion = date('d/m/Y', strtotime($oferta['fecha_aprobacion'] ?? $oferta['fecha_creacion']));
                   ?>
+                  <div class="col-12 col-md-6 col-lg-6">
                   <article class="utp-job-card"
                            data-titulo="<?= htmlspecialchars(mb_strtolower($oferta['titulo'])) ?>"
                            data-empresa="<?= htmlspecialchars(mb_strtolower($oferta['empresa'] ?? '')) ?>"
@@ -176,6 +179,7 @@ sort($allLocations);
                     </div>
                     <a href="oferta-detalle.php?id=<?= (int)$oferta['id'] ?>" class="btn btn-utp-red btn-utp-rounded">Ver detalles</a>
                   </article>
+                  </div>
                   <?php endforeach; ?>
                 <?php endif; ?>
 

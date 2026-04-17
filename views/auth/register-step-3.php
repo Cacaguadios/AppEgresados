@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'role'      => $resultado['role'],
         ];
 
-        // Redirigir al paso 4 - Verificación de email institucional
+        // Redirigir al paso 4 - Verificación de correo
         header('Location: register-step-4.php');
         exit;
     } else {

@@ -47,6 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_seguimiento']
         $egresadoModel->updateSeguimiento($_SESSION['usuario_id'], $data);
         $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
         $prestacionesArr = json_decode($perfil['prestaciones'] ?? '[]', true) ?: [];
+        
+        // Actualizar próximo recordatorio de información (3 meses)
+        $egresadoModel->setProximoRecordatorio($_SESSION['usuario_id']);
+        
+        // Recalcular completitud
+        $egresadoModel->actualizarCompletudinformacion($_SESSION['usuario_id']);
+        
         $msgExito = 'Seguimiento guardado correctamente.';
     }
 }

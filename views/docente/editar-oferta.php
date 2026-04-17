@@ -6,8 +6,28 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SES
 }
 
 require_once __DIR__ . '/../../app/models/Oferta.php';
-require_once __DIR__ . '/../../app/models/Notificacion.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
+
+$ofertaId = (int)($_GET['id'] ?? 0);
+if (!$ofertaId) {
+    header('Location: mis-ofertas.php');
+    exit;
+}
+
+$ofertaModel = new Oferta();
+$oferta = $ofertaModel->getById($ofertaId);
+
+// Verificar que existe la oferta
+if (!$oferta) {
+    header('Location: mis-ofertas.php?error=no_existe');
+    exit;
+}
+
+// Verificar que el usuario es el propietario
+if ($oferta['id_usuario_creador'] != $_SESSION['usuario_id']) {
+    header('Location: mis-ofertas.php?error=no_permiso');
+    exit;
+}
 
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
 $apellidos = $_SESSION['usuario_apellidos'] ?? '';
@@ -18,8 +38,13 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
 $msgExito = '';
 $msgError = '';
 
+// Parsear JSON fields
+$requisitos = json_decode($oferta['requisitos'] ?? '[]', true) ?: [];
+$beneficios = json_decode($oferta['beneficios'] ?? '[]', true) ?: [];
+$habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
+
 // Handle POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $msgError = 'Token de seguridad inválido. Recarga la página.';
     } else {
@@ -60,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
             $salarioMax = !empty($_POST['salario_max']) ? (float)$_POST['salario_max'] : null;
 
             $data = [
-                'id_usuario_creador' => $_SESSION['usuario_id'],
                 'titulo'             => $titulo,
                 'empresa'            => $empresa,
                 'ubicacion'          => trim($_POST['ubicacion'] ?? ''),
@@ -77,25 +101,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                 'nombre_contacto'    => $nombreContacto,
                 'puesto_contacto'    => $puestoContacto,
                 'telefono_contacto'  => $telefonoContacto,
-                'estado'             => 'pendiente_aprobacion',
-                'estado_vacante'     => 'verde',
-                'fecha_creacion'     => date('Y-m-d H:i:s'),
-                'fecha_expiracion'   => !empty($_POST['fecha_expiracion']) ? $_POST['fecha_expiracion'] : date('Y-m-d H:i:s', strtotime('+30 days')),
+                'fecha_expiracion'   => !empty($_POST['fecha_expiracion']) ? $_POST['fecha_expiracion'] : $oferta['fecha_expiracion'],
             ];
 
-            $ofertaModel = new Oferta();
-            $newId = $ofertaModel->create($data);
-
-            if ($newId) {
-                // Notificar a todos los admins
-                $notifModel = new Notificacion();
-                $notifModel->onOfertaCreada($titulo, $fullName);
-
-                header('Location: mis-ofertas.php?creada=1');
-                exit;
-            } else {
-                $msgError = 'Error al crear la oferta. Intenta de nuevo.';
-            }
+            $ofertaModel->edit($ofertaId, $data);
+            // Recargar oferta
+            $oferta = $ofertaModel->getById($ofertaId);
+            $requisitos = json_decode($oferta['requisitos'] ?? '[]', true) ?: [];
+            $beneficios = json_decode($oferta['beneficios'] ?? '[]', true) ?: [];
+            $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
+            
+            $msgExito = 'Oferta actualizada correctamente.';
         }
     }
 }
@@ -105,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crear Nueva Oferta - Docente UTP</title>
+  <title>Editar Oferta - Docente UTP</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -118,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
       role: 'docente', roleLabel: 'Docente',
       fullName: <?= json_encode($fullName) ?>,
       initials: <?= json_encode($initials) ?>,
-      currentPage: 'publicar-oferta',
+      currentPage: 'editar-oferta',
       requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
     };
   </script>
@@ -135,12 +151,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
 
           <!-- Header -->
           <section class="mb-4">
-            <a href="inicio.php" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
+            <a href="mis-ofertas.php" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
               <i class="bi bi-chevron-left"></i> Volver
             </a>
-            <h1 class="utp-h1 mb-2">Crear Nueva Oferta</h1>
-            <p class="utp-subtitle mb-0">Publica una vacante para egresados UTP</p>
+            <h1 class="utp-h1 mb-2">Editar Oferta</h1>
+            <p class="utp-subtitle mb-0">Actualiza los detalles de tu vacante</p>
           </section>
+
+          <?php if ($msgExito): ?>
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+              <i class="bi bi-check-circle me-2"></i><?= htmlspecialchars($msgExito) ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <?php endif; ?>
 
           <?php if ($msgError): ?>
             <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
@@ -151,8 +174,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
 
           <form method="POST" id="formOferta">
           <?= Security::csrfField() ?>
-          <input type="hidden" name="publicar_oferta" value="1">
-          <input type="hidden" name="habilidades_json" id="habilidadesJson" value="[]">
+          <input type="hidden" name="editar_oferta" value="1">
+          <input type="hidden" name="habilidades_json" id="habilidadesJson" value="<?= htmlspecialchars(json_encode($habilidades)) ?>">
 
           <div class="row g-4">
             <!-- Left Column: Form -->
@@ -164,51 +187,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                 <div class="row g-3">
                   <div class="col-12">
                     <label class="form-label">Título de la oferta *</label>
-                    <input type="text" name="titulo" class="form-control utp-input" placeholder="Ej: Desarrollador Full Stack Junior" required>
+                    <input type="text" name="titulo" class="form-control utp-input" value="<?= htmlspecialchars($oferta['titulo']) ?>" required>
                   </div>
                   <div class="col-12">
                     <label class="form-label">Empresa *</label>
-                    <input type="text" name="empresa" class="form-control utp-input" placeholder="Nombre de la empresa" required>
+                    <input type="text" name="empresa" class="form-control utp-input" value="<?= htmlspecialchars($oferta['empresa']) ?>" required>
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Ubicación</label>
-                    <input type="text" name="ubicacion" class="form-control utp-input" placeholder="Ciudad, Estado">
+                    <input type="text" name="ubicacion" class="form-control utp-input" value="<?= htmlspecialchars($oferta['ubicacion'] ?? '') ?>">
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Modalidad</label>
                     <select name="modalidad" class="form-select utp-select">
-                      <option value="hibrido" selected>Híbrido</option>
-                      <option value="presencial">Presencial</option>
-                      <option value="remoto">Remoto</option>
+                      <option value="hibrido" <?= $oferta['modalidad'] === 'hibrido' ? 'selected' : '' ?>>Híbrido</option>
+                      <option value="presencial" <?= $oferta['modalidad'] === 'presencial' ? 'selected' : '' ?>>Presencial</option>
+                      <option value="remoto" <?= $oferta['modalidad'] === 'remoto' ? 'selected' : '' ?>>Remoto</option>
                     </select>
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Jornada</label>
                     <select name="jornada" class="form-select utp-select">
-                      <option value="completo" selected>Tiempo completo</option>
-                      <option value="parcial">Medio tiempo</option>
-                      <option value="freelance">Freelance</option>
+                      <option value="completo" <?= $oferta['jornada'] === 'completo' ? 'selected' : '' ?>>Tiempo completo</option>
+                      <option value="parcial" <?= $oferta['jornada'] === 'parcial' ? 'selected' : '' ?>>Medio tiempo</option>
+                      <option value="freelance" <?= $oferta['jornada'] === 'freelance' ? 'selected' : '' ?>>Freelance</option>
                     </select>
                   </div>
                   <div class="col-12">
                     <label class="form-label">Descripción *</label>
-                    <textarea name="descripcion" class="form-control utp-input utp-textarea" rows="5" placeholder="Describe la posición, responsabilidades y lo que buscas en un candidato..." required></textarea>
+                    <textarea name="descripcion" class="form-control utp-input utp-textarea" rows="5" required><?= htmlspecialchars($oferta['descripcion']) ?></textarea>
                   </div>
                   <div class="col-12 col-md-4">
                     <label class="form-label">Salario mínimo (MXN)</label>
-                    <input type="number" name="salario_min" class="form-control utp-input" placeholder="15000" min="0" step="1000">
+                    <input type="number" name="salario_min" class="form-control utp-input" value="<?= $oferta['salario_min'] ?? '' ?>" min="0" step="1000">
                   </div>
                   <div class="col-12 col-md-4">
                     <label class="form-label">Salario máximo (MXN)</label>
-                    <input type="number" name="salario_max" class="form-control utp-input" placeholder="25000" min="0" step="1000">
+                    <input type="number" name="salario_max" class="form-control utp-input" value="<?= $oferta['salario_max'] ?? '' ?>" min="0" step="1000">
                   </div>
                   <div class="col-12 col-md-4">
                     <label class="form-label">Número de vacantes</label>
-                    <input type="number" name="vacantes" class="form-control utp-input" value="1" min="1">
+                    <input type="number" name="vacantes" class="form-control utp-input" value="<?= $oferta['vacantes'] ?? 1 ?>" min="1">
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Fecha de expiración</label>
-                    <input type="date" name="fecha_expiracion" class="form-control utp-input">
+                    <input type="date" name="fecha_expiracion" class="form-control utp-input" value="<?= substr($oferta['fecha_expiracion'], 0, 10) ?>">
                   </div>
                 </div>
               </article>
@@ -217,8 +240,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
               <article class="utp-form-card mb-4">
                 <h2 class="utp-form-card-title">Requisitos</h2>
                 <div id="requirementsList">
+                  <?php foreach ($requisitos as $req): ?>
+                    <div class="d-flex gap-2 mb-2">
+                      <input type="text" name="requisitos[]" class="form-control utp-input" value="<?= htmlspecialchars($req) ?>">
+                      <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                  <?php endforeach; ?>
                   <div class="d-flex gap-2 mb-2">
-                    <input type="text" name="requisitos[]" class="form-control utp-input" placeholder="Requisito 1">
+                    <input type="text" name="requisitos[]" class="form-control utp-input" placeholder="Requisito">
                   </div>
                 </div>
                 <button type="button" class="btn btn-utp-outline-gray w-100 mt-2" onclick="addDynamicItem('requirementsList', 'requisitos[]', 'Requisito')">
@@ -230,8 +259,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
               <article class="utp-form-card mb-4">
                 <h2 class="utp-form-card-title">Beneficios</h2>
                 <div id="benefitsList">
+                  <?php foreach ($beneficios as $ben): ?>
+                    <div class="d-flex gap-2 mb-2">
+                      <input type="text" name="beneficios[]" class="form-control utp-input" value="<?= htmlspecialchars($ben) ?>">
+                      <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                  <?php endforeach; ?>
                   <div class="d-flex gap-2 mb-2">
-                    <input type="text" name="beneficios[]" class="form-control utp-input" placeholder="Beneficio 1">
+                    <input type="text" name="beneficios[]" class="form-control utp-input" placeholder="Beneficio">
                   </div>
                 </div>
                 <button type="button" class="btn btn-utp-outline-gray w-100 mt-2" onclick="addDynamicItem('benefitsList', 'beneficios[]', 'Beneficio')">
@@ -257,47 +292,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                 <div class="row g-3">
                   <div class="col-12">
                     <label class="form-label">Email de contacto</label>
-                    <input type="email" name="contacto" class="form-control utp-input" placeholder="contacto@empresa.com">
+                    <input type="email" name="contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['contacto'] ?? '') ?>">
                   </div>
                   <div class="col-12">
                     <label class="form-label">Nombre del contacto</label>
-                    <input type="text" name="nombre_contacto" class="form-control utp-input" placeholder="Nombre completo">
+                    <input type="text" name="nombre_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['nombre_contacto'] ?? '') ?>">
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Puesto del contacto</label>
-                    <input type="text" name="puesto_contacto" class="form-control utp-input" placeholder="Ej: Gerente de RH">
+                    <input type="text" name="puesto_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['puesto_contacto'] ?? '') ?>">
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Teléfono del contacto</label>
-                    <input type="tel" name="telefono_contacto" class="form-control utp-input" placeholder="Ej: +52 123 456 7890">
+                    <input type="tel" name="telefono_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['telefono_contacto'] ?? '') ?>">
                   </div>
                 </div>
               </article>
             </div>
 
-            <!-- Right Column: Actions + Tips -->
+            <!-- Right Column: Actions + Info -->
             <div class="col-12 col-xl-4">
               <article class="utp-form-card mb-4">
                 <h3 class="utp-form-card-subtitle">Acciones</h3>
                 <div class="d-grid gap-3">
                   <button type="submit" class="btn btn-utp-green d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-send"></i> Enviar para aprobación
+                    <i class="bi bi-check-lg"></i> Guardar cambios
                   </button>
-                  <a href="inicio.php" class="btn btn-link text-dark">Cancelar</a>
-                </div>
-                <div class="utp-info-box mt-4">
-                  <p class="mb-0">Tu oferta será revisada por un administrador antes de publicarse.</p>
+                  <a href="mis-ofertas.php" class="btn btn-link text-dark">Cancelar</a>
                 </div>
               </article>
 
               <article class="utp-form-card">
-                <h3 class="utp-form-card-subtitle">Consejos</h3>
-                <ul class="utp-tips-list">
-                  <li>✓ Sé claro y específico en los requisitos</li>
-                  <li>✓ Incluye el rango salarial para más postulaciones</li>
-                  <li>✓ Agrega beneficios atractivos</li>
-                  <li>✓ Especifica las tecnologías exactas</li>
-                </ul>
+                <h3 class="utp-form-card-subtitle">Estado de la oferta</h3>
+                <div class="utp-info-box">
+                  <p class="mb-2"><strong>Estado:</strong></p>
+                  <span class="badge" style="background-color: <?= match($oferta['estado']) { 'pendiente_aprobacion' => '#ffc107', 'aprobada' => '#28a745', 'rechazada' => '#dc3545', default => '#6c757d' } ?>">
+                    <?= ucfirst(str_replace('_', ' ', $oferta['estado'])) ?>
+                  </span>
+                  <?php if ($oferta['estado'] === 'pendiente_aprobacion'): ?>
+                    <p class="mb-0 mt-3 small">Tu oferta está siendo revisada por un administrador.</p>
+                  <?php endif; ?>
+                </div>
               </article>
             </div>
           </div>
@@ -312,8 +347,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
   <script src="../../public/assets/js/shared/components-loader.js"></script>
   <script src="../../public/assets/js/shared/app.js"></script>
   <script>
+    // Initialize skills with existing data
+    let skills = <?= json_encode($habilidades) ?>;
+
     // Dynamic list items (requisitos, beneficios)
-    let itemCounters = {};
     function addDynamicItem(containerId, nameAttr, label) {
       const container = document.getElementById(containerId);
       const count = container.children.length + 1;
@@ -325,7 +362,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
     }
 
     // Skills
-    const skills = [];
     function addSkill() {
       const input = document.getElementById('skillInput');
       const value = input.value.trim();
@@ -354,6 +390,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
     document.getElementById('formOferta').addEventListener('submit', function() {
       document.getElementById('habilidadesJson').value = JSON.stringify(skills);
     });
+
+    // Render skills on load
+    renderSkills();
   </script>
 </body>
 </html>

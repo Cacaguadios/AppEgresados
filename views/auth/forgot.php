@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <h1 class="auth-wizard-title mb-2">Recuperar contraseña</h1>
           <p class="auth-wizard-subtitle mb-0">
-            Ingresa tu correo institucional y te enviaremos un código de verificación
+            Ingresa tu correo personal y te enviaremos un código de verificación
           </p>
         </header>
 
@@ -96,16 +96,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <div class="mb-4">
             <label class="form-label" style="font-size:14px; font-weight:500;">
-              Correo institucional <span class="text-danger">*</span>
+              Correo personal <span class="text-danger">*</span>
             </label>
             <input class="form-control auth-input"
                    type="email"
                    name="email"
-                   placeholder="tu.correo@alumno.utpuebla.edu.mx"
+                   placeholder="tu.correo@gmail.com"
                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                    required />
             <div class="auth-help mt-2">
-              Ingresa el correo institucional asociado a tu cuenta
+              Ingresa el correo personal asociado a tu cuenta
             </div>
           </div>
 

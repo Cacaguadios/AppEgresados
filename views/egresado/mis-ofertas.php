@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
+if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || $_SESSION['usuario_rol'] !== 'egresado') {
     header('Location: ../auth/login.php');
     exit;
 }
@@ -35,7 +35,7 @@ $msgCreada = isset($_GET['creada']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mis Ofertas - Docente UTP</title>
+  <title>Mis Ofertas - Egresados UTP</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -45,7 +45,7 @@ $msgCreada = isset($_GET['creada']);
 <body class="bg-soft">
   <script>
     window.UTP_DATA = {
-      role: 'docente', roleLabel: 'Docente',
+      role: 'egresado', roleLabel: 'Egresado',
       fullName: <?= json_encode($fullName) ?>,
       initials: <?= json_encode($initials) ?>,
       currentPage: 'mis-ofertas',
@@ -86,8 +86,8 @@ $msgCreada = isset($_GET['creada']);
               <div class="utp-miniicon green mx-auto mb-3" style="width:64px;height:64px;border-radius:50%;">
                 <i class="bi bi-briefcase" style="font-size:28px;"></i>
               </div>
-              <h3 style="font-size:20px; font-weight:600; color:#121212;">Aún no tienes ofertas</h3>
-              <p style="color:#757575; font-size:16px; margin-top:8px;">Publica tu primera oferta para comenzar a recibir postulaciones.</p>
+              <h3 style="font-size:20px; font-weight:600; color:#121212;">Aún no tienes ofertas publicadas</h3>
+              <p style="color:#757575; font-size:16px; margin-top:8px;">Publica tu primera oferta para compartir una oportunidad con otros egresados.</p>
               <a href="publicar-oferta.php" class="btn btn-utp-green mt-2">
                 <i class="bi bi-plus-lg me-2"></i> Crear oferta
               </a>
@@ -148,7 +148,7 @@ $msgCreada = isset($_GET['creada']);
                   <?php if ($salarioTxt): ?>
                     <span style="font-size:13px; color:#757575;"><i class="bi bi-cash-stack me-1"></i><?= $salarioTxt ?></span>
                   <?php endif; ?>
-                  <span style="font-size:13px; color:#757575;"><i class="bi bi-people me-1"></i><?= (int)($o['postulantes_count'] ?? 0) ?> postulantes</span>
+                  <span style="font-size:13px; color:#757575;"><i class="bi bi-people me-1"></i><?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?></span>
                   <span style="font-size:13px; color:#757575;"><i class="bi bi-calendar3 me-1"></i>Creada: <?= $fechaCreacion ?></span>
                   <span style="font-size:13px; color:#757575;"><i class="bi bi-calendar-x me-1"></i>Expira: <?= $fechaExp ?></span>
                   <span style="font-size:13px; color:#757575;"><i class="bi bi-door-open me-1"></i><?= (int)$o['vacantes'] ?> vacante<?= $o['vacantes'] != 1 ? 's' : '' ?></span>
@@ -164,7 +164,7 @@ $msgCreada = isset($_GET['creada']);
                 <!-- Acciones -->
                 <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
                   <?php if ($o['estado'] === 'aprobada' && !$expirada && $o['activo'] == 1): ?>
-                    <a href="publicar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                    <a href="oferta-detalle.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
                       <i class="bi bi-eye me-1"></i> Ver
                     </a>
                     <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
@@ -206,6 +206,14 @@ $msgCreada = isset($_GET['creada']);
   <script>
     function confirmarBaja(ofertaId, titulo) {
       if (confirm('Confirmas que deseas dar de baja la oferta: ' + titulo + '?\n\nEsto ocultará la oferta pero podrás reactivarla después.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+          <input type="hidden" name="action" value="baja">
+          <input type="hidden" name="oferta_id" value="${ofertaId}">
+          <input type="hidden" name="csrf_token" value="">
+        `;
+        
         fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},

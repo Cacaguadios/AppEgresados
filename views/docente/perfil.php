@@ -11,6 +11,17 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
 $usuarioModel = new Usuario();
 $usuario = $usuarioModel->getById($_SESSION['usuario_id']);
 
+// Para docentes, mostrar alerta simple de completitud
+// usando campos básicos: nombre, email, etc.
+$docenteCompletudinformacion = 0;
+if (!empty($usuario['nombre']) && !empty($usuario['email'])) {
+    $docenteCompletudinformacion = 100; // Docente con datos básicos = completo
+} elseif (!empty($usuario['nombre']) || !empty($usuario['email'])) {
+    $docenteCompletudinformacion = 50;
+} else {
+    $docenteCompletudinformacion = 0;
+}
+
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
 $apellidos = $_SESSION['usuario_apellidos'] ?? '';
 $fullName  = trim($nombre . ' ' . $apellidos);
@@ -87,6 +98,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
               <span class="utp-profile-hint">Tus datos de nombre y usuario no se pueden modificar.</span>
             </div>
           </div>
+
+          <!-- Completitud Alertas -->
+          <?php if ($docenteCompletudinformacion < 100): ?>
+            <div class="alert <?= $docenteCompletudinformacion >= 50 ? 'alert-warning' : 'alert-danger' ?> alert-dismissible fade show mb-4" role="alert">
+              <div class="d-flex align-items-start justify-content-between">
+                <div>
+                  <i class="bi <?= $docenteCompletudinformacion >= 50 ? 'bi-exclamation-triangle' : 'bi-info-circle' ?> me-2"></i>
+                  <strong>Completitud de perfil:</strong> Solo tienes el <strong><?= $docenteCompletudinformacion ?>%</strong> de tu información completada.
+                  <p class="mb-0 mt-2 small">Completa tu perfil para tener una presencia profesional completa en el sistema.</p>
+                  <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: <?= $docenteCompletudinformacion ?>%" aria-valuenow="<?= $docenteCompletudinformacion ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <?php else: ?>
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+              <i class="bi bi-check-circle me-2"></i>
+              <strong>Perfil completo:</strong> Tienes el 100% de tu información completada. Excelente trabajo!
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <?php endif; ?>
 
           <!-- Tab Navigation -->
           <div class="utp-tabs-wrapper mb-4">
@@ -188,6 +222,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../public/assets/js/shared/components-loader.js"></script>
   <script src="../../public/assets/js/shared/app.js"></script>
+  
+  <!-- Modal de Recordatorio de Actualización -->
+  <?php require_once __DIR__ . '/../compartido/modal-recordatorio-actualizacion.php'; ?>
+  
   <script>
     // Tab switching
     document.querySelectorAll('.utp-tab').forEach(function(tab) {
