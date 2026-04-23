@@ -29,7 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'resend') {
         // Reenviar código
         $result = $verificationCtrl->sendPasswordResetCode($email);
+      if ($result['success']) {
         $successMsg = 'Nuevo código enviado a ' . $email;
+      } else {
+        $errorMsg = $result['message'] ?? 'No fue posible reenviar el código.';
+      }
     } else {
         // Verificar código
         $code = '';

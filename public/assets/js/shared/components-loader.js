@@ -95,9 +95,17 @@
 
       switch (link) {
         case 'profile':
+          if ((DATA.role === 'docente' || DATA.role === 'ti') && el.closest('li')) {
+            el.closest('li').remove();
+            return;
+          }
           if (el.tagName === 'A') el.href = viewBase + 'perfil.php';
           break;
         case 'security':
+          if ((DATA.role === 'docente' || DATA.role === 'ti') && el.closest('li')) {
+            el.closest('li').remove();
+            return;
+          }
           if (el.tagName === 'A') el.href = viewBase + 'seguridad.php';
           break;
         case 'notifications':

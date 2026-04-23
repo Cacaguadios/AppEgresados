@@ -16,10 +16,12 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $egresadoModel = new Egresado();
 $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+$estadoRecordatorio = $perfil ? $egresadoModel->obtenerEstadoRecordatorio($_SESSION['usuario_id']) : null;
 
 // Calcular completitud de perfil
 $completitud = $egresadoModel->calcularCompletudinformacion($perfil);
 $porcentajeCompletitud = $completitud['porcentaje'] ?? 0;
+$camposFaltantesDetalle = $completitud['campos_faltantes_detalle'] ?? [];
 
 // Handle form submission
 $msgExito = '';
@@ -32,7 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
             'correo_personal' => trim($_POST['correo_personal'] ?? ''),
             'telefono'        => trim($_POST['telefono'] ?? ''),
             'genero'          => $_POST['genero'] ?? null,
-            'año_nacimiento'  => !empty($_POST['año_nacimiento']) ? (int)$_POST['año_nacimiento'] : null,
+          'año_nacimiento'  => !empty($_POST['anio_nacimiento'])
+            ? (int)$_POST['anio_nacimiento']
+            : (!empty($_POST['año_nacimiento']) ? (int)$_POST['año_nacimiento'] : null),
             'especialidad'    => trim($_POST['especialidad'] ?? ''),
             'generacion'      => !empty($_POST['generacion']) ? (int)$_POST['generacion'] : null,
         ];
@@ -41,6 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
         
         // Recalcular completitud del perfil
         $egresadoModel->actualizarCompletudinformacion($_SESSION['usuario_id']);
+        $egresadoModel->setProximoRecordatorio($_SESSION['usuario_id']);
+
+        $completitud = $egresadoModel->calcularCompletudinformacion($perfil);
+        $porcentajeCompletitud = $completitud['porcentaje'] ?? 0;
+        $camposFaltantesDetalle = $completitud['campos_faltantes_detalle'] ?? [];
         
         $msgExito = 'Perfil actualizado correctamente.';
     }
@@ -58,7 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_habilidades']
             $habilidades = array_filter(array_map('trim', (array)$_POST['habilidades_blandas']));
         }
         $egresadoModel->updateHabilidadesBlandas($_SESSION['usuario_id'], $habilidades);
+        $egresadoModel->setProximoRecordatorio($_SESSION['usuario_id']);
         $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+
+        $completitud = $egresadoModel->calcularCompletudinformacion($perfil);
+        $porcentajeCompletitud = $completitud['porcentaje'] ?? 0;
+        $camposFaltantesDetalle = $completitud['campos_faltantes_detalle'] ?? [];
+
         $msgExitoHabilidades = 'Habilidades blandas actualizadas correctamente.';
     }
 }
@@ -89,7 +104,8 @@ $curGenero = $perfil['genero'] ?? '';
       fullName: <?= json_encode($fullName) ?>,
       initials: <?= json_encode($initials) ?>,
       currentPage: 'perfil',
-      requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
+      requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>,
+      estadoRecordatorio: <?= $estadoRecordatorio ? json_encode($estadoRecordatorio) : 'null' ?>
     };
   </script>
 
@@ -103,11 +119,11 @@ $curGenero = $perfil['genero'] ?? '';
 
         <div class="col">
           <div class="utp-content">
-            <div class="px-0 py-3 py-md-4" style="min-height: calc(100vh - 65px);">
+            <div class="px-0 py-3 py-md-4 utp-content-wrap">
 
               <!-- Page Header -->
               <div class="mb-4">
-                <h1 style="font-size:36px; font-weight:700; line-height:40px; color:#121212;" class="mb-3">Mi Perfil</h1>
+                <h1 class="utp-h1 mb-3">Mi Perfil</h1>
                 <div class="d-flex flex-wrap align-items-center gap-3">
                   <span class="utp-verified-badge">
                     <i class="bi bi-check-lg"></i> Verificado
@@ -124,8 +140,18 @@ $curGenero = $perfil['genero'] ?? '';
                       <i class="bi <?= $porcentajeCompletitud >= 50 ? 'bi-exclamation-triangle' : 'bi-info-circle' ?> me-2"></i>
                       <strong>Completitud de perfil:</strong> Solo tienes el <strong><?= $porcentajeCompletitud ?>%</strong> de tu información completada.
                       <p class="mb-0 mt-2 small">Completa tu perfil para mejorar tu visibilidad ante los empleadores y recibir mejores oportunidades.</p>
-                      <div class="progress mt-2" style="height: 8px;">
-                        <div class="progress-bar" role="progressbar" style="width: <?= $porcentajeCompletitud ?>%" aria-valuenow="<?= $porcentajeCompletitud ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                      <?php if (!empty($camposFaltantesDetalle)): ?>
+                        <div class="mt-2">
+                          <span class="small fw-semibold">Te falta completar:</span>
+                          <ul class="small mb-0 mt-1 ps-3">
+                            <?php foreach (array_slice($camposFaltantesDetalle, 0, 6) as $campo): ?>
+                              <li><?= htmlspecialchars($campo) ?></li>
+                            <?php endforeach; ?>
+                          </ul>
+                        </div>
+                      <?php endif; ?>
+                      <div class="progress mt-2 utp-progress-thin">
+                        <div class="progress-bar utp-progress-dynamic" role="progressbar" style="--utp-progress: <?= (int)$porcentajeCompletitud ?>%;" aria-valuenow="<?= $porcentajeCompletitud ?>" aria-valuemin="0" aria-valuemax="100"></div>
                       </div>
                     </div>
                   </div>
@@ -144,8 +170,8 @@ $curGenero = $perfil['genero'] ?? '';
                 <div class="utp-tabs" role="tablist">
                   <button class="utp-tab active" data-tab="personal" role="tab" aria-selected="true">Datos personales</button>
                   <button class="utp-tab" data-tab="habilidades" role="tab" aria-selected="false">Habilidades</button>
-                  <a class="utp-tab" href="seguimiento.php" style="text-decoration:none;">Seguimiento</a>
-                  <a class="utp-tab" href="seguridad.php" style="text-decoration:none;">Seguridad</a>
+                  <a class="utp-tab utp-link-clean" href="seguimiento.php">Seguimiento</a>
+                  <a class="utp-tab utp-link-clean" href="seguridad.php">Seguridad</a>
                 </div>
               </div>
 
@@ -227,7 +253,7 @@ $curGenero = $perfil['genero'] ?? '';
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
                       <label class="utp-label">Año de nacimiento</label>
-                      <input type="text" name="año_nacimiento" class="form-control utp-input" value="<?= htmlspecialchars($perfil['año_nacimiento'] ?? '') ?>" placeholder="1999">
+                      <input type="text" name="anio_nacimiento" class="form-control utp-input" value="<?= htmlspecialchars($perfil['año_nacimiento'] ?? '') ?>" placeholder="1999">
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
@@ -288,7 +314,7 @@ $curGenero = $perfil['genero'] ?? '';
                         <?php foreach ($habilidadesBlandas as $skill): ?>
                           <span class="utp-skill-chip-editable" data-skill="<?= htmlspecialchars($skill) ?>">
                             <?= htmlspecialchars($skill) ?>
-                            <i class="bi bi-x ms-1" style="cursor:pointer;"></i>
+                            <i class="bi bi-x ms-1"></i>
                           </span>
                         <?php endforeach; ?>
                       <?php endif; ?>
@@ -384,7 +410,7 @@ $curGenero = $perfil['genero'] ?? '';
       const chip = document.createElement('span');
       chip.className = 'utp-skill-chip-editable';
       chip.dataset.skill = skill;
-      chip.innerHTML = `${skill}<i class="bi bi-x ms-1" style="cursor:pointer;"></i>`;
+      chip.innerHTML = `${skill}<i class="bi bi-x ms-1"></i>`;
       
       chip.querySelector('i').addEventListener('click', function() {
         chip.remove();
@@ -416,6 +442,12 @@ $curGenero = $perfil['genero'] ?? '';
     });
 
     updateHiddenInput();
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.UTP_DATA && window.UTP_DATA.estadoRecordatorio) {
+        inicializarRecordatorio(window.UTP_DATA.estadoRecordatorio);
+      }
+    });
   </script>
 </body>
 </html>

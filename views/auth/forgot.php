@@ -29,13 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errorMsg = 'El formato del correo no es válido.';
         } else {
             $result = $verificationCtrl->sendPasswordResetCode($email);
-
+          if ($result['success']) {
             // Guardar email en sesión para pasos siguientes
             $_SESSION['reset_email'] = $email;
 
             // Redirigir a verificación de código
             header('Location: verify-code.php');
             exit;
+          }
+
+          $errorMsg = $result['message'] ?? 'No fue posible enviar el código. Intenta de nuevo.';
         }
     }
 }
@@ -77,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <h1 class="auth-wizard-title mb-2">Recuperar contraseña</h1>
           <p class="auth-wizard-subtitle mb-0">
-            Ingresa tu correo personal y te enviaremos un código de verificación
+            Ingresa el correo de tu cuenta y te enviaremos un código de verificación
           </p>
         </header>
 
@@ -96,16 +99,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <div class="mb-4">
             <label class="form-label" style="font-size:14px; font-weight:500;">
-              Correo personal <span class="text-danger">*</span>
+              Correo registrado <span class="text-danger">*</span>
             </label>
             <input class="form-control auth-input"
                    type="email"
                    name="email"
-                   placeholder="tu.correo@gmail.com"
+                   placeholder="tu.correo@dominio.com"
                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                    required />
             <div class="auth-help mt-2">
-              Ingresa el correo personal asociado a tu cuenta
+              Puede ser tu correo personal o institucional
             </div>
           </div>
 

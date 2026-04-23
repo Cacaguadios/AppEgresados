@@ -6,6 +6,7 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || $_SESSION['usua
 }
 
 require_once __DIR__ . '/../../app/models/Oferta.php';
+require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
 $apellidos = $_SESSION['usuario_apellidos'] ?? '';
@@ -51,6 +52,7 @@ $msgCreada = isset($_GET['creada']);
       currentPage: 'mis-ofertas',
       requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
     };
+    window.UTP_CSRF_TOKEN = <?= json_encode(Security::generateCsrfToken()) ?>;
   </script>
 
   <div id="utp-notice-container"></div>
@@ -83,11 +85,11 @@ $msgCreada = isset($_GET['creada']);
 
           <?php if (empty($ofertas)): ?>
             <div class="utp-card text-center py-5">
-              <div class="utp-miniicon green mx-auto mb-3" style="width:64px;height:64px;border-radius:50%;">
-                <i class="bi bi-briefcase" style="font-size:28px;"></i>
+              <div class="utp-miniicon utp-empty-icon green mx-auto mb-3">
+                <i class="bi bi-briefcase"></i>
               </div>
-              <h3 style="font-size:20px; font-weight:600; color:#121212;">Aún no tienes ofertas publicadas</h3>
-              <p style="color:#757575; font-size:16px; margin-top:8px;">Publica tu primera oferta para compartir una oportunidad con otros egresados.</p>
+              <h3 class="utp-empty-title">Aún no tienes ofertas publicadas</h3>
+              <p class="utp-empty-text">Publica tu primera oferta para compartir una oportunidad con otros egresados.</p>
               <a href="publicar-oferta.php" class="btn btn-utp-green mt-2">
                 <i class="bi bi-plus-lg me-2"></i> Crear oferta
               </a>
@@ -109,10 +111,10 @@ $msgCreada = isset($_GET['creada']);
               <article class="utp-card">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
                   <div>
-                    <h3 style="font-size:18px; font-weight:600; color:#121212; margin-bottom:4px;">
+                    <h3 class="utp-app-title mb-1">
                       <?= htmlspecialchars($o['titulo']) ?>
                     </h3>
-                    <p style="color:#757575; font-size:14px; margin-bottom:0;">
+                    <p class="utp-app-company mb-0">
                       <?= htmlspecialchars($o['empresa'] ?? '') ?>
                       <?php if ($o['ubicacion']): ?> · <?= htmlspecialchars($o['ubicacion']) ?><?php endif; ?>
                       <?php if ($o['modalidad']): ?> · <?= ucfirst(htmlspecialchars($o['modalidad'])) ?><?php endif; ?>
@@ -146,16 +148,16 @@ $msgCreada = isset($_GET['creada']);
 
                 <div class="d-flex flex-wrap align-items-center gap-3">
                   <?php if ($salarioTxt): ?>
-                    <span style="font-size:13px; color:#757575;"><i class="bi bi-cash-stack me-1"></i><?= $salarioTxt ?></span>
+                    <span class="utp-app-meta"><i class="bi bi-cash-stack me-1"></i><?= $salarioTxt ?></span>
                   <?php endif; ?>
-                  <span style="font-size:13px; color:#757575;"><i class="bi bi-people me-1"></i><?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?></span>
-                  <span style="font-size:13px; color:#757575;"><i class="bi bi-calendar3 me-1"></i>Creada: <?= $fechaCreacion ?></span>
-                  <span style="font-size:13px; color:#757575;"><i class="bi bi-calendar-x me-1"></i>Expira: <?= $fechaExp ?></span>
-                  <span style="font-size:13px; color:#757575;"><i class="bi bi-door-open me-1"></i><?= (int)$o['vacantes'] ?> vacante<?= $o['vacantes'] != 1 ? 's' : '' ?></span>
+                  <span class="utp-app-meta"><i class="bi bi-people me-1"></i><?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?></span>
+                  <span class="utp-app-meta"><i class="bi bi-calendar3 me-1"></i>Creada: <?= $fechaCreacion ?></span>
+                  <span class="utp-app-meta"><i class="bi bi-calendar-x me-1"></i>Expira: <?= $fechaExp ?></span>
+                  <span class="utp-app-meta"><i class="bi bi-door-open me-1"></i><?= (int)$o['vacantes'] ?> vacante<?= $o['vacantes'] != 1 ? 's' : '' ?></span>
                 </div>
 
                 <?php if ($o['estado'] === 'rechazada' && !empty($o['razon_rechazo'])): ?>
-                <div class="alert alert-warning mt-3 mb-0 py-2 px-3" style="font-size:13px;">
+                <div class="alert alert-warning mt-3 mb-0 py-2 px-3 utp-warning-compact">
                   <i class="bi bi-exclamation-triangle me-1"></i>
                   <strong>Razón de rechazo:</strong> <?= htmlspecialchars($o['razon_rechazo']) ?>
                 </div>
@@ -164,27 +166,27 @@ $msgCreada = isset($_GET['creada']);
                 <!-- Acciones -->
                 <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
                   <?php if ($o['estado'] === 'aprobada' && !$expirada && $o['activo'] == 1): ?>
-                    <a href="oferta-detalle.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                    <a href="oferta-detalle.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary utp-btn-compact">
                       <i class="bi bi-eye me-1"></i> Ver
                     </a>
-                    <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
+                    <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary utp-btn-compact">
                       <i class="bi bi-pencil me-1"></i> Editar
                     </a>
-                    <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius:8px;" onclick="confirmarBaja(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
+                    <button type="button" class="btn btn-sm btn-outline-danger utp-btn-compact" onclick="confirmarBaja(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
                       <i class="bi bi-x-circle me-1"></i> Dar de baja
                     </button>
-                    <a href="postulantes.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto" style="border-radius:8px;">
+                    <a href="postulantes.php?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto utp-btn-compact">
                       <i class="bi bi-people me-1"></i> <?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?>
                     </a>
                   <?php elseif ($o['activo'] == 0): ?>
-                    <span class="badge bg-secondary" style="align-self:center;">
+                    <span class="badge bg-secondary utp-badge-center">
                       <i class="bi bi-archive me-1"></i> Dada de baja
                     </span>
-                    <button type="button" class="btn btn-sm btn-outline-success ms-auto" style="border-radius:8px;" onclick="confirmarActivacion(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
+                    <button type="button" class="btn btn-sm btn-outline-success ms-auto utp-btn-compact" onclick="confirmarActivacion(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
                       <i class="bi bi-arrow-repeat me-1"></i> Reactivar
                     </button>
                   <?php else: ?>
-                    <span class="badge bg-info" style="align-self:center;">
+                    <span class="badge bg-info utp-badge-center">
                       <i class="bi bi-clock-history me-1"></i> En revisión
                     </span>
                   <?php endif; ?>
@@ -216,8 +218,14 @@ $msgCreada = isset($_GET['creada']);
         
         fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({oferta_id: ofertaId})
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
+          },
+          body: JSON.stringify({
+            oferta_id: ofertaId,
+            csrf_token: window.UTP_CSRF_TOKEN || ''
+          })
         })
         .then(r => r.json())
         .then(data => {
@@ -235,8 +243,14 @@ $msgCreada = isset($_GET['creada']);
       if (confirm('Confirmas que deseas reactivar la oferta: ' + titulo + '?')) {
         fetch('../../public/api/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({oferta_id: ofertaId})
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
+          },
+          body: JSON.stringify({
+            oferta_id: ofertaId,
+            csrf_token: window.UTP_CSRF_TOKEN || ''
+          })
         })
         .then(r => r.json())
         .then(data => {

@@ -28,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_seguimiento']
     } else {
         // Collect benefit chips
         $prestacionesPost = json_decode($_POST['prestaciones_json'] ?? '[]', true) ?: [];
+    $habilidadesPost = json_decode($_POST['habilidades_json'] ?? '[]', true) ?: [];
+    $habilidadesPost = array_values(array_unique(array_filter(array_map('trim', $habilidadesPost))));
 
         $data = [
             'trabaja_actualmente'  => !empty($_POST['trabaja_actualmente']) ? 1 : 0,
@@ -41,12 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_seguimiento']
             'fecha_inicio_empleo'  => !empty($_POST['fecha_inicio_empleo']) ? $_POST['fecha_inicio_empleo'] : null,
             'rango_salarial'       => $_POST['rango_salarial'] ?? '',
             'prestaciones'         => json_encode($prestacionesPost),
+            'habilidades'          => json_encode($habilidadesPost),
             'anos_experiencia_ti'  => $_POST['anos_experiencia_ti'] ?? '',
             'descripcion_experiencia' => trim($_POST['descripcion_experiencia'] ?? ''),
+            'campo_adicional_1'    => trim($_POST['campo_adicional_1'] ?? ''),
+            'campo_adicional_2'    => trim($_POST['campo_adicional_2'] ?? ''),
         ];
         $egresadoModel->updateSeguimiento($_SESSION['usuario_id'], $data);
         $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
         $prestacionesArr = json_decode($perfil['prestaciones'] ?? '[]', true) ?: [];
+          $habilidadesArr  = json_decode($perfil['habilidades'] ?? '[]', true) ?: [];
         
         // Actualizar próximo recordatorio de información (3 meses)
         $egresadoModel->setProximoRecordatorio($_SESSION['usuario_id']);
@@ -94,7 +100,7 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
 
         <div class="col">
           <div class="utp-content">
-            <div class="px-0 py-3 py-md-4" style="min-height: calc(100vh - 65px);">
+            <div class="px-0 py-3 py-md-4 utp-content-wrap">
 
               <!-- Privacy Notice -->
               <div class="utp-privacy-notice mb-4">
@@ -129,6 +135,7 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
               <?= Security::csrfField() ?>
               <input type="hidden" name="guardar_seguimiento" value="1">
               <input type="hidden" name="prestaciones_json" id="prestacionesJson" value="<?= htmlspecialchars(json_encode($prestacionesArr)) ?>">
+              <input type="hidden" name="habilidades_json" id="habilidadesJson" value='<?= htmlspecialchars(json_encode($habilidadesArr), ENT_QUOTES) ?>'>
 
               <!-- Section A: Situación Laboral -->
               <div class="utp-followup-card mb-4">
@@ -276,16 +283,16 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
 
                 <div class="utp-form-group">
                   <label class="utp-label mb-2">Tecnologías principales que dominas</label>
-                  <div class="utp-tech-display">
-                    <?php if (!empty($habilidadesArr)): ?>
-                      <?php foreach ($habilidadesArr as $skill): ?>
-                        <span class="utp-tech-chip"><?= htmlspecialchars($skill) ?></span>
-                      <?php endforeach; ?>
-                    <?php else: ?>
-                      <span class="utp-tech-chip">—</span>
-                    <?php endif; ?>
+                  <div class="d-flex gap-2 mb-2">
+                    <input type="text" id="skillInputSeguimiento" class="form-control utp-input" placeholder="Escribe una tecnología y presiona Enter (ej: React)">
+                    <button type="button" class="btn btn-utp-green" id="addSkillBtnSeguimiento">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
                   </div>
-                  <span class="utp-field-hint mt-2 d-block">Puedes editar tus habilidades en la sección CV / Habilidades</span>
+                  <div class="utp-tech-display" id="skillsContainerSeguimiento">
+                    <!-- Se llena dinámicamente -->
+                  </div>
+                  <span class="utp-field-hint mt-2 d-block">Agrega tus tecnologías para mejorar la coincidencia con ofertas.</span>
                 </div>
               </div>
 
@@ -295,23 +302,21 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
                   <i class="bi bi-info-circle text-primary fs-5"></i>
                   <div>
                     <h2 class="utp-section-title mb-1">E) Campos Adicionales</h2>
-                    <p class="utp-field-hint mb-0">Este apartado se actualizará cuando dirección confirme los campos oficiales.</p>
+                    <p class="utp-field-hint mb-0">Puedes capturar información complementaria relevante para tu seguimiento.</p>
                   </div>
                 </div>
 
-                <div class="utp-disabled-section">
-                  <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                      <div class="utp-form-group">
-                        <label class="utp-label">Campo Adicional 1 (Por definir)</label>
-                        <input type="text" class="utp-input-disabled" value="Pendiente de especificación" disabled>
-                      </div>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <div class="utp-form-group">
+                      <label class="utp-label">Campo Adicional 1</label>
+                      <input type="text" name="campo_adicional_1" class="form-control utp-input" placeholder="Ejemplo: Certificación reciente" value="<?= htmlspecialchars($perfil['campo_adicional_1'] ?? '') ?>">
                     </div>
-                    <div class="col-12 col-md-6">
-                      <div class="utp-form-group">
-                        <label class="utp-label">Campo Adicional 2 (Por definir)</label>
-                        <input type="text" class="utp-input-disabled" value="Pendiente de especificación" disabled>
-                      </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="utp-form-group">
+                      <label class="utp-label">Campo Adicional 2</label>
+                      <input type="text" name="campo_adicional_2" class="form-control utp-input" placeholder="Ejemplo: Disponibilidad de cambio" value="<?= htmlspecialchars($perfil['campo_adicional_2'] ?? '') ?>">
                     </div>
                   </div>
                 </div>
@@ -349,6 +354,11 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
     // Benefit chips ↔ hidden JSON sync
     const benefitChips = document.querySelectorAll('.utp-benefit-chip');
     const prestacionesInput = document.getElementById('prestacionesJson');
+    const habilidadesInput = document.getElementById('habilidadesJson');
+    const skillInput = document.getElementById('skillInputSeguimiento');
+    const addSkillBtn = document.getElementById('addSkillBtnSeguimiento');
+    const skillsContainer = document.getElementById('skillsContainerSeguimiento');
+    const skillsData = <?= json_encode($habilidadesArr) ?> || [];
 
     function syncBenefits() {
       const selected = [];
@@ -363,8 +373,76 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
       });
     });
 
+    function syncSkills() {
+      habilidadesInput.value = JSON.stringify(skillsData);
+    }
+
+    function renderSkills() {
+      skillsContainer.innerHTML = '';
+
+      if (!skillsData.length) {
+        const empty = document.createElement('span');
+        empty.className = 'utp-tech-chip';
+        empty.textContent = '—';
+        skillsContainer.appendChild(empty);
+        syncSkills();
+        return;
+      }
+
+      skillsData.forEach(function(skill, index) {
+        const chip = document.createElement('span');
+        chip.className = 'utp-tech-chip d-inline-flex align-items-center gap-1';
+        chip.innerHTML =
+          '<span>' + skill.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
+          '<i class="bi bi-x utp-clickable" data-index="' + index + '"></i>';
+        skillsContainer.appendChild(chip);
+      });
+
+      syncSkills();
+    }
+
+    function addSkill() {
+      const value = (skillInput.value || '').trim();
+      if (!value) return;
+
+      const exists = skillsData.some(function(s) {
+        return String(s).toLowerCase() === value.toLowerCase();
+      });
+      if (exists) {
+        skillInput.value = '';
+        return;
+      }
+
+      skillsData.push(value);
+      skillInput.value = '';
+      renderSkills();
+    }
+
+    addSkillBtn.addEventListener('click', addSkill);
+    skillInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addSkill();
+      }
+    });
+
+    skillsContainer.addEventListener('click', function(e) {
+      const icon = e.target.closest('i[data-index]');
+      if (!icon) return;
+      const idx = parseInt(icon.getAttribute('data-index'), 10);
+      if (!Number.isNaN(idx)) {
+        skillsData.splice(idx, 1);
+        renderSkills();
+      }
+    });
+
+    renderSkills();
+
     // Sync on form submit as safety net
-    document.getElementById('seguimientoForm').addEventListener('submit', syncBenefits);
+    document.getElementById('seguimientoForm').addEventListener('submit', function() {
+      syncBenefits();
+      syncSkills();
+    });
   </script>
 </body>
 </html>

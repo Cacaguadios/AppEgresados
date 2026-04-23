@@ -172,9 +172,9 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
                         <div id="strengthContainer" class="mt-2 d-none">
                           <div class="d-flex align-items-center gap-2 mb-1">
                             <div class="utp-strength-bar flex-grow-1">
-                              <div class="utp-strength-fill" id="strengthBar" style="width:0%;"></div>
+                              <div class="utp-strength-fill utp-security-strength-init" id="strengthBar"></div>
                             </div>
-                            <span class="utp-strength-text" id="strengthLabel" style="min-width:70px;"></span>
+                            <span class="utp-strength-text utp-security-strength-label" id="strengthLabel"></span>
                           </div>
                           <ul class="list-unstyled small text-muted mt-1 mb-0" id="reqList">
                             <li id="req-length"><i class="bi bi-x-circle text-danger me-1"></i>Mínimo 8 caracteres</li>

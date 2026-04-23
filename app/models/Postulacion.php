@@ -12,6 +12,7 @@ class Postulacion extends Database {
      */
     public function getByEgresadoId($egresadoId) {
         $sql = "SELECT p.*, 
+                       p.id_oferta AS oferta_id,
                        o.titulo, o.empresa, o.ubicacion, o.modalidad, o.habilidades AS oferta_habilidades,
                        o.estado_vacante, o.vacantes, o.fecha_expiracion,
                        o.salario_min, o.salario_max
@@ -45,6 +46,21 @@ class Postulacion extends Database {
     }
 
     /**
+     * Estadísticas globales para reportes admin.
+     */
+    public function getAdminStats() {
+        $sql = "SELECT
+                    SUM(estado = 'pendiente') AS pendientes,
+                    SUM(estado = 'preseleccionado') AS preseleccionadas,
+                    SUM(estado = 'contactado') AS contactadas,
+                    SUM(estado = 'rechazado') AS rechazadas,
+                    SUM(estado = 'retirada') AS retiradas,
+                    COUNT(*) AS total
+                FROM postulaciones";
+        return $this->fetchOne($sql);
+    }
+
+    /**
      * Verificar si un egresado ya postuló a una oferta
      */
     public function hasApplied($egresadoId, $ofertaId) {
@@ -74,17 +90,41 @@ class Postulacion extends Database {
     }
 
     /**
+     * Actualizar mensaje de postulación
+     */
+    public function updateMensaje($id, $mensaje) {
+        $this->update('postulaciones', ['mensaje' => $mensaje], ['id' => $id]);
+    }
+
+    /**
      * Obtener postulación por ID
      */
     public function getById($id) {
         $sql = "SELECT p.*, 
                        o.titulo AS oferta_titulo, o.id_usuario_creador,
-                       e.id_usuario AS egresado_usuario_id
+                       e.id_usuario AS egresado_usuario_id,
+                       u.email AS egresado_email,
+                       CONCAT(u.nombre, ' ', IFNULL(u.apellidos,'')) AS egresado_nombre,
+                       uc.email AS creador_oferta_email
                 FROM postulaciones p
                 JOIN ofertas o ON p.id_oferta = o.id
                 JOIN egresados e ON p.id_egresado = e.id
+                JOIN usuarios u ON e.id_usuario = u.id
+                JOIN usuarios uc ON o.id_usuario_creador = uc.id
                 WHERE p.id = ?";
         return $this->fetchOne($sql, [$id]);
+    }
+
+    /**
+     * Guardar feedback del ofertador sobre el resultado del contacto
+     */
+    public function guardarFeedback($id, $resultado, $quedo_en_trabajo, $comentario = '') {
+        $this->update('postulaciones', [
+            'feedback_resultado'   => $resultado,
+            'feedback_trabajo'     => $quedo_en_trabajo,
+            'feedback_comentario'  => $comentario,
+            'fecha_feedback'       => date('Y-m-d H:i:s'),
+        ], ['id' => $id]);
     }
 
     /**
@@ -98,6 +138,80 @@ class Postulacion extends Database {
             ],
             ['id' => $id]
         );
+    }
+
+    /**
+     * Restaurar postulación retirada
+     */
+    public function restaurar($id) {
+        $this->update('postulaciones',
+            [
+                'retirada' => 0,
+                'fecha_retiro' => null
+            ],
+            ['id' => $id]
+        );
+    }
+
+    /**
+     * Eliminar postulación de forma permanente
+     */
+    public function eliminar($id) {
+        $this->delete('postulacion_habilidades_blandas', ['id_postulacion' => $id]);
+        $this->delete('postulaciones', ['id' => $id]);
+    }
+
+    /**
+     * Inicializar checklist de habilidades blandas para una postulación
+     */
+    public function inicializarChecklistHabilidadesBlandas($postulacionId, array $habilidades) {
+        $habilidades = array_values(array_filter(array_map('trim', $habilidades)));
+        $habilidades = array_values(array_unique($habilidades));
+
+        if (empty($habilidades)) {
+            return;
+        }
+
+        $existentes = $this->fetchAll(
+            "SELECT habilidad FROM postulacion_habilidades_blandas WHERE id_postulacion = ?",
+            [$postulacionId]
+        );
+        $setExistentes = array_map(fn($r) => mb_strtolower((string)$r['habilidad']), $existentes);
+
+        foreach ($habilidades as $habilidad) {
+            if (in_array(mb_strtolower($habilidad), $setExistentes, true)) {
+                continue;
+            }
+
+            $this->insert('postulacion_habilidades_blandas', [
+                'id_postulacion' => $postulacionId,
+                'habilidad' => $habilidad,
+                'cumple' => null,
+                'fecha_evaluacion' => null,
+                'evaluado_por' => null,
+            ]);
+        }
+    }
+
+    /**
+     * Obtener evaluación de habilidades blandas de una postulación
+     */
+    public function getEvaluacionHabilidadesBlandas($postulacionId) {
+        $sql = "SELECT *
+                FROM postulacion_habilidades_blandas
+                WHERE id_postulacion = ?
+                ORDER BY habilidad ASC";
+        return $this->fetchAll($sql, [$postulacionId]);
+    }
+
+    /**
+     * Guardar evaluación cumple/no cumple de una habilidad blanda
+     */
+    public function evaluarHabilidadBlanda($postulacionId, $habilidad, $cumple, $evaluadoPor) {
+        $sql = "UPDATE postulacion_habilidades_blandas
+                SET cumple = ?, evaluado_por = ?, fecha_evaluacion = NOW()
+                WHERE id_postulacion = ? AND habilidad = ?";
+        $this->query($sql, [$cumple, $evaluadoPor, $postulacionId, $habilidad]);
     }
 
     /**

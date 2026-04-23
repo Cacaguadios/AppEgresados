@@ -158,6 +158,16 @@ $tasaVerif         = $totalUsuarios > 0 ? round(($totalVerificados / $totalUsuar
                 </a>
               </div>
               <div class="col-12 col-lg-4">
+                <a class="utp-actioncard" href="reportes.php">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="utp-miniicon yellow"><i class="bi bi-bar-chart-line"></i></div>
+                    <i class="bi bi-chevron-right text-muted"></i>
+                  </div>
+                  <div class="utp-actiontitle mt-3">Reportes y exportes</div>
+                  <div class="utp-actiondesc">Genera gráficas, reportes y descargas en Excel o CSV</div>
+                </a>
+              </div>
+              <div class="col-12 col-lg-4">
                 <a class="utp-actioncard" href="users.php">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon blue"><i class="bi bi-people-fill"></i></div>

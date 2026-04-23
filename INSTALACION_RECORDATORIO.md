@@ -26,7 +26,7 @@ Mostrar una ventana emergente cada 3 meses pidiendo al egresado actualizar su in
 
 Opción A) Vía PHP CLI:
 ```bash
-cd c:\xampp\htdocs\AppEgresados
+cd c:\laragon\www\AppEgresados
 php database/migrations/run_010.php
 ```
 

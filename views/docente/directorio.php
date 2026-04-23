@@ -6,6 +6,9 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SES
 }
 
 require_once __DIR__ . '/../../app/models/Egresado.php';
+require_once __DIR__ . '/../../app/models/Oferta.php';
+require_once __DIR__ . '/../../app/models/Notificacion.php';
+require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
 $apellidos = $_SESSION['usuario_apellidos'] ?? '';
@@ -16,6 +19,56 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
 // Load all egresados
 $egresadoModel = new Egresado();
 $egresados = $egresadoModel->getAllWithUser();
+
+// Load active offers created by the current docente/TI
+$ofertaModel = new Oferta();
+$misOfertas = array_values(array_filter($ofertaModel->getByUserId($_SESSION['usuario_id']), function ($oferta) {
+  $estadoOk = ($oferta['estado'] ?? '') === 'aprobada';
+  $activoOk = (int)($oferta['activo'] ?? 1) === 1;
+  $vacantesOk = (int)($oferta['vacantes'] ?? 0) > 0;
+  $expiracionOk = empty($oferta['fecha_expiracion']) || strtotime((string)$oferta['fecha_expiracion']) >= strtotime(date('Y-m-d'));
+
+  return $estadoOk && $activoOk && $vacantesOk && $expiracionOk;
+}));
+
+$notifModel = new Notificacion();
+$msgExito = isset($_GET['invitacion']) ? 'Invitación enviada correctamente.' : '';
+$msgError = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_invitacion'])) {
+  if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+    $msgError = 'Token de seguridad inválido. Recarga la página.';
+  } else {
+    $egresadoUsuarioId = (int)($_POST['egresado_usuario_id'] ?? 0);
+    $ofertaId = (int)($_POST['oferta_id'] ?? 0);
+
+    if (!$egresadoUsuarioId || !$ofertaId) {
+      $msgError = 'Selecciona un egresado y una vacante.';
+    } else {
+      $egresado = $egresadoModel->getByUsuarioId($egresadoUsuarioId);
+      $oferta = $ofertaModel->getById($ofertaId);
+
+      if (!$egresado) {
+        $msgError = 'El egresado no existe.';
+      } elseif (!$oferta || (int)$oferta['id_usuario_creador'] !== (int)$_SESSION['usuario_id']) {
+        $msgError = 'No puedes invitar a esa vacante.';
+      } elseif (($oferta['estado'] ?? '') !== 'aprobada' || (int)($oferta['activo'] ?? 1) !== 1 || (int)($oferta['vacantes'] ?? 0) <= 0) {
+        $msgError = 'La vacante ya no está disponible para invitaciones.';
+      } else {
+        $notifModel->onOfertaInvitada(
+          $oferta['titulo'],
+          (int)$egresadoUsuarioId,
+          trim(($egresado['nombre_usuario'] ?? '') . ' ' . ($egresado['apellidos'] ?? '')),
+          $egresado['email'] ?? null,
+          '../../views/egresado/oferta-detalle.php?id=' . (int)$oferta['id']
+        );
+
+        header('Location: directorio.php?invitacion=1');
+        exit;
+      }
+    }
+  }
+}
 
 // Collect unique generations and specialties for filters
 $generaciones = [];
@@ -102,6 +155,20 @@ ksort($especialidades);
 
           <p class="text-muted small mb-3" id="counterText"><?= count($egresados) ?> egresado<?= count($egresados) !== 1 ? 's' : '' ?> encontrado<?= count($egresados) !== 1 ? 's' : '' ?></p>
 
+          <?php if ($msgExito): ?>
+            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+              <i class="bi bi-check-circle me-2"></i><?= htmlspecialchars($msgExito) ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <?php endif; ?>
+
+          <?php if ($msgError): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+              <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($msgError) ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <?php endif; ?>
+
           <?php if (empty($egresados)): ?>
             <div class="utp-card text-center py-5">
               <h3 style="font-size:20px; font-weight:600; color:#121212;">No hay egresados registrados</h3>
@@ -154,7 +221,10 @@ ksort($especialidades);
                     <i class="bi bi-file-earmark-person"></i> Sin CV
                   </button>
                 <?php endif; ?>
-                <button class="btn btn-utp-red flex-fill btn-invitar" type="button" data-nombre="<?= htmlspecialchars($eName) ?>">
+                <button class="btn btn-utp-red flex-fill btn-invitar" type="button"
+                        data-nombre="<?= htmlspecialchars($eName) ?>"
+                        data-egresado-id="<?= (int)$e['id_usuario'] ?>"
+                        data-egresado-email="<?= htmlspecialchars($e['email'] ?? '') ?>">
                   <i class="bi bi-send"></i> Invitar a postularse
                 </button>
               </div>
@@ -168,12 +238,45 @@ ksort($especialidades);
     </div>
   </div>
 
-  <!-- Toast -->
-  <div class="utp-toast" id="toastInvitacion" style="display:none;">
-    <i class="bi bi-check-circle-fill utp-toast-icon"></i>
-    <div class="utp-toast-content">
-      <div class="utp-toast-title">Invitación enviada</div>
-      <div class="utp-toast-message" id="toastMessage"></div>
+  <!-- Modal de invitación -->
+  <div class="modal fade" id="modalInvitacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:18px;">
+        <div class="modal-header">
+          <h5 class="modal-title">Invitar a postularse</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form method="POST">
+          <?= Security::csrfField() ?>
+          <input type="hidden" name="enviar_invitacion" value="1">
+          <input type="hidden" name="egresado_usuario_id" id="invEgresadoId" value="">
+          <div class="modal-body">
+            <p class="text-muted mb-3">Se enviará una notificación en el sistema y un correo simulado al egresado.</p>
+            <div class="mb-3">
+              <label class="form-label">Egresado</label>
+              <input type="text" class="form-control" id="invEgresadoDisplay" disabled>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Vacante</label>
+              <select class="form-select" name="oferta_id" id="invOfertaId" required>
+                <option value="">Selecciona una vacante</option>
+                <?php foreach ($misOfertas as $oferta): ?>
+                  <option value="<?= (int)$oferta['id'] ?>"><?= htmlspecialchars($oferta['titulo']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <?php if (empty($misOfertas)): ?>
+              <div class="alert alert-warning mb-0">
+                No tienes vacantes activas disponibles para invitar egresados.
+              </div>
+            <?php endif; ?>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-dark" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-utp-red" <?= empty($misOfertas) ? 'disabled' : '' ?>>Enviar invitación</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -185,11 +288,12 @@ ksort($especialidades);
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.btn-invitar');
       if (btn) {
-        var nombre = btn.dataset.nombre;
-        document.getElementById('toastMessage').textContent = 'Se ha enviado una notificación a ' + nombre;
-        var toast = document.getElementById('toastInvitacion');
-        toast.style.display = 'flex';
-        setTimeout(function() { toast.style.display = 'none'; }, 3000);
+        document.getElementById('invEgresadoId').value = btn.dataset.egresadoId || '';
+        document.getElementById('invEgresadoDisplay').value = btn.dataset.nombre || '';
+        document.getElementById('invOfertaId').focus();
+
+        var modal = new bootstrap.Modal(document.getElementById('modalInvitacion'));
+        modal.show();
       }
     });
 

@@ -3,7 +3,9 @@
  * Modal recordatorio de actualización de información
  * Se muestra cada 3 meses recordando al egresado actualizar su información laboral
  */
+require_once __DIR__ . '/../../app/helpers/Security.php';
 ?>
+<script>window.UTP_CSRF_TOKEN = window.UTP_CSRF_TOKEN || <?= json_encode(Security::generateCsrfToken()) ?>;</script>
 
 <!-- Modal Recordatorio de Actualización -->
 <div class="modal fade" id="modalRecordatorioActualizacion" tabindex="-1" aria-labelledby="modalRecordatorioLabel" aria-hidden="true">
@@ -189,12 +191,13 @@ function mostrarCamposFaltantes(camposFaltantes) {
  * Marcar el recordatorio como visto
  */
 function marcarRecordatorioVisto() {
-  fetch('../api/marcar-recordatorio.php', {
+  fetch('../../public/api/marcar-recordatorio.php', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
     },
-    body: JSON.stringify({ accion: 'marcar_visto' })
+    body: JSON.stringify({ accion: 'marcar_visto', csrf_token: window.UTP_CSRF_TOKEN || '' })
   })
   .then(response => response.json())
   .then(data => {

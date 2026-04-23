@@ -32,7 +32,7 @@ class RegisterController {
     }
 
     /* ================================================================
-     *  PASO 2 – Validar datos de verificación (solo egresado por ahora)
+     *  PASO 2 – Validar datos de verificación por rol
      * ================================================================ */
     public function validateVerification($role, $data) {
 
@@ -53,23 +53,12 @@ class RegisterController {
         }
     }
 
-    /* ── Egresado: matrícula, CURP y correo personal ── */
+    /* ── Egresado: correo personal, CURP y teléfono ── */
     private function validateEgresado($data) {
-        $matricula = strtoupper(trim($data['matricula'] ?? ''));
         $curp = strtoupper(trim($data['curp'] ?? ''));
+        $telefono = preg_replace('/\D+/', '', (string)($data['telefono'] ?? ''));
         $email = strtolower(trim($data['email'] ?? ''));
         $errors = [];
-
-        // Matrícula: 6-10 dígitos y debe comenzar con 23 o 24
-        if (empty($matricula)) {
-            $errors[] = 'La matrícula es requerida.';
-        } elseif (!preg_match('/^\d{6,10}$/', $matricula)) {
-            $errors[] = 'La matrícula debe tener 6-10 dígitos.';
-        } elseif (!preg_match('/^(23|24)/', $matricula)) {
-            $errors[] = 'La matrícula debe comenzar con 23 o 24.';
-        } elseif ($this->usuarioModel->matriculaExists($matricula)) {
-            $errors[] = 'Esta matrícula ya está registrada.';
-        }
 
         // CURP: 18 caracteres
         if (empty($curp)) {
@@ -78,6 +67,13 @@ class RegisterController {
             $errors[] = 'El CURP debe tener 18 caracteres válidos.';
         } elseif ($this->usuarioModel->curpExists($curp)) {
             $errors[] = 'Este CURP ya está registrado.';
+        }
+
+        // Teléfono: 10 dígitos
+        if (empty($telefono)) {
+            $errors[] = 'El teléfono de contacto es requerido.';
+        } elseif (!preg_match('/^\d{10}$/', $telefono)) {
+            $errors[] = 'El teléfono debe tener exactamente 10 dígitos.';
         }
 
         // Email
@@ -95,22 +91,32 @@ class RegisterController {
 
         return [
             'success' => true,
-            'data'    => ['email' => $email, 'matricula' => $matricula, 'curp' => $curp]
+            'data'    => ['email' => $email, 'curp' => $curp, 'telefono' => $telefono]
         ];
     }
 
-    /* ── Docente: ID 6-8 alfanuméricos ── */
+    /* ── Docente: correo institucional ── */
     private function validateDocente($data) {
-        $id = strtoupper(trim($data['id_docente'] ?? ''));
+        $email = strtolower(trim($data['email_docente'] ?? ''));
+        $errors = [];
 
-        if (empty($id)) {
-            return ['success' => false, 'message' => 'El ID de docente es requerido.'];
-        }
-        if (!preg_match('/^[A-Z0-9]{6,8}$/', $id)) {
-            return ['success' => false, 'message' => 'El ID de docente debe tener 6-8 caracteres alfanuméricos.'];
+        if (empty($email)) {
+            $errors[] = 'El correo institucional de docente es requerido.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'El formato del correo institucional no es válido.';
+        } elseif (!str_ends_with($email, '@utpuebla.edu.mx') && !str_ends_with($email, '@utp.edu.mx')) {
+            $errors[] = 'El correo docente debe terminar en @utpuebla.edu.mx o @utp.edu.mx.';
         }
 
-        return ['success' => true, 'data' => ['id_docente' => $id]];
+        if (!empty($email) && $this->usuarioModel->emailExists($email)) {
+            $errors[] = 'Este correo ya está registrado en el sistema.';
+        }
+
+        if (!empty($errors)) {
+            return ['success' => false, 'message' => implode(' ', $errors)];
+        }
+
+        return ['success' => true, 'data' => ['email_institucional' => $email]];
     }
 
     /* ── TI: 5-6 dígitos ── */
@@ -147,11 +153,13 @@ class RegisterController {
         $usuario  = $this->generateUsername($nombre, $apellidos);
         $password = $this->generatePassword();
         
-        // Para egresados, usar el email personal proporcionado en Step 2
-        if ($role === 'egresado' && !empty($verificacionData['email'])) {
+        // Priorizar email validado en Step 2 (egresado/docente)
+        if (!empty($verificacionData['email'])) {
             $email = strtolower(trim($verificacionData['email']));
+        } elseif (!empty($verificacionData['email_institucional'])) {
+            $email = strtolower(trim($verificacionData['email_institucional']));
         } else {
-            // Para otros roles, generar email automáticamente
+            // Si no se proporcionó email verificable, generar uno técnico
             $email = $usuario . '@egresados.utp.edu.mx';
 
             // Verificar que no exista duplicado de email
@@ -175,7 +183,18 @@ class RegisterController {
                 'requiere_cambio_pass' => 1,
                 'fecha_creacion'       => date('Y-m-d H:i:s'),
             ]);
+
+            if ($role === 'egresado') {
+                $curp = $verificacionData['curp'] ?? null;
+                $this->usuarioModel->createEgresado($idUsuario, null, $curp);
+            }
         } catch (\Exception $e) {
+            if (!empty($idUsuario)) {
+                try {
+                    $this->usuarioModel->delete('usuarios', ['id' => $idUsuario]);
+                } catch (\Exception $ignored) {
+                }
+            }
             return [
                 'success' => false,
                 'message' => 'Error al crear el usuario. Intenta de nuevo.'

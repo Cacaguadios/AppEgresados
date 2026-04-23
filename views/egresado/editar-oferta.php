@@ -348,15 +348,8 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
     function addSkillChip(skill) {
       const container = document.getElementById('skillsContainer');
       const chip = document.createElement('span');
-      chip.className = 'utp-skill-chip';
-      chip.style.padding = '6px 12px';
-      chip.style.backgroundColor = '#e0e0e0';
-      chip.style.borderRadius = '20px';
-      chip.style.fontSize = '14px';
-      chip.style.display = 'inline-flex';
-      chip.style.alignItems = 'center';
-      chip.style.gap = '8px';
-      chip.innerHTML = `${skill}<button type="button" class="btn btn-sm p-0" style="border:none;background:none;" onclick="removeSkill(this)"><i class="bi bi-x-lg" style="font-size:12px;"></i></button>`;
+      chip.className = 'utp-skill-chip-editable';
+      chip.innerHTML = `${skill}<button type="button" class="btn btn-sm p-0 border-0 bg-transparent" onclick="removeSkill(this)"><i class="bi bi-x-lg"></i></button>`;
       container.appendChild(chip);
       updateHabilidadesJson();
     }

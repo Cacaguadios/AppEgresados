@@ -7,6 +7,7 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usu
 
 require_once __DIR__ . '/../../app/models/Egresado.php';
 require_once __DIR__ . '/../../app/models/Postulacion.php';
+require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
 $apellidos = $_SESSION['usuario_apellidos'] ?? '';
@@ -33,6 +34,7 @@ $statusMap = [
     'preseleccionado'=> ['label' => 'En revisión',     'color' => 'yellow', 'icon' => 'bi-eye'],
     'contactado'     => ['label' => 'Seleccionado',    'color' => 'green',  'icon' => 'bi-check-circle'],
     'rechazado'      => ['label' => 'No seleccionado', 'color' => 'gray',   'icon' => 'bi-x-circle'],
+  'retirada'       => ['label' => 'Retirada',        'color' => 'gray',   'icon' => 'bi-archive'],
 ];
 ?>
 <!doctype html>
@@ -56,6 +58,7 @@ $statusMap = [
       currentPage: 'postulaciones',
       requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
     };
+    window.UTP_CSRF_TOKEN = <?= json_encode(Security::generateCsrfToken()) ?>;
   </script>
 
   <div id="utp-notice-container"></div>
@@ -68,12 +71,12 @@ $statusMap = [
 
         <div class="col">
           <div class="utp-content">
-            <div class="px-0 py-3 py-md-4" style="min-height: calc(100vh - 65px);">
+            <div class="px-0 py-3 py-md-4">
 
               <!-- Page Header -->
               <div class="mb-4">
-                <h1 style="font-size:36px; font-weight:700; line-height:40px; color:#121212;">Mis Postulaciones</h1>
-                <p style="color:#757575; font-size:18px; line-height:28px;" class="mb-0">Revisa el estado de tus postulaciones</p>
+                <h1 class="utp-h1">Mis Postulaciones</h1>
+                <p class="utp-subtitle mb-0">Revisa el estado de tus postulaciones</p>
               </div>
 
               <!-- Stats Cards Row -->
@@ -123,11 +126,11 @@ $statusMap = [
                 <!-- Empty state -->
                 <div class="col-12">
                   <div class="utp-card text-center py-5">
-                    <div class="utp-miniicon blue mx-auto mb-3" style="width:64px;height:64px;border-radius:50%;">
-                      <i class="bi bi-file-earmark-text" style="font-size:28px;"></i>
+                    <div class="utp-miniicon utp-empty-icon blue mx-auto mb-3">
+                      <i class="bi bi-file-earmark-text"></i>
                     </div>
-                    <h3 style="font-size:20px; font-weight:600; color:#121212;">Aún no tienes postulaciones</h3>
-                    <p style="color:#757575; font-size:16px; margin-top:8px;">
+                    <h3 class="utp-empty-title">Aún no tienes postulaciones</h3>
+                    <p class="utp-empty-text">
                       Explora las ofertas disponibles y postúlate a las que te interesen.
                     </p>
                     <a href="ofertas.php" class="btn btn-utp-red btn-utp-rounded mt-2">Explorar ofertas</a>
@@ -135,7 +138,7 @@ $statusMap = [
                 </div>
                 <?php else: ?>
                   <?php foreach ($postulaciones as $p):
-                    $estado = $p['estado'] ?? 'pendiente';
+                    $estado = !empty($p['retirada']) ? 'retirada' : ($p['estado'] ?? 'pendiente');
                     $st = $statusMap[$estado] ?? $statusMap['pendiente'];
                     $ofertaSkills = json_decode($p['oferta_habilidades'] ?? '[]', true) ?: [];
                     // Skill match
@@ -159,13 +162,13 @@ $statusMap = [
                     }
                   ?>
                   <div class="col-12">
-                    <div class="utp-card">
+                    <div class="utp-card utp-application-card">
                       <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                       <div>
-                        <h3 style="font-size:18px; font-weight:600; color:#121212; margin-bottom:4px;">
+                        <h3 class="utp-app-title mb-1">
                           <?= htmlspecialchars($p['titulo']) ?>
                         </h3>
-                        <p style="color:#757575; font-size:14px; margin-bottom:0;">
+                        <p class="utp-app-company mb-0">
                           <?= htmlspecialchars($p['empresa'] ?? '') ?>
                           <?php if ($p['ubicacion'] ?? ''): ?> · <?= htmlspecialchars($p['ubicacion']) ?><?php endif; ?>
                           <?php if ($p['modalidad'] ?? ''): ?> · <?= ucfirst(htmlspecialchars($p['modalidad'])) ?><?php endif; ?>
@@ -185,6 +188,13 @@ $statusMap = [
                           <span class="utp-skill-chip-sm">+<?= count($ofertaSkills) - 6 ?></span>
                         <?php endif; ?>
                       </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($p['mensaje'])): ?>
+                    <div class="utp-app-message mb-3">
+                      <span class="utp-app-message-label">Tu mensaje:</span>
+                      <p class="utp-app-message-text mb-0"><?= nl2br(htmlspecialchars($p['mensaje'])) ?></p>
+                    </div>
                     <?php endif; ?>
 
                     <!-- Barra de compatibilidad -->
@@ -207,32 +217,42 @@ $statusMap = [
                         $compatLabel = 'Compatible';
                       }
                     ?>
-                    <div class="mb-3" style="padding: 12px; background-color: <?= $compatBg ?>; border-radius: 8px;">
+                    <div class="utp-compat-box mb-3" style="--compat-bg: <?= htmlspecialchars($compatBg, ENT_QUOTES) ?>; --compat-color: <?= htmlspecialchars($compatColor, ENT_QUOTES) ?>; --compat-pct: <?= (int)$matchPct ?>%;">
                       <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span style="font-size:13px; font-weight:600; color:#121212;">
-                          <i class="bi bi-lightning-fill me-1" style="color:<?= $compatColor ?>;"></i>Coincidencia
+                        <span class="utp-compat-title">
+                          <i class="bi bi-lightning-fill me-1 utp-compat-icon"></i>Coincidencia
                         </span>
-                        <span style="font-size:13px; font-weight:600; color:<?= $compatColor ?>;"><?= $matchPct ?>%</span>
+                        <span class="utp-compat-pct"><?= $matchPct ?>%</span>
                       </div>
-                      <div style="width:100%; height:6px; background-color:rgba(0,0,0,0.1); border-radius:4px; overflow:hidden;">
-                        <div style="width:<?= $matchPct ?>%; height:100%; background-color:<?= $compatColor ?>; transition:width 0.3s ease;"></div>
+                      <div class="utp-compat-track">
+                        <div class="utp-compat-fill"></div>
                       </div>
-                      <div style="font-size:12px; color:#666; margin-top:6px;"><?= $compatLabel ?></div>
+                      <div class="utp-compat-label"><?= $compatLabel ?></div>
                     </div>
 
-                    <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="utp-app-footer d-flex flex-wrap align-items-center gap-3">
                       <?php if ($salarioTxt): ?>
-                      <span style="font-size:13px; color:#757575;"><i class="bi bi-cash-stack me-1"></i><?= $salarioTxt ?></span>
+                      <span class="utp-app-meta"><i class="bi bi-cash-stack me-1"></i><?= $salarioTxt ?></span>
                       <?php endif; ?>
-                      <span style="font-size:13px; color:#757575;"><i class="bi bi-calendar3 me-1"></i>Postulado: <?= $fechaPost ?></span>
+                      <span class="utp-app-meta"><i class="bi bi-calendar3 me-1"></i>Postulado: <?= $fechaPost ?></span>
                       <?php $ofertaUrl = 'oferta-detalle.php?id=' . (int)$p['oferta_id']; ?>
-                      <a href="<?= htmlspecialchars($ofertaUrl) ?>" class="ms-auto btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                      <a href="<?= htmlspecialchars($ofertaUrl) ?>" class="ms-auto btn btn-sm btn-outline-secondary utp-btn-compact">
                         Ver oferta <i class="bi bi-arrow-right ms-1"></i>
                       </a>
-                      <?php if ($estado !== 'rechazado'): ?>
-                        <?php $retiroId = (int)$p['id']; $retiroTitulo = htmlspecialchars($p['titulo'], ENT_QUOTES); ?>
-                        <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius:8px;" onclick="confirmarRetiro(<?= $retiroId ?>, <?= json_encode($retiroTitulo) ?>)">
-                          <i class="bi bi-trash me-1"></i> Retirar
+                      <?php $postId = (int)$p['id']; $postTitulo = htmlspecialchars($p['titulo'], ENT_QUOTES); ?>
+                      <?php if ($estado !== 'retirada' && $estado !== 'rechazado'): ?>
+                        <button type="button" class="btn btn-sm btn-outline-primary utp-btn-compact" onclick="editarMensaje(<?= $postId ?>, <?= json_encode((string)($p['mensaje'] ?? '')) ?>)">
+                          <i class="bi bi-pencil me-1"></i> Editar mensaje
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger utp-btn-compact" onclick="confirmarRetiro(<?= $postId ?>, <?= json_encode($postTitulo) ?>)">
+                          <i class="bi bi-x-circle me-1"></i> Dar de baja
+                        </button>
+                      <?php elseif ($estado === 'retirada'): ?>
+                        <button type="button" class="btn btn-sm btn-outline-success utp-btn-compact" onclick="restaurarPostulacion(<?= $postId ?>)">
+                          <i class="bi bi-arrow-repeat me-1"></i> Restaurar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger utp-btn-compact" onclick="eliminarPostulacion(<?= $postId ?>, <?= json_encode($postTitulo) ?>)">
+                          <i class="bi bi-trash me-1"></i> Borrar
                         </button>
                       <?php endif; ?>
                     </div>
@@ -255,24 +275,60 @@ $statusMap = [
   <script src="../../public/assets/js/shared/app.js"></script>
 
   <script>
+    function postAction(url, payload, okMessage) {
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
+        },
+        body: JSON.stringify(Object.assign({}, payload || {}, {
+          csrf_token: window.UTP_CSRF_TOKEN || ''
+        }))
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (okMessage) alert(okMessage);
+          location.reload();
+          return;
+        }
+        alert('Error: ' + (data.error || 'No se pudo completar la acción'));
+      })
+      .catch(() => alert('Error de conexión'));
+    }
+
     function confirmarRetiro(postulacionId, titulo) {
       if (confirm('Confirmas que deseas retirar tu postulación a: ' + titulo + '?\n\nNo podrás deshacer esta acción.')) {
-        fetch('../../public/api/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({postulacion_id: postulacionId})
-        })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            alert('Postulación retirada correctamente');
-            location.reload();
-          } else {
-            alert('Error: ' + (data.error || 'No se pudo retirar la postulación'));
-          }
-        })
-        .catch(() => alert('Error de conexión'));
+        postAction('../../public/api/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId,
+          {postulacion_id: postulacionId},
+          'Postulación dada de baja correctamente');
       }
+    }
+
+    function restaurarPostulacion(postulacionId) {
+      if (confirm('¿Deseas restaurar esta postulación?')) {
+        postAction('../../public/api/postulaciones-update.php?action=restaurar&postulacion_id=' + postulacionId,
+          {postulacion_id: postulacionId},
+          'Postulación restaurada correctamente');
+      }
+    }
+
+    function eliminarPostulacion(postulacionId, titulo) {
+      if (confirm('¿Eliminar permanentemente la postulación a ' + titulo + '?\n\nEsta acción no se puede deshacer.')) {
+        postAction('../../public/api/postulaciones-update.php?action=eliminar&postulacion_id=' + postulacionId,
+          {postulacion_id: postulacionId},
+          'Postulación eliminada correctamente');
+      }
+    }
+
+    function editarMensaje(postulacionId, mensajeActual) {
+      var nuevoMensaje = prompt('Edita tu mensaje de postulación:', mensajeActual || '');
+      if (nuevoMensaje === null) return;
+
+      postAction('../../public/api/postulaciones-update.php?action=editar_mensaje&postulacion_id=' + postulacionId,
+        {postulacion_id: postulacionId, mensaje: nuevoMensaje},
+        'Mensaje actualizado correctamente');
     }
   </script>
 </body>

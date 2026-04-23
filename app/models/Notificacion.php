@@ -23,6 +23,26 @@ class Notificacion extends Database {
     }
 
     /**
+     * Registrar un correo simulado en el log local.
+     */
+    private function registrarCorreoSimulado($to, $subject, $message, $tipo) {
+        if (empty($to)) {
+            return;
+        }
+
+        $logDir = __DIR__ . '/../../storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        $logFile = $logDir . '/emails.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $body = str_replace(["\r", "\n"], [' ', ' '], trim($message));
+        $log = "[{$timestamp}] TO: {$to} | SUBJECT: {$subject} | TYPE: {$tipo} | MESSAGE: {$body}\n";
+        file_put_contents($logFile, $log, FILE_APPEND);
+    }
+
+    /**
      * Crear notificación masiva para todos los usuarios de un rol
      */
     public function crearParaRol($tipo, $titulo, $mensaje, $url, $rol) {
@@ -146,39 +166,190 @@ class Notificacion extends Database {
     /**
      * Egresado se postula → notifica al docente/ti creador de la oferta
      */
-    public function onPostulacion($ofertaTitulo, $idCreadorOferta, $egresadoNombre) {
+    public function onPostulacion($ofertaTitulo, $idCreadorOferta, $egresadoNombre, $correoCreador = null) {
+        $mensaje = "{$egresadoNombre} se postuló a tu oferta \"{$ofertaTitulo}\".";
         $this->crear(
             $idCreadorOferta,
             'nueva_postulacion',
             'Nuevo postulante',
-            "{$egresadoNombre} se postuló a tu oferta \"{$ofertaTitulo}\".",
+            $mensaje,
             '../../views/docente/postulantes.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoCreador,
+            'Nueva postulación recibida - UTP',
+            $mensaje,
+            'nueva_postulacion'
+        );
+    }
+
+    /**
+     * Docente/TI invita a un egresado a revisar una vacante.
+     */
+    public function onOfertaInvitada($ofertaTitulo, $idUsuarioEgresado, $egresadoNombre, $correoEgresado = null, $urlOferta = null) {
+        $mensaje = "{$egresadoNombre}, te invitamos a revisar la oferta \"{$ofertaTitulo}\" y postularte si te interesa.";
+
+        $this->crear(
+            $idUsuarioEgresado,
+            'general',
+            'Invitación a vacante',
+            $mensaje,
+            $urlOferta ?: '../../views/egresado/oferta-detalle.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoEgresado,
+            'Invitación a postularse - UTP',
+            $mensaje,
+            'invitacion_vacante'
         );
     }
 
     /**
      * Docente selecciona postulante → notifica al egresado
      */
-    public function onPostulanteSeleccionado($ofertaTitulo, $idUsuarioEgresado) {
+    public function onPostulanteSeleccionado($ofertaTitulo, $idUsuarioEgresado, $correoEgresado = null) {
+        $mensaje = "¡Felicidades! Fuiste seleccionado para la oferta \"{$ofertaTitulo}\".";
         $this->crear(
             $idUsuarioEgresado,
             'postulacion_seleccionada',
             '¡Has sido seleccionado!',
-            "¡Felicidades! Fuiste seleccionado para la oferta \"{$ofertaTitulo}\".",
+            $mensaje,
             '../../views/egresado/postulaciones.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoEgresado,
+            'Seleccionado en vacante - UTP',
+            $mensaje,
+            'postulacion_seleccionada'
         );
     }
 
     /**
      * Docente rechaza postulante → notifica al egresado
      */
-    public function onPostulanteRechazado($ofertaTitulo, $idUsuarioEgresado) {
+    public function onPostulanteRechazado($ofertaTitulo, $idUsuarioEgresado, $correoEgresado = null) {
+        $mensaje = "Tu postulación para \"{$ofertaTitulo}\" no fue seleccionada en esta ocasión.";
         $this->crear(
             $idUsuarioEgresado,
             'postulacion_rechazada',
             'Postulación no seleccionada',
-            "Tu postulación para \"{$ofertaTitulo}\" no fue seleccionada en esta ocasión.",
+            $mensaje,
             '../../views/egresado/postulaciones.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoEgresado,
+            'Estado de postulación - UTP',
+            $mensaje,
+            'postulacion_rechazada'
+        );
+    }
+
+    /**
+     * Docente invita a egresado a postularse → notifica al egresado
+     */
+    public function onInvitacionOferta($ofertaTitulo, $empresa, $idUsuarioEgresado, $ofertaId, $correoEgresado = null) {
+        $mensaje = "Fuiste invitado a postularte para la vacante \"{$ofertaTitulo}\" en {$empresa}. ¡No pierdas esta oportunidad!";
+        $this->crear(
+            $idUsuarioEgresado,
+            'invitacion_oferta',
+            '¡Invitación a postularte!',
+            $mensaje,
+            "../../views/egresado/invitaciones.php"
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoEgresado,
+            'Invitación a vacante - UTP',
+            $mensaje,
+            'invitacion_oferta'
+        );
+    }
+
+    /**
+     * Egresado acepta invitación y se postula → notifica al docente
+     */
+    public function onPostulacionRecibida($ofertaTitulo, $egresadoNombre, $idDocente, $correoDocente = null) {
+        $mensaje = "{$egresadoNombre} aceptó tu invitación y se postuló para \"{$ofertaTitulo}\".";
+        $this->crear(
+            $idDocente,
+            'nueva_postulacion',
+            'Invitado aceptó y se postuló',
+            $mensaje,
+            '../../views/docente/postulantes.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoDocente,
+            'Postulación recibida - UTP',
+            $mensaje,
+            'nueva_postulacion'
+        );
+    }
+
+    /**
+     * El perfil del egresado no cumple requisitos → notifica al mismo egresado
+     */
+    public function onPerfilNoCumple($ofertaTitulo, $idUsuarioEgresado, $correoEgresado = null) {
+        $mensaje = "Tu perfil no cumple completamente con los requisitos de la oferta \"{$ofertaTitulo}\". Te recomendamos actualizar tus habilidades y experiencia antes de postularte.";
+        $this->crear(
+            $idUsuarioEgresado,
+            'general',
+            'Perfil no coincide con la oferta',
+            $mensaje,
+            '../../views/egresado/perfil.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoEgresado,
+            'Tu perfil y la oferta - UTP',
+            $mensaje,
+            'perfil_no_cumple'
+        );
+    }
+
+    /**
+     * Postulante marcado como contactado → pregunta al ofertador sobre el resultado
+     */
+    public function onFeedbackSolicitado($ofertaTitulo, $egresadoNombre, $idCreadorOferta, $postulacionId, $correoCreador = null) {
+        $mensaje = "Ya lograste el contacto con {$egresadoNombre} para la oferta \"{$ofertaTitulo}\". ¿Quedaste satisfecho? ¿El candidato obtuvo el empleo? Cuéntanos el resultado.";
+        $this->crear(
+            $idCreadorOferta,
+            'feedback_pendiente',
+            '¿Cómo resultó el contacto?',
+            $mensaje,
+            "../../views/docente/postulantes.php?feedback={$postulacionId}"
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoCreador,
+            'Resultado del contacto - UTP',
+            $mensaje,
+            'feedback_pendiente'
+        );
+    }
+
+    /**
+     * Egresado retira su postulación → notifica al docente
+     */
+    public function onPostulacionRetirada($ofertaTitulo, $egresadoNombre, $idDocente, $correoDocente = null) {
+        $mensaje = "{$egresadoNombre} retiró su postulación para \"{$ofertaTitulo}\".";
+        $this->crear(
+            $idDocente,
+            'postulacion_retirada',
+            'Postulación retirada',
+            $mensaje,
+            '../../views/docente/postulantes.php'
+        );
+
+        $this->registrarCorreoSimulado(
+            $correoDocente,
+            'Postulación retirada - UTP',
+            $mensaje,
+            'postulacion_retirada'
         );
     }
 }

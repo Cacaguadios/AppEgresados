@@ -76,6 +76,15 @@ class AuthController {
             $_SESSION['error'] = '❌ Tu cuenta ha sido desactivada';
             return false;
         }
+
+        // Verificación obligatoria para usuarios no admin
+        $rol = $usuario['tipo_usuario'] ?? '';
+        $estadoVerificacion = $usuario['verificacion_estado'] ?? 'pendiente';
+        if ($rol !== 'admin' && $estadoVerificacion !== 'verificado') {
+            $_SESSION['error'] = '⏳ Tu cuenta aún no ha sido verificada por administración.';
+            $_SESSION['login_prefill_user'] = $identifier;
+            return false;
+        }
         
         // Actualizar último login
         $this->usuarioModel->updateLastLogin($usuario['id']);
@@ -86,7 +95,7 @@ class AuthController {
         $_SESSION['usuario_nombre']   = $usuario['nombre'];
         $_SESSION['usuario_apellidos'] = $usuario['apellidos'] ?? '';
         $_SESSION['usuario_usuario']  = $usuario['usuario'] ?? '';
-        $_SESSION['usuario_rol']      = $usuario['tipo_usuario'];
+        $_SESSION['usuario_rol']      = $rol;
         $_SESSION['logged_in']        = true;
         $_SESSION['requiere_cambio_pass'] = !empty($usuario['requiere_cambio_pass']);
         

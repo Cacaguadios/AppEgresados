@@ -21,13 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Preparar datos según el rol
     if ($role === 'egresado') {
-        $datosValidar = [
-            'matricula' => $_POST['matricula'] ?? '',
-            'curp' => $_POST['curp'] ?? ''
-        ];
+      $datosValidar = [
+        'curp' => $_POST['curp'] ?? '',
+        'telefono' => $_POST['telefono'] ?? '',
+        'email' => $_POST['email'] ?? ''
+      ];
     } elseif ($role === 'docente') {
         $datosValidar = [
-            'id_docente' => $_POST['id_docente'] ?? ''
+            'email_docente' => $_POST['email_docente'] ?? ''
         ];
     } else { // ti
         $datosValidar = [
@@ -128,12 +129,40 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
             <div id="fieldsEgresado" class="d-block">
               <div class="mb-3">
                 <label class="form-label" style="font-size:14px; font-weight:500;">
+                  CURP <span class="text-danger">*</span>
+                </label>
+                <input class="form-control auth-input"
+                       type="text"
+                       name="curp"
+                       placeholder="18 caracteres"
+                       maxlength="18"
+                       value="<?php echo htmlspecialchars($_POST['curp'] ?? ''); ?>"
+                       required />
+                <div class="auth-help mt-2">Usado para validar autenticidad</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" style="font-size:14px; font-weight:500;">
+                  Teléfono de contacto <span class="text-danger">*</span>
+                </label>
+                <input class="form-control auth-input"
+                       type="tel"
+                       name="telefono"
+                       placeholder="10 dígitos"
+                       inputmode="numeric"
+                       value="<?php echo htmlspecialchars($_POST['telefono'] ?? ''); ?>"
+                       required />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" style="font-size:14px; font-weight:500;">
                   Correo Electrónico Personal <span class="text-danger">*</span>
                 </label>
                 <input class="form-control auth-input"
                        type="email"
                        name="email"
                        placeholder="tu.correo@ejemplo.com"
+                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                        data-field="egresado"
                        required />
                 <div class="auth-help mt-2">Usaremos este correo para verificación</div>
@@ -144,14 +173,16 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
             <div id="fieldsDocente" class="d-none">
               <div class="mb-3">
                 <label class="form-label" style="font-size:14px; font-weight:500;">
-                  ID de Docente <span class="text-danger">*</span>
+                  Correo Institucional Docente <span class="text-danger">*</span>
                 </label>
                 <input class="form-control auth-input"
-                       type="text"
-                       name="id_docente"
-                       placeholder="Ingresa tu ID de docente"
+                       type="email"
+                       name="email_docente"
+                    placeholder="nombre@utpuebla.edu.mx"
+                       value="<?php echo htmlspecialchars($_POST['email_docente'] ?? ''); ?>"
                        data-field="docente"
                        required />
+                  <div class="auth-help mt-2">Debe terminar en @utpuebla.edu.mx o @utp.edu.mx</div>
               </div>
             </div>
 
@@ -203,8 +234,8 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
 
     // Subtítulos según rol
     const subtitles = {
-      egresado: 'Valida tu identidad',
-      docente: 'El ID de empleado valida tu identidad',
+      egresado: 'Valida tu identidad con datos personales',
+      docente: 'Valida tu identidad con correo institucional',
       ti: 'El ID de empleado valida tu identidad'
     };
 
@@ -216,7 +247,7 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
       document.getElementById('fieldsTI').classList.add('d-none');
 
       // Remover required de todos los campos
-      document.querySelectorAll('input[name="email"], input[name="id_docente"], input[name="id_ti"]').forEach(input => {
+      document.querySelectorAll('input[name="curp"], input[name="telefono"], input[name="email"], input[name="email_docente"], input[name="id_ti"]').forEach(input => {
         input.removeAttribute('required');
       });
 
@@ -226,10 +257,12 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
       // Mostrar y validar solo los del rol actual
       if (rol === 'egresado') {
         document.getElementById('fieldsEgresado').classList.remove('d-none');
+        document.querySelector('input[name="curp"]').setAttribute('required', 'required');
+        document.querySelector('input[name="telefono"]').setAttribute('required', 'required');
         document.querySelector('input[name="email"]').setAttribute('required', 'required');
       } else if (rol === 'docente') {
         document.getElementById('fieldsDocente').classList.remove('d-none');
-        document.querySelector('input[name="id_docente"]').setAttribute('required', 'required');
+        document.querySelector('input[name="email_docente"]').setAttribute('required', 'required');
       } else if (rol === 'ti') {
         document.getElementById('fieldsTI').classList.remove('d-none');
         document.querySelector('input[name="id_ti"]').setAttribute('required', 'required');

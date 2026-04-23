@@ -23,6 +23,7 @@ if (($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../app/models/Egresado.php';
+require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $egresadoModel = new Egresado();
 $id_usuario = $_SESSION['usuario_id'];
@@ -50,6 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 // Marcar recordatorio como visto
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
+    $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if (!Security::validateCsrfToken($csrfToken)) {
+        http_response_code(419);
+        echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+        exit;
+    }
     $accion = $data['accion'] ?? '';
 
     if ($accion === 'marcar_visto') {
@@ -60,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode([
                 'success' => true,
                 'message' => 'Recordatorio marcado como visto',
-                'proximo_recordatorio' => date('Y-m-d', strtotime('+30 days'))
+                'proximo_recordatorio' => date('Y-m-d', strtotime('+3 months'))
             ]);
         } else {
             http_response_code(500);

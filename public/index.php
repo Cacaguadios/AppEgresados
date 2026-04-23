@@ -149,6 +149,54 @@ switch ($request) {
             header('Location: /AppEgresados/login'); exit;
         }
         break;
+
+    case '/egresado/publicar-oferta':
+        if ($user_logged && $user_role === 'egresado') {
+            require __DIR__ . '/../views/egresado/publicar-oferta.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/egresado/mis-ofertas':
+        if ($user_logged && $user_role === 'egresado') {
+            require __DIR__ . '/../views/egresado/mis-ofertas.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/egresado/postulantes':
+        if ($user_logged && $user_role === 'egresado') {
+            require __DIR__ . '/../views/egresado/postulantes.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/egresado/oferta-detalle':
+        if ($user_logged && $user_role === 'egresado') {
+            require __DIR__ . '/../views/egresado/oferta-detalle.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/egresado/editar-oferta':
+        if ($user_logged && $user_role === 'egresado') {
+            require __DIR__ . '/../views/egresado/editar-oferta.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/egresado/invitaciones':
+        if ($user_logged && $user_role === 'egresado') {
+            require __DIR__ . '/../views/egresado/invitaciones.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
         
     case '/egresado/postulaciones':
     case '/egresado/mis-postulaciones':
@@ -200,6 +248,22 @@ switch ($request) {
     case '/docente/mis-ofertas':
         if ($user_logged && ($user_role === 'docente' || $user_role === 'ti')) {
             require __DIR__ . '/../views/docente/mis-ofertas.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/docente/editar-oferta':
+        if ($user_logged && ($user_role === 'docente' || $user_role === 'ti')) {
+            require __DIR__ . '/../views/docente/editar-oferta.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/docente/invitar-egresados':
+        if ($user_logged && ($user_role === 'docente' || $user_role === 'ti')) {
+            require __DIR__ . '/../views/docente/invitar-egresados.php';
         } else {
             header('Location: /AppEgresados/login'); exit;
         }
@@ -289,6 +353,14 @@ switch ($request) {
     case '/admin/seguridad':
         if ($user_logged && $user_role === 'admin') {
             require __DIR__ . '/../views/admin/seguridad.php';
+        } else {
+            header('Location: /AppEgresados/login'); exit;
+        }
+        break;
+
+    case '/admin/reportes':
+        if ($user_logged && $user_role === 'admin') {
+            require __DIR__ . '/../views/admin/reportes.php';
         } else {
             header('Location: /AppEgresados/login'); exit;
         }

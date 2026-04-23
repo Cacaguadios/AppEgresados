@@ -37,8 +37,27 @@ $adminRow = $pdo->query("SELECT id FROM usuarios WHERE tipo_usuario = 'admin' LI
 $adminId = $adminRow ? $adminRow['id'] : 1;
 
 // ====================================================
-// 2. Update egresado test user profile (ID=4 → egresados.id_usuario=4)
+// 2. Resolve egresado users and update their profiles
 // ====================================================
+$testUserRow = $pdo->query("SELECT id FROM usuarios WHERE usuario = 'test.egresado' LIMIT 1")->fetch();
+$juanUserRow = $pdo->query("SELECT id FROM usuarios WHERE usuario = 'juan.perez' LIMIT 1")->fetch();
+
+if (!$testUserRow || !$juanUserRow) {
+    throw new RuntimeException('No se encontraron usuarios base test.egresado y/o juan.perez en la tabla usuarios.');
+}
+
+$testUserId = (int) $testUserRow['id'];
+$juanUserId = (int) $juanUserRow['id'];
+
+// Ensure egresado rows exist for both users.
+$pdo->exec("INSERT INTO egresados (id_usuario)
+    SELECT {$testUserId}
+    WHERE NOT EXISTS (SELECT 1 FROM egresados WHERE id_usuario = {$testUserId})");
+
+$pdo->exec("INSERT INTO egresados (id_usuario)
+    SELECT {$juanUserId}
+    WHERE NOT EXISTS (SELECT 1 FROM egresados WHERE id_usuario = {$juanUserId})");
+
 $pdo->exec("UPDATE egresados SET
     correo_personal  = 'carlos.hdz@gmail.com',
     genero           = 'M',
@@ -61,10 +80,10 @@ $pdo->exec("UPDATE egresados SET
     descripcion_experiencia = 'He trabajado como desarrollador frontend con React y Vue.js en proyectos de comercio electrónico. También tengo experiencia en backend con Node.js y PHP.',
     habilidades      = '[\"React\",\"JavaScript\",\"Node.js\",\"PHP\",\"MySQL\",\"Git\"]',
     fecha_actualizacion_seguimiento = NOW()
-WHERE id_usuario = 4");
-echo "OK: Updated egresado profile for test.egresado (usuario_id=4)" . PHP_EOL;
+WHERE id_usuario = {$testUserId}");
+echo "OK: Updated egresado profile for test.egresado (usuario_id={$testUserId})" . PHP_EOL;
 
-// Also update the other egresado (juan.perez, usuario_id=3)
+// Also update the other egresado (juan.perez)
 $pdo->exec("UPDATE egresados SET
     correo_personal  = 'juan.perez.garcia@gmail.com',
     genero           = 'M',
@@ -75,8 +94,8 @@ $pdo->exec("UPDATE egresados SET
     trabaja_actualmente = 0,
     trabaja_en_ti    = 0,
     habilidades      = '[\"Windows\",\"Redes\",\"Hardware\",\"Cisco\",\"Linux\"]'
-WHERE id_usuario = 3");
-echo "OK: Updated egresado profile for juan.perez (usuario_id=3)" . PHP_EOL;
+WHERE id_usuario = {$juanUserId}");
+echo "OK: Updated egresado profile for juan.perez (usuario_id={$juanUserId})" . PHP_EOL;
 
 // ====================================================
 // 3. Insert 5 Ofertas (approved, with varied statuses)
@@ -267,13 +286,17 @@ foreach ($ofertas as $i => $oferta) {
 }
 
 // ====================================================
-// 4. Insert Postulaciones for test.egresado (egresados.id=3, id_usuario=4)
+// 4. Insert Postulaciones for test.egresado and juan.perez
 // ====================================================
-$egresadoRow = $pdo->query("SELECT id FROM egresados WHERE id_usuario = 4")->fetch();
-$egresadoId = $egresadoRow['id']; // Should be 3
+$egresadoRow = $pdo->query("SELECT id FROM egresados WHERE id_usuario = {$testUserId} LIMIT 1")->fetch();
+$egresadoId = $egresadoRow ? (int) $egresadoRow['id'] : null;
 
-$egresado2Row = $pdo->query("SELECT id FROM egresados WHERE id_usuario = 3")->fetch();
-$egresado2Id = $egresado2Row['id']; // Should be 2
+$egresado2Row = $pdo->query("SELECT id FROM egresados WHERE id_usuario = {$juanUserId} LIMIT 1")->fetch();
+$egresado2Id = $egresado2Row ? (int) $egresado2Row['id'] : null;
+
+if (!$egresadoId || !$egresado2Id) {
+    throw new RuntimeException('No se pudieron resolver los registros de egresados para test.egresado y/o juan.perez.');
+}
 
 $postulaciones = [
     // test.egresado applied to offer 1 (Full Stack) - preseleccionado
@@ -299,7 +322,7 @@ $postulaciones = [
         'fecha_postulacion' => '2026-01-12 16:00:00',
         'estado' => 'rechazado',
         'validacion_automatica' => 'no_cumple',
-        'razon_rechazo' => 'Vacante ya cubierta antes de revisar postulación.',
+        'mensaje' => 'Vacante ya cubierta antes de revisar postulación.',
     ],
     // test.egresado applied to offer 5 (UX/UI) - contactado
     [
@@ -329,7 +352,7 @@ foreach ($postulaciones as $p) {
 }
 
 echo PHP_EOL . "=== SEED COMPLETE ===" . PHP_EOL;
-echo "Users: admin(ID=$adminId), docente(ID=$docenteId), egresados(3,4)" . PHP_EOL;
+echo "Users: admin(ID=$adminId), docente(ID=$docenteId), egresados({$egresadoId},{$egresado2Id})" . PHP_EOL;
 echo "Ofertas: " . count($ofertaIds) . " inserted (IDs: " . implode(',', $ofertaIds) . ")" . PHP_EOL;
 echo "Postulaciones: " . count($postulaciones) . " inserted" . PHP_EOL;
 echo PHP_EOL . "Login: test.egresado / Test1234!" . PHP_EOL;

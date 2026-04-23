@@ -65,8 +65,8 @@ sort($allLocations);
 
               <!-- Title -->
               <section class="mb-4">
-                <h1 style="font-size:36px; font-weight:700; line-height:40px; color:#121212;" class="mb-2">Ofertas laborales</h1>
-                <p style="color:#757575; font-size:18px; line-height:28px;" class="mb-0">Encuentra oportunidades laborales validadas para egresados UTP</p>
+                <h1 class="utp-h1 mb-2">Ofertas laborales</h1>
+                <p class="utp-subtitle mb-0">Encuentra oportunidades laborales validadas para egresados UTP</p>
               </section>
 
               <!-- Filters Card -->
@@ -128,9 +128,11 @@ sort($allLocations);
                 <?php if (empty($ofertas)): ?>
                   <div class="col-12">
                     <div class="utp-card text-center py-5">
-                      <i class="bi bi-briefcase" style="font-size:48px; color:#ccc;"></i>
-                      <h3 class="mt-3" style="color:#757575;">No hay ofertas disponibles</h3>
-                      <p class="text-muted">Vuelve más tarde para ver nuevas oportunidades.</p>
+                      <div class="utp-empty-briefcase-icon mx-auto mb-3">
+                        <i class="bi bi-briefcase"></i>
+                      </div>
+                      <h3 class="utp-empty-muted-title mt-3">No hay ofertas disponibles</h3>
+                      <p class="text-muted mb-0">Vuelve más tarde para ver nuevas oportunidades.</p>
                     </div>
                   </div>
                 <?php else: ?>

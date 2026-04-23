@@ -6,14 +6,21 @@
 
 class Database {
     private $connection;
-    private $host = 'localhost';
-    private $db_name = 'bolsa_trabajo_utp';
-    private $db_user = 'root';
-    private $db_pass = '';
+    private $host;
+    private $db_name;
+    private $db_user;
+    private $db_pass;
+    private $db_port;
     
     public function __construct() {
+        $this->host = getenv('APP_DB_HOST') ?: getenv('DB_HOST') ?: 'localhost';
+        $this->db_name = getenv('APP_DB_NAME') ?: getenv('DB_NAME') ?: 'bolsa_trabajo_utp';
+        $this->db_user = getenv('APP_DB_USER') ?: getenv('DB_USER') ?: 'root';
+        $this->db_pass = getenv('APP_DB_PASS') ?: getenv('DB_PASS') ?: '';
+        $this->db_port = getenv('APP_DB_PORT') ?: getenv('DB_PORT') ?: '3306';
+
         try {
-            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4";
+            $dsn = "mysql:host=" . $this->host . ";port=" . $this->db_port . ";dbname=" . $this->db_name . ";charset=utf8mb4";
             
             $this->connection = new PDO(
                 $dsn,

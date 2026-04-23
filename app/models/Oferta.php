@@ -36,15 +36,29 @@ class Oferta extends Database {
     }
     
     /**
+     * Desactivar automáticamente las ofertas cuya fecha de expiración ya pasó
+     */
+    public function desactivarExpiradas() {
+        $sql = "UPDATE ofertas
+                SET activo = 0, motivo_baja = 'Expirada', fecha_baja = NOW(), estado_vacante = 'rojo'
+                WHERE estado = 'aprobada' AND activo = 1
+                  AND fecha_expiracion IS NOT NULL AND fecha_expiracion < NOW()";
+        $this->query($sql);
+    }
+
+    /**
      * Obtener ofertas aprobadas y vigentes
      */
     public function getApprovedAndActive() {
+        $this->desactivarExpiradas();
         $sql = "SELECT o.*,
                        CONCAT(u.nombre, ' ', IFNULL(u.apellidos,'')) AS creador,
                        (SELECT COUNT(*) FROM postulaciones WHERE id_oferta = o.id) AS postulantes_count
                 FROM ofertas o
                 JOIN usuarios u ON o.id_usuario_creador = u.id
                 WHERE o.estado = 'aprobada' 
+                AND o.activo = 1
+                AND o.vacantes > 0
                 AND o.fecha_expiracion > NOW()
                 ORDER BY o.fecha_creacion DESC";
         return $this->fetchAll($sql);
@@ -106,7 +120,7 @@ class Oferta extends Database {
     public function getPostulantesByUser($id_usuario, $ofertaId = null, $estado = null) {
         $sql = "SELECT p.*, 
                        o.titulo AS oferta_titulo, o.empresa AS oferta_empresa,
-                       e.matricula, e.correo_personal, e.telefono, e.habilidades AS egresado_habilidades,
+              e.matricula, e.correo_personal, e.telefono, e.habilidades AS egresado_habilidades, e.habilidades_blandas,
                        e.cv_path, e.especialidad, e.generacion,
                        u.nombre, u.apellidos, u.email
                 FROM postulaciones p
@@ -176,6 +190,41 @@ class Oferta extends Database {
     }
 
     /**
+     * Resumen de ofertas para reportes admin.
+     */
+    public function getReportSummary() {
+        $sql = "SELECT
+            COUNT(*) AS total,
+            SUM(estado = 'aprobada') AS liberadas,
+            SUM(estado = 'aprobada' AND activo = 1 AND fecha_expiracion > NOW()) AS activas,
+            SUM(estado = 'pendiente_aprobacion') AS pendientes,
+            SUM(estado = 'rechazada') AS rechazadas,
+            SUM(activo = 0 OR vacantes = 0 OR fecha_expiracion <= NOW()) AS cerradas,
+            COALESCE(SUM((SELECT COUNT(*) FROM postulaciones p WHERE p.id_oferta = ofertas.id)), 0) AS postulaciones_totales
+        FROM ofertas";
+        return $this->fetchOne($sql);
+    }
+
+    /**
+     * Ofertas aprobadas por mes.
+     */
+    public function getApprovedByMonth($limit = 6) {
+        $limit = max(1, (int)$limit);
+
+        $sql = "SELECT
+            DATE_FORMAT(fecha_aprobacion, '%Y-%m') AS periodo,
+            DATE_FORMAT(fecha_aprobacion, '%b %Y') AS etiqueta,
+            COUNT(*) AS total
+        FROM ofertas
+        WHERE estado = 'aprobada' AND fecha_aprobacion IS NOT NULL
+        GROUP BY DATE_FORMAT(fecha_aprobacion, '%Y-%m'), DATE_FORMAT(fecha_aprobacion, '%b %Y')
+        ORDER BY periodo DESC
+        LIMIT {$limit}";
+
+        return array_reverse($this->fetchAll($sql));
+    }
+
+    /**
      * Aprobar oferta
      */
     public function approve($id, $id_admin) {
@@ -210,11 +259,17 @@ class Oferta extends Database {
         $oferta = $this->getById($id);
         if (!$oferta) return false;
 
-        $nuevasVacantes = $oferta['vacantes'] - 1;
+        $nuevasVacantes = max(0, ((int)$oferta['vacantes']) - 1);
 
         if ($nuevasVacantes <= 0) {
-            // Eliminar la oferta cuando se llena el cupo
-            $this->delete('ofertas', ['id' => $id]);
+            // Dar de baja cuando se llena el cupo para conservar historial.
+            $this->update('ofertas', [
+                'vacantes' => 0,
+                'activo' => 0,
+                'estado_vacante' => 'rojo',
+                'fecha_baja' => date('Y-m-d H:i:s'),
+                'motivo_baja' => 'Cupo lleno'
+            ], ['id' => $id]);
             return true;
         } else {
             // Actualizar vacantes
@@ -232,6 +287,11 @@ class Oferta extends Database {
         
         $oferta = $this->getById($id);
         if (!$oferta) return;
+
+        if ((int)($oferta['activo'] ?? 1) === 0) {
+            $this->update('ofertas', ['estado_vacante' => 'rojo'], ['id' => $id]);
+            return;
+        }
         
         $estado = 'verde';
         

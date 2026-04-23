@@ -189,7 +189,7 @@ $usuario->create([
 
 - PHP 7.x+
 - MySQL (para BD real en futuro)
-- XAMPP (local development)
+- Laragon (local development)
 - Navegador moderno (Chrome, Firefox, Safari)
 
 ---
@@ -207,8 +207,8 @@ $usuario->create([
    - Abre: F12 → Console
    - Busca errores rojos
 
-3. **Revisa que XAMPP esté running**
-   - Apache y MySQL deben estar verdes
+3. **Revisa que Laragon esté running**
+   - Apache y MySQL deben estar activos
 
 4. **Limpia la sesión**
    - Cierra el navegador completamente

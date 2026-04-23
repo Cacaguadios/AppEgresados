@@ -41,16 +41,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['postularse'])) {
         $msgError = 'Ya te postulaste a esta oferta.';
     } elseif (!$egresado) {
         $msgError = 'Completa tu perfil de egresado primero.';
-    } elseif ($oferta['estado'] !== 'aprobada') {
+    } elseif ($oferta['estado'] !== 'aprobada' || (int)($oferta['activo'] ?? 1) !== 1 || (int)($oferta['vacantes'] ?? 0) <= 0) {
         $msgError = 'Esta oferta no está disponible.';
     } else {
-        $postulacionModel->create([
-            'id_egresado'       => $egresado['id'],
-            'id_oferta'         => $ofertaId,
-            'estado'            => 'pendiente',
-            'fecha_postulacion' => date('Y-m-d H:i:s'),
-            'mensaje'           => trim($_POST['mensaje_postulacion'] ?? ''),
+      // ── Validación automática de perfil ──
+      $ofertaHabs  = array_map('mb_strtolower', json_decode($oferta['habilidades'] ?? '[]', true) ?: []);
+      $egresadoHabsRaw = $egresado['habilidades'] ?? '';
+      // Soporta JSON array o texto separado por comas/saltos
+      $egresadoHabs = json_decode($egresadoHabsRaw, true);
+      if (!is_array($egresadoHabs)) {
+          $egresadoHabs = array_filter(array_map('trim', preg_split('/[,;\n]+/', $egresadoHabsRaw)));
+      }
+      $egresadoHabs = array_map('mb_strtolower', $egresadoHabs);
+
+      $match = 0;
+      foreach ($ofertaHabs as $req) {
+          foreach ($egresadoHabs as $eHab) {
+              if ($eHab !== '' && (str_contains($eHab, $req) || str_contains($req, $eHab))) {
+                  $match++;
+                  break;
+              }
+          }
+      }
+      $totalReq = count($ofertaHabs);
+      $cumpleHabs = $totalReq === 0 || ($match / $totalReq) >= 0.3; // ≥30% de habilidades coinciden
+
+      // Experiencia mínima (si aplica)
+      $expMin      = (int)($oferta['experiencia_minima'] ?? 0);
+      $expEgresado = (int)preg_replace('/\D.*/', '', $egresado['anos_experiencia_ti'] ?? '0');
+      $cumpleExp   = $expMin === 0 || $expEgresado >= $expMin;
+
+      $validacion = ($cumpleHabs && $cumpleExp) ? 'cumple' : 'no_cumple';
+
+      $postulacionId = $postulacionModel->create([
+            'id_egresado'          => $egresado['id'],
+            'id_oferta'            => $ofertaId,
+            'estado'               => 'pendiente',
+            'fecha_postulacion'    => date('Y-m-d H:i:s'),
+            'mensaje'              => trim($_POST['mensaje_postulacion'] ?? ''),
+            'validacion_automatica'=> $validacion,
         ]);
+
+      // Inicializar checklist de habilidades blandas para evaluación de docente/TI.
+      $habilidadesBlandas = $egresadoModel->getHabilidadesBlandas($_SESSION['usuario_id']);
+      if ($postulacionId) {
+        $postulacionModel->inicializarChecklistHabilidadesBlandas((int)$postulacionId, $habilidadesBlandas);
+      }
 
         // Decrementar vacantes (se elimina automáticamente si llega a 0)
         $ofertaEliminada = !$ofertaModel->decrementVacancies($ofertaId);
@@ -60,15 +96,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['postularse'])) {
         $notifModel->onPostulacion(
             $oferta['titulo'],
             $oferta['id_usuario_creador'],
-            $fullName
+          $fullName,
+          $oferta['creador_email'] ?? null
         );
+
+        // Si el perfil no cumple, avisar al egresado
+        if ($validacion === 'no_cumple') {
+            $notifModel->onPerfilNoCumple(
+                $oferta['titulo'],
+                $_SESSION['usuario_id'],
+                $_SESSION['usuario_email'] ?? null
+            );
+        }
 
         if ($ofertaEliminada) {
             header('Location: ofertas.php?cupo_lleno=1');
         } else {
             // Actualizar estado de vacante
             $ofertaModel->updateVacancyStatus($ofertaId);
-            header('Location: oferta-detalle.php?id=' . $ofertaId . '&postulado=1');
+            $redir = 'oferta-detalle.php?id=' . $ofertaId . '&postulado=1';
+            if ($validacion === 'no_cumple') {
+                $redir .= '&aviso=perfil';
+            }
+            header('Location: ' . $redir);
         }
         exit;
     }
@@ -141,7 +191,7 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
 
         <div class="col">
           <div class="utp-content">
-            <div class="px-0 py-3 py-md-4" style="min-height: calc(100vh - 65px);">
+            <div class="px-0 py-3 py-md-4 utp-content-wrap">
 
               <!-- Volver a ofertas -->
               <a href="ofertas.php" class="utp-back-link mb-3 d-inline-flex align-items-center gap-2">
@@ -227,6 +277,12 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
                   <div class="alert alert-success mb-4">
                     <i class="bi bi-check-circle me-2"></i>¡Te has postulado exitosamente!
                   </div>
+                  <?php if (isset($_GET['aviso']) && $_GET['aviso'] === 'perfil'): ?>
+                  <div class="alert alert-warning mb-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Aviso:</strong> Tu perfil no cumple completamente con los requisitos de esta oferta. Te recomendamos actualizar tu perfil para mejorar tus oportunidades.
+                  </div>
+                  <?php endif; ?>
                   <?php endif; ?>
 
                   <?php if ($msgError): ?>
@@ -261,21 +317,20 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
                       <p class="utp-applied-text">Revisa el estado en <a href="postulaciones.php">"Mis Postulaciones"</a></p>
                     </div>
                   </div>
-                  <?php elseif ($oferta['estado'] === 'aprobada' && $oferta['estado_vacante'] !== 'rojo'): ?>
+                  <?php elseif ($oferta['estado'] === 'aprobada' && (int)($oferta['activo'] ?? 1) === 1 && (int)($oferta['vacantes'] ?? 0) > 0 && $oferta['estado_vacante'] !== 'rojo'): ?>
                   <!-- Apply Card -->
                   <div class="utp-detail-card mb-4">
                     <div class="text-center">
-                      <div class="utp-miniicon green mx-auto mb-3" style="width:56px;height:56px;border-radius:50%;">
-                        <i class="bi bi-send" style="font-size:24px;"></i>
+                      <div class="utp-miniicon utp-empty-icon-sm green mx-auto mb-3">
+                        <i class="bi bi-send"></i>
                       </div>
-                      <h3 style="font-size:18px; font-weight:600; color:#121212; margin-bottom:8px;">¿Te interesa esta oferta?</h3>
-                      <p style="color:#757575; font-size:14px; margin-bottom:16px;">Postúlate y el reclutador revisará tu perfil</p>
+                      <h3 class="utp-apply-title">¿Te interesa esta oferta?</h3>
+                      <p class="utp-apply-text">Postúlate y el reclutador revisará tu perfil</p>
                       <form method="POST" action="">
                         <input type="hidden" name="csrf_token" value="<?= Security::generateCsrfToken() ?>">
                         <input type="hidden" name="postularse" value="1">
-                        <textarea name="mensaje_postulacion" class="form-control mb-3" rows="3" 
-                                  placeholder="Mensaje opcional para el reclutador..." 
-                                  style="border-radius:12px; font-size:14px;"></textarea>
+                        <textarea name="mensaje_postulacion" class="form-control mb-3 utp-apply-textarea" rows="3" 
+                                  placeholder="Mensaje opcional para el reclutador..."></textarea>
                         <button type="submit" class="btn btn-utp-red btn-utp-lg w-100">
                           <i class="bi bi-send me-2"></i>Postularme
                         </button>
@@ -305,7 +360,11 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
                     </div>
                     <div class="utp-info-item mb-3">
                       <span class="utp-info-label">Email de contacto</span>
-                      <span class="utp-info-value"><?= htmlspecialchars($oferta['contacto'] ?? '—') ?></span>
+                      <?php if (!empty($oferta['contacto'])): ?>
+                        <a class="utp-info-value" href="mailto:<?= htmlspecialchars($oferta['contacto']) ?>"><?= htmlspecialchars($oferta['contacto']) ?></a>
+                      <?php else: ?>
+                        <span class="utp-info-value">—</span>
+                      <?php endif; ?>
                     </div>
                     <?php if (!empty($oferta['nombre_contacto'])): ?>
                     <div class="utp-info-item mb-3">

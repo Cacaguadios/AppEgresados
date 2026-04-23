@@ -344,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
       skills.forEach(function(s, i) {
         const chip = document.createElement('span');
         chip.className = 'utp-skill-chip-sm d-inline-flex align-items-center gap-1';
-        chip.innerHTML = s + ' <i class="bi bi-x" style="cursor:pointer" onclick="removeSkill(' + i + ')"></i>';
+        chip.innerHTML = s + ' <i class="bi bi-x utp-clickable" onclick="removeSkill(' + i + ')"></i>';
         container.appendChild(chip);
       });
       document.getElementById('habilidadesJson').value = JSON.stringify(skills);

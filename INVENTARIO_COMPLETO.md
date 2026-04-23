@@ -13,8 +13,8 @@
 | Lenguaje | PHP 8.0+ |
 | Base de datos | MySQL (`bolsa_trabajo_utp`), PDO |
 | UI | Bootstrap 5.3.0 (CDN), Bootstrap Icons 1.11.0 |
-| Servidor | XAMPP / Apache en Windows |
-| Ruta local | `C:\xampp\htdocs\AppEgresados` |
+| Servidor | Laragon / Apache en Windows |
+| Ruta local | `C:\laragon\www\AppEgresados` |
 | URL base | `/AppEgresados` |
 | Arquitectura | MVC personalizado sin framework. Las vistas incluyen guardas de sesión y lógica POST inline |
 | Roles | `egresado`, `docente`, `ti` (registro), `admin` |

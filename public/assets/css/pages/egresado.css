@@ -33,6 +33,18 @@
   margin: 0;
 }
 
+.utp-empty-briefcase-icon{
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: #bdbdbd;
+}
+
+.utp-empty-briefcase-icon i{ font-size: 48px; }
+
+.utp-empty-muted-title{ color: #757575; }
+
 @media (max-width: 575.98px){
   .utp-filter-card{ padding: 16px; }
   .utp-job-card{ padding: 16px; }
@@ -243,12 +255,220 @@
   color: #004CEB; font-size: 14px; font-weight: 500; line-height: 20px;
 }
 
+.utp-kpi-label{ color: #757575; font-size: 14px; line-height: 20px; }
+.utp-kpi-sub{ color: #999999; font-size: 13px; line-height: 18px; }
+
+.utp-complete-profile-card{
+  background: linear-gradient(135deg, #FFF8E7 0%, #FFEDCC 100%);
+  border-left: 4px solid #D97706;
+}
+
+.utp-shrink-0{ flex-shrink: 0; }
+.utp-flex-1{ flex: 1; }
+.utp-nowrap{ white-space: nowrap; }
+
+.utp-profile-tip-title{
+  font-size: 16px;
+  font-weight: 600;
+  color: #121212;
+  margin: 0;
+}
+
+.utp-profile-tip-text{
+  color: #757575;
+  font-size: 14px;
+  margin: 4px 0 0 0;
+}
+
+.utp-security-modal-content{
+  border-radius: 20px;
+  padding: 32px;
+}
+
+.utp-security-modal-title{
+  font-size: 24px;
+  font-weight: 600;
+  color: #121212;
+  margin: 0;
+}
+
+.utp-security-modal-text{
+  color: #757575;
+  font-size: 16px;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.utp-app-message{
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.utp-app-message-label{
+  font-size: 12px;
+  color: #757575;
+}
+
+.utp-app-message-text{
+  font-size: 13px;
+  color: #121212;
+}
+
+.utp-compat-box{
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--compat-bg, #f5f5f5);
+}
+
+.utp-compat-title{
+  font-size: 13px;
+  font-weight: 600;
+  color: #121212;
+}
+
+.utp-compat-icon,
+.utp-compat-pct{ color: var(--compat-color, #7A1501); }
+
+.utp-compat-pct{
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.utp-compat-track{
+  width: 100%;
+  height: 6px;
+  background-color: rgba(0, 0, 0, 0.10);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.utp-compat-fill{
+  width: var(--compat-pct, 0%);
+  height: 100%;
+  background-color: var(--compat-color, #7A1501);
+  transition: width 0.3s ease;
+}
+
+.utp-compat-label{
+  font-size: 12px;
+  color: #666666;
+  margin-top: 6px;
+}
+
+.utp-app-meta{
+  font-size: 13px;
+  color: #757575;
+}
+
+.utp-btn-compact{ border-radius: 8px; }
+.utp-badge-center{ align-self: center; }
+
+.utp-content-wrap{ min-height: calc(100vh - 65px); }
+
+.utp-progress-thin{ height: 8px; }
+
+.utp-progress-dynamic{ width: var(--utp-progress, 0%); }
+
+.utp-link-clean{ text-decoration: none; }
+
+.utp-clickable{ cursor: pointer; }
+
+.utp-warning-compact{ font-size: 13px; }
+
+.utp-security-strength-init{ width: 0%; }
+
+.utp-security-strength-label{ min-width: 70px; }
+
+.utp-apply-title{
+  font-size: 18px;
+  font-weight: 600;
+  color: #121212;
+  margin-bottom: 8px;
+}
+
+.utp-apply-text{
+  color: #757575;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.utp-apply-textarea{
+  border-radius: 12px;
+  font-size: 14px;
+}
+
 @media (max-width: 575.98px){
   .utp-stat-card{ padding: 12px; }
   .utp-stat-number{ font-size: 20px; line-height: 28px; }
   .utp-stat-label{ font-size: 12px; }
   .utp-application-card{ padding: 16px; }
   .utp-app-title{ font-size: 18px; line-height: 24px; }
+  .utp-security-modal-content{ padding: 20px; }
+  .utp-security-modal-title{ font-size: 20px; }
+  .utp-security-modal-text{ font-size: 14px; }
+}
+
+/* ===== Invitations Page ===== */
+.utp-card-link{
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.utp-card-link:hover,
+.utp-card-link:focus{
+  color: inherit;
+}
+
+.utp-card-link .utp-card{
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.utp-card-link:hover .utp-card{
+  transform: translateY(-1px);
+  box-shadow: 0px 25px 50px -12px rgba(0,0,0,0.10);
+}
+
+.utp-inv-filter{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.utp-empty-icon{
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.utp-empty-icon i{ font-size: 28px; }
+
+.utp-empty-icon-sm{
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+
+.utp-empty-icon-sm i{ font-size: 24px; }
+
+.utp-empty-title{
+  font-size: 20px;
+  font-weight: 600;
+  color: #121212;
+  margin: 0;
+}
+
+.utp-empty-text{
+  color: #757575;
+  font-size: 16px;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.utp-inv-card .utp-info-notice{
+  padding: 12px;
+  border-radius: 14px;
 }
 
 /* Badge Status Colors */

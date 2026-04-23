@@ -2,19 +2,26 @@
 
 ## Empezar a Probar en 2 Minutos
 
-### 1️⃣ Verifica que XAMPP esté corriendo
+### 1️⃣ Verifica que Laragon esté corriendo
 ```bash
-# En Windows, abre XAMPP Control Panel
-# Asegúrate que Apache y MySQL estén en verde
+# En Windows, abre Laragon
+# Asegúrate que Apache y MySQL estén activos
 ```
 
-### 2️⃣ Accede al registro
+### 2️⃣ Crea la base de datos y datos de prueba
+```bash
+php database/setup_laragon.php
+```
+
+O abre el script en el navegador si prefieres ejecutarlo desde el proyecto local.
+
+### 3️⃣ Accede al registro
 ```
 Abre en el navegador:
 http://localhost/AppEgresados/views/auth/register-step-1.php
 ```
 
-### 3️⃣ Completa el flujo rápido
+### 4️⃣ Completa el flujo rápido
 
 **PASO 1 (Rol):**
 - Selecciona cualquier rol (recomendado: Egresado)
@@ -40,6 +47,15 @@ http://localhost/AppEgresados/views/auth/register-step-1.php
 - Email: (el mostrado en credenciales)
 - Contraseña: (la mostrada en credenciales)
 - Click **Entrar**
+
+### Credenciales de prueba del seed
+- `admin` / `Admin1234!`
+- `maria.lopez` / `Docente123!`
+- `pedro.garcia` / `Docente123!`
+- `carlos.anzurez` / `Carlos1234!`
+- `juan.perez` / `Juan1234!`
+- `test.egresado` / `Test1234!`
+- `ana.ortiz` / `Ana1234!`
 
 ---
 

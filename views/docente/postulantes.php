@@ -34,12 +34,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_estado'])) {
             // Notificar al egresado
             $notifModel = new Notificacion();
             if ($nuevoEstado === 'contactado') {
-                $notifModel->onPostulanteSeleccionado($post['oferta_titulo'], $post['egresado_usuario_id']);
+              $notifModel->onPostulanteSeleccionado(
+                $post['oferta_titulo'],
+                $post['egresado_usuario_id'],
+                $post['egresado_email'] ?? null
+              );
+              // Req.9: solicitar feedback al docente sobre el resultado
+              $notifModel->onFeedbackSolicitado(
+                $post['oferta_titulo'],
+                $post['egresado_nombre'] ?? 'el candidato',
+                (int)$_SESSION['usuario_id'],
+                $postId,
+                $_SESSION['usuario_email'] ?? null
+              );
             } elseif ($nuevoEstado === 'rechazado') {
-                $notifModel->onPostulanteRechazado($post['oferta_titulo'], $post['egresado_usuario_id']);
+              $notifModel->onPostulanteRechazado(
+                $post['oferta_titulo'],
+                $post['egresado_usuario_id'],
+                $post['egresado_email'] ?? null
+              );
             }
         }
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_habilidades_blandas'])) {
+  if (Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+    $postId = (int)($_POST['postulacion_id'] ?? 0);
+    $habilidades = $_POST['habilidad'] ?? [];
+    $cumpleVals = $_POST['cumple'] ?? [];
+    $post = $postulacionModel->getById($postId);
+
+    if ($post && (int)$post['id_usuario_creador'] === (int)$_SESSION['usuario_id']) {
+      foreach ($habilidades as $idx => $habilidad) {
+        $habilidad = trim((string)$habilidad);
+        $cumple = $cumpleVals[$idx] ?? '';
+        if ($habilidad === '' || ($cumple !== '1' && $cumple !== '0')) {
+          continue;
+        }
+        $postulacionModel->evaluarHabilidadBlanda($postId, $habilidad, (int)$cumple, (int)$_SESSION['usuario_id']);
+      }
+      $msgExito = 'Evaluación de habilidades blandas guardada correctamente.';
+    }
+  }
 }
 
 // Filters
@@ -83,6 +120,7 @@ $estadoPostBadge = [
       currentPage: 'postulantes',
       requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
     };
+    window.UTP_CSRF_TOKEN = <?= json_encode(Security::generateCsrfToken()) ?>;
   </script>
 
   <div id="utp-notice-container"></div>
@@ -164,6 +202,15 @@ $estadoPostBadge = [
               $estado = $p['estado'] ?? 'pendiente';
               $badge = $estadoPostBadge[$estado] ?? $estadoPostBadge['pendiente'];
               $skills = json_decode($p['egresado_habilidades'] ?? '[]', true) ?: [];
+              $skillsBlandas = json_decode($p['habilidades_blandas'] ?? '[]', true) ?: [];
+              if (!empty($skillsBlandas)) {
+                $postulacionModel->inicializarChecklistHabilidadesBlandas((int)$p['id'], $skillsBlandas);
+              }
+              $evaluacionesBlandas = $postulacionModel->getEvaluacionHabilidadesBlandas((int)$p['id']);
+              $mapEvaluaciones = [];
+              foreach ($evaluacionesBlandas as $ev) {
+                $mapEvaluaciones[mb_strtolower((string)$ev['habilidad'])] = $ev;
+              }
               $fechaPost = $p['fecha_postulacion'] ? date('d/m/Y', strtotime($p['fecha_postulacion'])) : '—';
             ?>
             <article class="utp-postulante-card" data-name="<?= strtolower($pNombre) ?>" data-matricula="<?= strtolower($pMatricula) ?>">
@@ -190,6 +237,50 @@ $estadoPostBadge = [
                     <span class="utp-chip-sm"><?= htmlspecialchars($s) ?></span>
                   <?php endforeach; ?>
                 </div>
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($skillsBlandas)): ?>
+              <div class="utp-postulante-skills mt-2">
+                <span class="utp-skill-label">Habilidades blandas (cumple/no cumple):</span>
+                <form method="POST" class="mt-2">
+                  <?= Security::csrfField() ?>
+                  <input type="hidden" name="guardar_habilidades_blandas" value="1">
+                  <input type="hidden" name="postulacion_id" value="<?= (int)$p['id'] ?>">
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-2">
+                      <thead>
+                        <tr>
+                          <th>Habilidad</th>
+                          <th style="width: 180px;">Evaluación</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php foreach ($skillsBlandas as $hb):
+                          $evRow = $mapEvaluaciones[mb_strtolower((string)$hb)] ?? null;
+                          $evVal = isset($evRow['cumple']) ? (string)$evRow['cumple'] : '';
+                        ?>
+                        <tr>
+                          <td>
+                            <?= htmlspecialchars($hb) ?>
+                            <input type="hidden" name="habilidad[]" value="<?= htmlspecialchars($hb) ?>">
+                          </td>
+                          <td>
+                            <select name="cumple[]" class="form-select form-select-sm">
+                              <option value="" <?= $evVal === '' ? 'selected' : '' ?>>Pendiente</option>
+                              <option value="1" <?= $evVal === '1' ? 'selected' : '' ?>>Cumple</option>
+                              <option value="0" <?= $evVal === '0' ? 'selected' : '' ?>>No cumple</option>
+                            </select>
+                          </td>
+                        </tr>
+                        <?php endforeach; ?>
+                      </tbody>
+                    </table>
+                  </div>
+                  <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-save me-1"></i> Guardar evaluación
+                  </button>
+                </form>
               </div>
               <?php endif; ?>
 
@@ -224,6 +315,28 @@ $estadoPostBadge = [
                   data-telefono="<?= htmlspecialchars($pTelefono) ?>">
                   <i class="bi bi-envelope"></i> Contactar
                 </button>
+                <?php if ($estado === 'contactado' && empty($p['feedback_resultado'])): ?>
+                <button type="button" class="btn btn-sm btn-outline-warning btn-feedback"
+                  data-id="<?= (int)$p['id'] ?>"
+                  data-nombre="<?= htmlspecialchars($pNombre) ?>">
+                  <i class="bi bi-chat-dots"></i> Dar feedback
+                </button>
+                <?php elseif ($estado === 'contactado' && !empty($p['feedback_resultado'])): ?>
+                <span class="badge <?= $p['feedback_resultado'] === 'satisfecho' ? 'bg-success' : 'bg-secondary' ?>" title="<?= htmlspecialchars($p['feedback_comentario'] ?? '') ?>">
+                  <i class="bi bi-chat-check"></i> <?= $p['feedback_resultado'] === 'satisfecho' ? 'Satisfecho' : 'Insatisfecho' ?>
+                  <?php if ($p['feedback_trabajo'] !== null): ?>
+                    &bull; <?= $p['feedback_trabajo'] ? 'Obtuvo el empleo' : 'No obtuvo el empleo' ?>
+                  <?php endif; ?>
+                </span>
+                <?php endif; ?>
+                <?php if (empty($p['retirada'])): ?>
+                <button type="button" class="btn utp-btn-outline" onclick="darDeBajaPostulacion(<?= (int)$p['id'] ?>)">
+                  <i class="bi bi-archive"></i> Dar de baja
+                </button>
+                <?php endif; ?>
+                <button type="button" class="btn utp-btn-outline" onclick="borrarPostulacion(<?= (int)$p['id'] ?>)">
+                  <i class="bi bi-trash"></i> Borrar
+                </button>
               </div>
             </article>
             <?php endforeach; ?>
@@ -232,6 +345,58 @@ $estadoPostBadge = [
 
         </div>
       </main>
+    </div>
+  </div>
+
+  <!-- Modal Feedback -->
+  <div class="utp-modal-overlay" id="modalFeedback" style="display:none;">
+    <div class="utp-modal-contact">
+      <button type="button" class="utp-modal-close" aria-label="Cerrar" onclick="cerrarModalFeedback()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <div class="utp-modal-header">
+        <h2 class="utp-modal-title">Feedback del contacto</h2>
+        <p class="utp-modal-subtitle" id="feedbackSubtitle">¿Quedaste satisfecho con el candidato?</p>
+      </div>
+      <div class="utp-modal-body">
+        <input type="hidden" id="feedbackPostId" value="">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">¿Quedaste satisfecho con las propuestas?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="fb_resultado" id="fbSatisfecho" value="satisfecho">
+              <label class="form-check-label" for="fbSatisfecho">Sí, satisfecho</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="fb_resultado" id="fbInsatisfecho" value="insatisfecho">
+              <label class="form-check-label" for="fbInsatisfecho">No, insatisfecho</label>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">¿El candidato obtuvo el empleo?</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="fb_trabajo" id="fbTrabSi" value="1">
+              <label class="form-check-label" for="fbTrabSi">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="fb_trabajo" id="fbTrabNo" value="0">
+              <label class="form-check-label" for="fbTrabNo">No</label>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">¿Por qué? (opcional)</label>
+          <textarea id="feedbackComentario" class="form-control" rows="3" placeholder="Cuéntanos más sobre el resultado..."></textarea>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-utp-red w-100" onclick="enviarFeedback()">
+            <i class="bi bi-send me-1"></i> Enviar feedback
+          </button>
+          <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalFeedback()">Cancelar</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -256,7 +421,7 @@ $estadoPostBadge = [
         <div class="utp-contact-fields">
           <div class="utp-contact-field">
             <span class="utp-contact-label">Correo electrónico</span>
-            <span class="utp-contact-value" id="modalEmail"></span>
+            <a class="utp-contact-value" id="modalEmail" href="#" target="_blank" rel="noopener"></a>
           </div>
           <div class="utp-contact-field">
             <span class="utp-contact-label">Teléfono</span>
@@ -279,7 +444,9 @@ $estadoPostBadge = [
         document.getElementById('modalAvatar').textContent = btn.dataset.initials;
         document.getElementById('modalNombre').textContent = btn.dataset.nombre;
         document.getElementById('modalMatricula').textContent = btn.dataset.matricula;
-        document.getElementById('modalEmail').textContent = btn.dataset.email;
+        var emailEl = document.getElementById('modalEmail');
+        emailEl.textContent = btn.dataset.email;
+        emailEl.href = 'mailto:' + btn.dataset.email;
         document.getElementById('modalTelefono').textContent = btn.dataset.telefono;
         document.getElementById('modalContactar').style.display = 'flex';
       }
@@ -301,6 +468,87 @@ $estadoPostBadge = [
         card.style.display = (name.includes(q) || mat.includes(q)) ? '' : 'none';
       });
     });
+
+    function postAction(url, payload, okMsg) {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
+        },
+        body: JSON.stringify(Object.assign({}, payload || {}, {
+          csrf_token: window.UTP_CSRF_TOKEN || ''
+        }))
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          alert(okMsg);
+          location.reload();
+          return;
+        }
+        alert('Error: ' + (data.error || 'No se pudo completar la acción'));
+      })
+      .catch(() => alert('Error de conexión'));
+    }
+
+    function darDeBajaPostulacion(postulacionId) {
+      if (confirm('¿Dar de baja esta postulación?')) {
+        postAction('../../public/api/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId,
+          {postulacion_id: postulacionId},
+          'Postulación dada de baja correctamente');
+      }
+    }
+
+    function borrarPostulacion(postulacionId) {
+      if (confirm('¿Eliminar permanentemente esta postulación? Esta acción no se puede deshacer.')) {
+        postAction('../../public/api/postulaciones-update.php?action=eliminar&postulacion_id=' + postulacionId,
+          {postulacion_id: postulacionId},
+          'Postulación eliminada correctamente');
+      }
+    }
+
+    // Modal feedback
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.btn-feedback');
+      if (btn) {
+        document.getElementById('feedbackPostId').value  = btn.dataset.id;
+        document.getElementById('feedbackSubtitle').textContent = '¿Cómo resultó el contacto con ' + btn.dataset.nombre + '?';
+        document.querySelectorAll('input[name="fb_resultado"], input[name="fb_trabajo"]').forEach(function(r){ r.checked = false; });
+        document.getElementById('feedbackComentario').value = '';
+        document.getElementById('modalFeedback').style.display = 'flex';
+      }
+    });
+    function cerrarModalFeedback() {
+      document.getElementById('modalFeedback').style.display = 'none';
+    }
+    document.getElementById('modalFeedback').addEventListener('click', function(e) {
+      if (e.target === this) cerrarModalFeedback();
+    });
+    function enviarFeedback() {
+      var resultado = document.querySelector('input[name="fb_resultado"]:checked')?.value;
+      if (!resultado) { alert('Selecciona si quedaste satisfecho o no.'); return; }
+      var trabajo   = document.querySelector('input[name="fb_trabajo"]:checked')?.value ?? null;
+      var postId    = document.getElementById('feedbackPostId').value;
+      var comentario= document.getElementById('feedbackComentario').value;
+      fetch('../../public/api/feedback-postulacion.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.UTP_CSRF_TOKEN || '' },
+        body: JSON.stringify({
+          postulacion_id: parseInt(postId),
+          resultado: resultado,
+          quedo_en_trabajo: trabajo !== null ? parseInt(trabajo) : null,
+          comentario: comentario,
+          csrf_token: window.UTP_CSRF_TOKEN || ''
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) { cerrarModalFeedback(); location.reload(); }
+        else alert('Error: ' + (data.error || 'No se pudo guardar'));
+      })
+      .catch(() => alert('Error de conexión'));
+    }
   </script>
 </body>
 </html>

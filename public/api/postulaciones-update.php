@@ -1,7 +1,7 @@
 <?php
 /**
  * API Handler para actualizaciones de postulaciones
- * Acciones: retirar
+ * Acciones: retirar, restaurar, actualizar_estado, editar_mensaje, eliminar
  */
 
 session_start();
@@ -16,9 +16,20 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
 
 require_once __DIR__ . '/../../app/models/Postulacion.php';
 require_once __DIR__ . '/../../app/models/Egresado.php';
+require_once __DIR__ . '/../../app/models/Notificacion.php';
+require_once __DIR__ . '/../../app/helpers/Security.php';
 
-$action = $_GET['action'] ?? $_POST['action'] ?? null;
-$postulacionId = (int)($_GET['postulacion_id'] ?? $_POST['postulacion_id'] ?? 0);
+$input = json_decode(file_get_contents('php://input'), true) ?: [];
+
+$csrfToken = $_POST['csrf_token'] ?? ($input['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+if (!Security::validateCsrfToken($csrfToken)) {
+    http_response_code(419);
+    echo json_encode(['success' => false, 'error' => 'Token CSRF inválido']);
+    exit;
+}
+
+$action = $_GET['action'] ?? $_POST['action'] ?? ($input['action'] ?? null);
+$postulacionId = (int)($_GET['postulacion_id'] ?? $_POST['postulacion_id'] ?? ($input['postulacion_id'] ?? 0));
 
 if (!$postulacionId) {
     http_response_code(400);
@@ -35,38 +46,70 @@ if (!$postulacion) {
     exit;
 }
 
-// Validar que es el egresado propietario
+// Validar actor y permisos
 $egresadoModel = new Egresado();
 $egresado = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+$rol = $_SESSION['usuario_rol'] ?? '';
 
-if (!$egresado || $postulacion['id_egresado'] != $egresado['id']) {
-    // Si no es el egresado, verificar si es admin/docente
-    $esAdmin = $_SESSION['usuario_rol'] === 'admin';
-    $esDocente = $_SESSION['usuario_rol'] === 'docente' && $postulacion['id_usuario_creador'] == $_SESSION['usuario_id'];
-    
-    if (!$esAdmin && !$esDocente) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'No tienes permisos para esta acción']);
-        exit;
-    }
+$esAdmin = $rol === 'admin';
+$esCreadorOferta = ((int)$postulacion['id_usuario_creador'] === (int)$_SESSION['usuario_id']);
+$esEgresadoPropietario = ($rol === 'egresado') && $egresado && ((int)$postulacion['id_egresado'] === (int)$egresado['id']);
+
+if (!$esAdmin && !$esCreadorOferta && !$esEgresadoPropietario) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'No tienes permisos para esta acción']);
+    exit;
 }
 
 switch ($action) {
     case 'retirar':
-        // Solo el egresado puede retirar su postulación
-        if ($_SESSION['usuario_rol'] !== 'egresado' && $_SESSION['usuario_rol'] !== 'admin') {
+        if (!$esEgresadoPropietario && !$esAdmin && !$esCreadorOferta) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'No tienes permisos para retirar esta postulación']);
             exit;
         }
-        
+
         $postulacionModel->retirar($postulacionId);
+
+        // Notificar al docente si es el egresado quien retira
+        if ($esEgresadoPropietario && !$esAdmin && !$esCreadorOferta) {
+            $notifModel = new Notificacion();
+            $notifModel->onPostulacionRetirada(
+                $postulacion['oferta_titulo'],
+                trim(($_SESSION['usuario_nombre'] ?? '') . ' ' . ($_SESSION['usuario_apellidos'] ?? '')),
+                (int)$postulacion['id_usuario_creador'],
+                $postulacion['creador_email'] ?? null
+            );
+        }
+
         echo json_encode(['success' => true, 'message' => 'Postulación retirada correctamente']);
         break;
 
+    case 'restaurar':
+        if (!$esEgresadoPropietario && !$esAdmin && !$esCreadorOferta) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No tienes permisos para restaurar esta postulación']);
+            exit;
+        }
+
+        $postulacionModel->restaurar($postulacionId);
+        echo json_encode(['success' => true, 'message' => 'Postulación restaurada correctamente']);
+        break;
+
+    case 'editar_mensaje':
+        $mensaje = trim($_POST['mensaje'] ?? ($input['mensaje'] ?? ''));
+        $postulacionModel->updateMensaje($postulacionId, $mensaje);
+        echo json_encode(['success' => true, 'message' => 'Mensaje de postulación actualizado']);
+        break;
+
     case 'actualizar_estado':
-        // Docente/Admin puede actualizar estado
-        $nuevoEstado = $_POST['estado'] ?? null;
+        if (!$esAdmin && !$esCreadorOferta) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Solo quien publicó la oferta o administración puede actualizar estado']);
+            exit;
+        }
+
+        $nuevoEstado = $_POST['estado'] ?? ($input['estado'] ?? null);
         $estadosValidos = ['pendiente', 'preseleccionado', 'contactado', 'rechazado'];
         
         if (!in_array($nuevoEstado, $estadosValidos)) {
@@ -76,7 +119,43 @@ switch ($action) {
         }
 
         $postulacionModel->updateEstado($postulacionId, $nuevoEstado);
+
+        // Notificar al egresado en estados clave
+        $notifModel = new Notificacion();
+        if ($nuevoEstado === 'contactado') {
+            $notifModel->onPostulanteSeleccionado(
+                $postulacion['oferta_titulo'],
+                $postulacion['egresado_usuario_id'],
+                $postulacion['egresado_email'] ?? null
+            );
+            // Req.9: pedir feedback al ofertador sobre el resultado del contacto
+            $notifModel->onFeedbackSolicitado(
+                $postulacion['oferta_titulo'],
+                $postulacion['egresado_nombre'] ?? 'el candidato',
+                (int)$postulacion['id_usuario_creador'],
+                $postulacionId,
+                $postulacion['creador_oferta_email'] ?? null
+            );
+        } elseif ($nuevoEstado === 'rechazado') {
+            $notifModel->onPostulanteRechazado(
+                $postulacion['oferta_titulo'],
+                $postulacion['egresado_usuario_id'],
+                $postulacion['egresado_email'] ?? null
+            );
+        }
+
         echo json_encode(['success' => true, 'message' => 'Estado actualizado correctamente']);
+        break;
+
+    case 'eliminar':
+        if (!$esAdmin && !$esCreadorOferta && !$esEgresadoPropietario) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No tienes permisos para eliminar esta postulación']);
+            exit;
+        }
+
+        $postulacionModel->eliminar($postulacionId);
+        echo json_encode(['success' => true, 'message' => 'Postulación eliminada correctamente']);
         break;
 
     default:

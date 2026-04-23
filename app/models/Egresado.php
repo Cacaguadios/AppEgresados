@@ -82,6 +82,18 @@ class Egresado extends Database {
                 ORDER BY u.fecha_creacion DESC";
         return $this->fetchAll($sql);
     }
+
+    /**
+     * Obtener todos los egresados (simple)
+     */
+    public function getAll() {
+        $sql = "SELECT e.*, u.id AS id_usuario, u.email, u.nombre, u.apellidos
+                FROM egresados e
+                JOIN usuarios u ON e.id_usuario = u.id
+                WHERE u.activo = 1
+                ORDER BY u.nombre ASC, u.apellidos ASC";
+        return $this->fetchAll($sql);
+    }
     
     /**
      * Estadísticas de egresados
@@ -124,6 +136,117 @@ class Egresado extends Database {
     }
 
     /**
+     * Resumen ampliado para reportes admin.
+     */
+    public function getAdminReportSummary() {
+        $sql = "SELECT
+            COUNT(*) AS total,
+            SUM(COALESCE(trabaja_actualmente, 0) = 1) AS empleados,
+            SUM(COALESCE(trabaja_actualmente, 0) = 0) AS no_empleados,
+            SUM(COALESCE(trabaja_en_ti, 0) = 1) AS en_ti,
+            SUM(COALESCE(trabaja_actualmente, 0) = 1 AND (empresa_actual IS NOT NULL AND empresa_actual <> '')) AS con_empresa,
+            SUM(COALESCE(trabaja_actualmente, 0) = 1 AND (puesto_actual IS NOT NULL AND puesto_actual <> '')) AS con_puesto,
+            SUM(COALESCE(u.activo, 0) = 1) AS usuarios_activos,
+            ROUND(AVG(
+                CASE rango_salarial
+                    WHEN '0-8000' THEN 4000
+                    WHEN '8001-12000' THEN 10000
+                    WHEN '12001-18000' THEN 15000
+                    WHEN '18001-25000' THEN 21500
+                    WHEN '25001-35000' THEN 30000
+                    WHEN '35001+' THEN 40000
+                    ELSE NULL
+                END
+            ), 2) AS salario_promedio_estimado,
+            ROUND(AVG(
+                CASE
+                    WHEN fecha_inicio_empleo IS NOT NULL AND fecha_inicio_empleo <= CURDATE()
+                        THEN TIMESTAMPDIFF(MONTH, fecha_inicio_empleo, CURDATE())
+                    ELSE NULL
+                END
+            ), 2) AS promedio_meses_laborando
+        FROM egresados e
+        JOIN usuarios u ON e.id_usuario = u.id";
+
+        return $this->fetchOne($sql);
+    }
+
+    /**
+     * Top de empresas donde trabajan egresados.
+     */
+    public function getTopEmpresasEmpleadoras($limit = 10) {
+        $limit = max(1, (int)$limit);
+
+        $sql = "SELECT
+            empresa_actual AS empresa,
+            COUNT(*) AS total,
+            SUM(COALESCE(trabaja_en_ti, 0) = 1) AS en_ti
+        FROM egresados
+        WHERE COALESCE(trabaja_actualmente, 0) = 1
+          AND empresa_actual IS NOT NULL
+          AND TRIM(empresa_actual) <> ''
+        GROUP BY empresa_actual
+        ORDER BY total DESC, empresa_actual ASC
+        LIMIT {$limit}";
+
+        return $this->fetchAll($sql);
+    }
+
+    /**
+     * Filas normalizadas para exporte de egresados.
+     */
+    public function getExportRows() {
+        $sql = "SELECT
+            e.matricula,
+            CONCAT(u.nombre, ' ', IFNULL(u.apellidos, '')) AS nombre,
+            u.email,
+            e.correo_personal,
+            e.curp,
+            e.generacion,
+            e.especialidad,
+            CASE WHEN COALESCE(e.trabaja_actualmente, 0) = 1 THEN 'Si' ELSE 'No' END AS trabaja_actualmente,
+            CASE WHEN COALESCE(e.trabaja_en_ti, 0) = 1 THEN 'Si' ELSE 'No' END AS trabaja_en_ti,
+            e.empresa_actual,
+            e.puesto_actual,
+            e.modalidad_trabajo,
+            e.tipo_contrato,
+            e.rango_salarial,
+            e.telefono,
+            e.fecha_actualizacion_seguimiento,
+            CASE WHEN COALESCE(u.activo, 0) = 1 THEN 'Activo' ELSE 'Bloqueado' END AS estado_usuario
+        FROM egresados e
+        JOIN usuarios u ON e.id_usuario = u.id
+        ORDER BY u.nombre ASC, u.apellidos ASC";
+
+        return $this->fetchAll($sql);
+    }
+
+    /**
+     * Filas de empleadores para exporte.
+     */
+    public function getEmployerRows() {
+        $sql = "SELECT
+            CONCAT(u.nombre, ' ', IFNULL(u.apellidos, '')) AS egresado,
+            e.matricula,
+            e.empresa_actual,
+            e.puesto_actual,
+            e.especialidad,
+            CASE WHEN COALESCE(e.trabaja_en_ti, 0) = 1 THEN 'Si' ELSE 'No' END AS trabaja_en_ti,
+            e.modalidad_trabajo,
+            e.tipo_contrato,
+            e.rango_salarial,
+            e.fecha_actualizacion_seguimiento
+        FROM egresados e
+        JOIN usuarios u ON e.id_usuario = u.id
+        WHERE COALESCE(e.trabaja_actualmente, 0) = 1
+          AND e.empresa_actual IS NOT NULL
+          AND TRIM(e.empresa_actual) <> ''
+        ORDER BY e.empresa_actual ASC, u.nombre ASC, u.apellidos ASC";
+
+        return $this->fetchAll($sql);
+    }
+
+    /**
      * Obtener todos los egresados con datos completos para seguimiento admin
      */
     public function getAllSeguimiento() {
@@ -149,29 +272,28 @@ class Egresado extends Database {
      * - Desarrollo: habilidades, anos_experiencia_ti, descripcion_experiencia
      */
     public function calcularCompletudinformacion($egresado_data) {
-        // Campos que consideramos para la completitud
-        $campos_perfil = [
-            'nombre',                    // del usuario
-            'correo_personal',           // contacto
-            'telefono',                  // contacto
-            'especialidad',              // info académica
-        ];
-        
-        $campos_laborales = [
-            'empresa_actual',            // empleo actual
-            'puesto_actual',             // rol
-            'modalidad_trabajo',         // presencial/híbrido/remoto
-            'jornada_trabajo',          // completo/parcial
-            'tipo_contrato',            // tipo de contrato
-            'habilidades',              // competencias
+        $campos_info = [
+            'nombre' => 'Nombre',
+            'correo_personal' => 'Correo personal',
+            'telefono' => 'Telefono',
+            'especialidad' => 'Especialidad',
+            'empresa_actual' => 'Empresa actual',
+            'puesto_actual' => 'Puesto actual',
+            'modalidad_trabajo' => 'Modalidad de trabajo',
+            'jornada_trabajo' => 'Jornada de trabajo',
+            'tipo_contrato' => 'Tipo de contrato',
+            'habilidades' => 'Habilidades tecnicas',
         ];
 
-        $campos_total = array_merge($campos_perfil, $campos_laborales);
+        $campos_total = array_keys($campos_info);
         $campos_llenos = 0;
+        $campos_faltantes_detalle = [];
 
         foreach ($campos_total as $campo) {
             if (!empty($egresado_data[$campo])) {
                 $campos_llenos++;
+            } else {
+                $campos_faltantes_detalle[] = $campos_info[$campo] ?? $campo;
             }
         }
 
@@ -181,7 +303,8 @@ class Egresado extends Database {
             'porcentaje' => $porcentaje,
             'campos_llenos' => $campos_llenos,
             'campos_totales' => count($campos_total),
-            'campos_faltantes' => count($campos_total) - $campos_llenos
+            'campos_faltantes' => count($campos_total) - $campos_llenos,
+            'campos_faltantes_detalle' => $campos_faltantes_detalle,
         ];
     }
 
@@ -225,17 +348,15 @@ class Egresado extends Database {
         $debe_mostrar = false;
         $razon = '';
 
-        // Mostrar si:
-        // 1. Tiene menos del 60% de info Y no ha visto el recordatorio en 30 días
-        if ($completitud['porcentaje'] < 60) {
-            if (empty($fecha_proximo) || strtotime($fecha_proximo) <= time()) {
-                $debe_mostrar = true;
-                $razon = 'completitud_baja';
-            }
+        $ya_corresponde_recordatorio = empty($fecha_proximo) || strtotime($fecha_proximo) <= time();
+
+        // Mostrar únicamente cuando ya corresponde una nueva ventana trimestral.
+        if ($ya_corresponde_recordatorio && $completitud['porcentaje'] < 60) {
+            $debe_mostrar = true;
+            $razon = 'completitud_baja';
         }
 
-        // 2. Información laboral no actualizada hace 3 meses
-        if ($necesita_actualizacion && !$recordatorio_visto) {
+        if ($ya_corresponde_recordatorio && $necesita_actualizacion) {
             $debe_mostrar = true;
             $razon = $razon ?: 'actualizacion_vencida';
         }
@@ -247,6 +368,7 @@ class Egresado extends Database {
             'campos_llenos' => $completitud['campos_llenos'],
             'campos_totales' => $completitud['campos_totales'],
             'campos_faltantes' => $completitud['campos_faltantes'],
+            'campos_faltantes_detalle' => $completitud['campos_faltantes_detalle'] ?? [],
             'necesita_actualizacion' => $necesita_actualizacion,
             'recordatorio_visto' => (bool)$recordatorio_visto
         ];
@@ -256,8 +378,8 @@ class Egresado extends Database {
      * Marcar recordatorio como visto (el usuario lo cerró)
      */
     public function marcarRecordatorioVisto($id_usuario) {
-        // Establecer próximo recordatorio para 30 días después
-        $fecha_proximo = date('Y-m-d H:i:s', strtotime('+30 days'));
+        // Establecer próximo recordatorio para 3 meses después
+        $fecha_proximo = date('Y-m-d H:i:s', strtotime('+3 months'));
         
         $this->update('egresados', [
             'recordatorio_visto' => 1,

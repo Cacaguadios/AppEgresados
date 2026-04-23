@@ -6,6 +6,7 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SES
 }
 
 require_once __DIR__ . '/../../app/models/Oferta.php';
+require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
 $apellidos = $_SESSION['usuario_apellidos'] ?? '';
@@ -51,6 +52,7 @@ $msgCreada = isset($_GET['creada']);
       currentPage: 'mis-ofertas',
       requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
     };
+    window.UTP_CSRF_TOKEN = <?= json_encode(Security::generateCsrfToken()) ?>;
   </script>
 
   <div id="utp-notice-container"></div>
@@ -170,10 +172,13 @@ $msgCreada = isset($_GET['creada']);
                     <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
                       <i class="bi bi-pencil me-1"></i> Editar
                     </a>
+                    <a href="invitar-egresados.php?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
+                      <i class="bi bi-hand-thumbs-up me-1"></i> Invitar
+                    </a>
                     <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius:8px;" onclick="confirmarBaja(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
                       <i class="bi bi-x-circle me-1"></i> Dar de baja
                     </button>
-                    <a href="postulantes.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto" style="border-radius:8px;">
+                    <a href="postulantes.php?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto" style="border-radius:8px;">
                       <i class="bi bi-people me-1"></i> <?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?>
                     </a>
                   <?php elseif ($o['activo'] == 0): ?>
@@ -208,8 +213,14 @@ $msgCreada = isset($_GET['creada']);
       if (confirm('Confirmas que deseas dar de baja la oferta: ' + titulo + '?\n\nEsto ocultará la oferta pero podrás reactivarla después.')) {
         fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({oferta_id: ofertaId})
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
+          },
+          body: JSON.stringify({
+            oferta_id: ofertaId,
+            csrf_token: window.UTP_CSRF_TOKEN || ''
+          })
         })
         .then(r => r.json())
         .then(data => {
@@ -227,8 +238,14 @@ $msgCreada = isset($_GET['creada']);
       if (confirm('Confirmas que deseas reactivar la oferta: ' + titulo + '?')) {
         fetch('../../public/api/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({oferta_id: ofertaId})
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': window.UTP_CSRF_TOKEN || ''
+          },
+          body: JSON.stringify({
+            oferta_id: ofertaId,
+            csrf_token: window.UTP_CSRF_TOKEN || ''
+          })
         })
         .then(r => r.json())
         .then(data => {

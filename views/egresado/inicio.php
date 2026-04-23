@@ -112,10 +112,10 @@ if ($egresado) {
 
             <!-- Encabezado -->
             <div class="mb-4">
-              <h1 style="font-size:36px; font-weight:700; line-height:40px; color:#121212;">
+              <h1 class="utp-h1">
                 Bienvenido de vuelta
               </h1>
-              <p style="color:#757575; font-size:18px; line-height:28px; margin-top:8px;">
+              <p class="utp-subtitle mt-2 mb-0">
                 Aquí está un resumen de tu actividad
               </p>
             </div>
@@ -130,8 +130,8 @@ if ($egresado) {
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $ofertasDisponibles ?></div>
-                  <div style="color:#757575; font-size:14px;">Activas</div>
-                  <div style="color:#999; font-size:13px;">Ofertas disponibles</div>
+                  <div class="utp-kpi-label">Activas</div>
+                  <div class="utp-kpi-sub">Ofertas disponibles</div>
                 </div>
               </div>
               <div class="col-6 col-lg-3">
@@ -142,8 +142,8 @@ if ($egresado) {
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $misPostulaciones ?></div>
-                  <div style="color:#757575; font-size:14px;">Total</div>
-                  <div style="color:#999; font-size:13px;">Mis aplicaciones</div>
+                  <div class="utp-kpi-label">Total</div>
+                  <div class="utp-kpi-sub">Mis aplicaciones</div>
                 </div>
               </div>
               <div class="col-6 col-lg-3">
@@ -154,7 +154,7 @@ if ($egresado) {
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $enRevision ?></div>
-                  <div style="color:#757575; font-size:14px;">En revisión</div>
+                  <div class="utp-kpi-label">En revisión</div>
                 </div>
               </div>
               <div class="col-6 col-lg-3">
@@ -165,15 +165,15 @@ if ($egresado) {
                     </div>
                   </div>
                   <div class="utp-kpi"><?= $perfilCompleto ?>%</div>
-                  <div style="color:#757575; font-size:14px;">Perfil</div>
-                  <div style="color:#999; font-size:13px;">Completado</div>
+                  <div class="utp-kpi-label">Perfil</div>
+                  <div class="utp-kpi-sub">Completado</div>
                 </div>
               </div>
             </div>
 
             <!-- Acciones rápidas -->
             <div class="mb-4">
-              <h2 style="font-size:24px; font-weight:600; line-height:32px; color:#121212; margin-bottom:16px;">
+              <h2 class="utp-h2 mb-3">
                 Acciones rápidas
               </h2>
               <div class="row g-3">
@@ -226,18 +226,18 @@ if ($egresado) {
 
             <!-- Completa tu perfil -->
             <?php if ($perfilCompleto < 100): ?>
-            <div class="utp-card utp-complete-profile-card" style="background:linear-gradient(135deg, #FFF8E7 0%, #FFEDCC 100%); border-left:4px solid #D97706;">
+            <div class="utp-card utp-complete-profile-card">
               <div class="d-flex align-items-start gap-3">
-                <div class="utp-miniicon orange" style="flex-shrink:0;">
-                  <i class="bi bi-person-badge" style="font-size:20px;"></i>
+                <div class="utp-miniicon orange utp-shrink-0">
+                  <i class="bi bi-person-badge"></i>
                 </div>
-                <div style="flex:1;">
-                  <h3 style="font-size:16px; font-weight:600; color:#121212; margin:0;">Completa tu perfil</h3>
-                  <p style="color:#757575; font-size:14px; margin:4px 0 0 0;">
+                <div class="utp-flex-1">
+                  <h3 class="utp-profile-tip-title">Completa tu perfil</h3>
+                  <p class="utp-profile-tip-text">
                     Un perfil completo aumenta tus posibilidades de selección. Le falta <?= (100 - $perfilCompleto) ?>% para completarlo.
                   </p>
                 </div>
-                <a href="perfil.php" class="btn btn-utp-red" style="flex-shrink:0; white-space:nowrap;">
+                <a href="perfil.php" class="btn btn-utp-red utp-shrink-0 utp-nowrap">
                   Completar ahora
                 </a>
               </div>
@@ -257,13 +257,13 @@ if ($egresado) {
   <?php if ($requirePasswordChange): ?>
   <div class="modal fade" id="securityReminderModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content utp-modal" style="border-radius:20px; padding:32px;">
+      <div class="modal-content utp-modal utp-security-modal-content">
         <div class="text-center mb-4">
-          <div class="utp-miniicon yellow mx-auto mb-3" style="width:64px;height:64px;border-radius:50%;">
-            <i class="bi bi-shield-lock" style="font-size:28px;"></i>
+          <div class="utp-miniicon utp-empty-icon yellow mx-auto mb-3">
+            <i class="bi bi-shield-lock"></i>
           </div>
-          <h3 style="font-size:24px; font-weight:600; color:#121212;">Cambia tu contraseña</h3>
-          <p style="color:#757575; font-size:16px; margin-top:8px;">
+          <h3 class="utp-security-modal-title">Cambia tu contraseña</h3>
+          <p class="utp-security-modal-text">
             Estás usando una contraseña temporal generada durante tu registro.
             Te recomendamos cambiarla para proteger tu cuenta.
           </p>
