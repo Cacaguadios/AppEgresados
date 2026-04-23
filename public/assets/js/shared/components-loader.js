@@ -11,11 +11,44 @@
 
   /* ---------- Helpers de rutas ---------- */
 
-  /** Raíz de la app, ej: /AppEgresados */
+  /** Raiz de la app, por ejemplo: /AppEgresados o '' en dominio raiz */
   function getAppBase() {
+    if (typeof DATA.appBase === 'string') {
+      return DATA.appBase;
+    }
+
+    // Derivar desde la URL del script cargado
+    var current = document.currentScript;
+    if (current && current.src) {
+      try {
+        var scriptPath = new URL(current.src, window.location.origin).pathname;
+        var marker = '/public/assets/';
+        var markerIdx = scriptPath.indexOf(marker);
+        if (markerIdx !== -1) {
+          return scriptPath.substring(0, markerIdx);
+        }
+      } catch (e) {
+        // continuar con otros metodos
+      }
+    }
+
     const path = window.location.pathname;
-    const idx = path.indexOf('/AppEgresados');
-    return idx !== -1 ? path.substring(0, idx) + '/AppEgresados' : '/AppEgresados';
+    const markers = ['/views/', '/public/'];
+
+    for (const marker of markers) {
+      const idx = path.indexOf(marker);
+      if (idx !== -1) {
+        return path.substring(0, idx);
+      }
+    }
+
+    // Fallback para rutas limpias tipo /AppEgresados/egresado/inicio
+    var parts = path.split('/').filter(Boolean);
+    if (parts.length > 0) {
+      return '/' + parts[0];
+    }
+
+    return '';
   }
 
   /** Ruta a la carpeta compartido/ (componentes HTML) */
@@ -31,7 +64,7 @@
   /** Ruta a la carpeta de vistas del rol activo */
   function getViewBase() {
     const role = DATA.role || 'egresado';
-    return getAppBase() + '/views/' + role + '/';
+    return getAppBase() + '/' + role + '/';
   }
 
   /* ---------- Cargador de componentes ---------- */
@@ -48,6 +81,9 @@
       let html = await resp.text();
 
       // Reemplazar placeholders
+      html = html.replace(/\{BASE\}([a-z0-9-]+)\.php/gi, function (_, page) {
+        return getViewBase() + page;
+      });
       html = html.replace(/\{BASE\}/g, getViewBase());
       html = html.replace(/\{ASSETS\}/g, getAssetBase());
       html = html.replace(/\{APP\}/g, getAppBase());
@@ -90,8 +126,8 @@
     // Links con data-link
     container.querySelectorAll('[data-link]').forEach(function (el) {
       const link = el.getAttribute('data-link');
-      const viewBase = getViewBase();
       const appBase = getAppBase();
+      const roleBase = appBase + '/' + (DATA.role || 'egresado');
 
       switch (link) {
         case 'profile':
@@ -99,24 +135,24 @@
             el.closest('li').remove();
             return;
           }
-          if (el.tagName === 'A') el.href = viewBase + 'perfil.php';
+          if (el.tagName === 'A') el.href = roleBase + '/perfil';
           break;
         case 'security':
           if ((DATA.role === 'docente' || DATA.role === 'ti') && el.closest('li')) {
             el.closest('li').remove();
             return;
           }
-          if (el.tagName === 'A') el.href = viewBase + 'seguridad.php';
+          if (el.tagName === 'A') el.href = roleBase + '/seguridad';
           break;
         case 'notifications':
-          if (el.tagName === 'A') el.href = appBase + '/views/notificaciones/index.php';
+          if (el.tagName === 'A') el.href = appBase + '/notificaciones';
           break;
         case 'logout':
           if (el.tagName === 'A') {
-            el.href = appBase + '/views/auth/logout.php';
+            el.href = appBase + '/logout';
           } else {
             el.addEventListener('click', function () {
-              window.location.href = appBase + '/views/auth/logout.php';
+              window.location.href = appBase + '/logout';
             });
           }
           break;

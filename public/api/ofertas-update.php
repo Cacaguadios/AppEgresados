@@ -90,6 +90,39 @@ switch ($action) {
                 $data[$campo] = trim($_POST[$campo]);
             }
         }
+
+        $contactFields = ['contacto', 'nombre_contacto', 'puesto_contacto', 'telefono_contacto'];
+        $contactoEnRequest = false;
+        foreach ($contactFields as $field) {
+            if (isset($_POST[$field])) {
+                $contactoEnRequest = true;
+                break;
+            }
+        }
+
+        if ($contactoEnRequest) {
+            $contactoFinal = trim((string)($data['contacto'] ?? $oferta['contacto'] ?? ''));
+            $nombreContactoFinal = trim((string)($data['nombre_contacto'] ?? $oferta['nombre_contacto'] ?? ''));
+            $puestoContactoFinal = trim((string)($data['puesto_contacto'] ?? $oferta['puesto_contacto'] ?? ''));
+            $telefonoContactoFinal = trim((string)($data['telefono_contacto'] ?? $oferta['telefono_contacto'] ?? ''));
+
+            if ($contactoFinal === '' || $nombreContactoFinal === '' || $puestoContactoFinal === '' || $telefonoContactoFinal === '') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Toda la información de contacto es obligatoria (email, nombre, puesto y teléfono).']);
+                exit;
+            }
+
+            if (!filter_var($contactoFinal, FILTER_VALIDATE_EMAIL)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'El email de contacto no es válido.']);
+                exit;
+            }
+
+            $data['contacto'] = $contactoFinal;
+            $data['nombre_contacto'] = $nombreContactoFinal;
+            $data['puesto_contacto'] = $puestoContactoFinal;
+            $data['telefono_contacto'] = $telefonoContactoFinal;
+        }
         
         // Requisitos, beneficios, habilidades (arrays JSON)
         if (isset($_POST['requisitos'])) {

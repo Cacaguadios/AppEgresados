@@ -43,7 +43,7 @@ $promedioAniosLaborando = $promedioMesesLaborando > 0 ? round($promedioMesesLabo
   <title>Reportes Admin - UTP</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../public/assets/css/app-main.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/app-main.css" rel="stylesheet">
   <style>
     .utp-report-card {
       min-height: 420px;
@@ -342,8 +342,8 @@ $promedioAniosLaborando = $promedioMesesLaborando > 0 ? round($promedioMesesLabo
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="../../public/assets/js/shared/components-loader.js"></script>
-  <script src="../../public/assets/js/shared/app.js"></script>
-  <script src="../../public/assets/js/reportes.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/components-loader.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/reportes.js"></script>
 </body>
 </html>

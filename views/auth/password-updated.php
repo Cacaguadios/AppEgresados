@@ -1,16 +1,19 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$baseUrl = '/AppEgresados';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '../admin/inicio.php', 'docente','ti' => '../docente/inicio.php', default => '../egresado/inicio.php' };
+    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
     header('Location: ' . $r);
     exit;
 }
 
 // Verificar que venga del flujo de recuperación
 if (empty($_SESSION['password_updated'])) {
-    header('Location: login.php');
+    header('Location: ' . $baseUrl . '/login');
     exit;
 }
 
@@ -30,9 +33,9 @@ unset($_SESSION['password_updated']);
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 
   <!-- Global Styles -->
-  <link href="../../public/assets/css/global.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/global.css" rel="stylesheet">
   <!-- Auth Styles -->
-  <link href="../../public/assets/css/auth.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/auth.css" rel="stylesheet">
 </head>
 
 <body>
@@ -54,7 +57,7 @@ unset($_SESSION['password_updated']);
         </header>
 
         <!-- CTA -->
-        <a class="btn btn-utp-green text-white w-100 auth-cta" href="login.php">
+        <a class="btn btn-utp-green text-white w-100 auth-cta" href="/AppEgresados/login">
           <i class="bi bi-box-arrow-in-right me-2"></i>Ir al inicio de sesión
         </a>
       </section>
@@ -63,6 +66,6 @@ unset($_SESSION['password_updated']);
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../public/assets/js/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/app.js"></script>
 </body>
 </html>

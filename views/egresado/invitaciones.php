@@ -55,7 +55,7 @@ $statusLabels = [
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../public/assets/css/app-main.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/app-main.css" rel="stylesheet">
 </head>
 
 <body class="bg-soft">
@@ -247,8 +247,8 @@ $statusLabels = [
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../public/assets/js/shared/components-loader.js"></script>
-  <script src="../../public/assets/js/shared/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/components-loader.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
   <script>
     async function aceptarInvitacion(invitacionId) {
       if (!confirm('¿Deseas aceptar esta invitación y postularte a la vacante?')) return;

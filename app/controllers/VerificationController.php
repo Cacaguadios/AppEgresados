@@ -83,12 +83,19 @@ class VerificationController {
         $expiration = date('Y-m-d H:i:s', strtotime('+10 minutes'));
         $this->usuarioModel->createVerificationCode($email, $code, $tipo, $expiration);
 
-        // Simular envío de correo (en producción usar PHPMailer/SMTP)
-        $this->simulateEmail($email, $code, $tipo);
+        // Enviar correo (SMTP en producción o log en desarrollo)
+        $mailResult = $this->sendVerificationEmail($email, $code, $tipo);
+
+        if (!($mailResult['success'] ?? false)) {
+            return [
+                'success' => false,
+                'message' => $mailResult['message'] ?? 'No se pudo enviar el correo de verificación.'
+            ];
+        }
 
         return [
             'success' => true,
-            'message' => 'Código de verificación enviado a ' . $email
+            'message' => $mailResult['message'] ?? ('Código de verificación enviado a ' . $email)
         ];
     }
 
@@ -249,12 +256,102 @@ class VerificationController {
     }
 
     /* ================================================================
-     *  Simular envío de email (desarrollo)
+     *  Enviar email de verificación (SMTP o log)
      * ================================================================ */
-    private function simulateEmail($to, $code, $tipo) {
+    private function sendVerificationEmail($to, $code, $tipo) {
         $subject = $tipo === 'registro' 
             ? 'Código de verificación - Registro UTP' 
             : 'Código de recuperación - UTP';
+
+        $message = $tipo === 'registro'
+            ? "Tu código de verificación es: {$code}. Expira en 10 minutos."
+            : "Tu código de recuperación es: {$code}. Expira en 10 minutos.";
+
+        $driver = strtolower((string) (getenv('MAIL_DRIVER') ?: 'log'));
+
+        if ($driver === 'smtp') {
+            if ($this->sendEmailViaSmtp($to, $subject, $message)) {
+                return [
+                    'success' => true,
+                    'message' => 'Código de verificación enviado a ' . $to
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'No se pudo enviar el correo de verificación por SMTP. Verifica MAIL_HOST, MAIL_PORT, MAIL_USER y MAIL_PASS.'
+            ];
+        }
+
+        $this->logSimulatedEmail($to, $subject, $code, $tipo);
+
+        return [
+            'success' => true,
+            'message' => 'Código generado en modo local (MAIL_DRIVER=log). Revisa storage/logs/emails.log para ver el código.'
+        ];
+    }
+
+    private function sendEmailViaSmtp($to, $subject, $message) {
+        $autoload = __DIR__ . '/../../vendor/autoload.php';
+        if (file_exists($autoload)) {
+            require_once $autoload;
+        }
+
+        if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+            return false;
+        }
+
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+
+            $host = getenv('MAIL_HOST') ?: '';
+            $port = (int) (getenv('MAIL_PORT') ?: 587);
+            $user = getenv('MAIL_USER') ?: '';
+            $pass = getenv('MAIL_PASS') ?: '';
+            $from = getenv('MAIL_FROM') ?: $user;
+            $fromName = getenv('MAIL_FROM_NAME') ?: (getenv('APP_NAME') ?: 'AppEgresados UTP');
+            $encryption = strtolower((string) (getenv('MAIL_ENCRYPTION') ?: 'tls'));
+
+            if ($host === '' || $from === '') {
+                return false;
+            }
+
+            $mail->isSMTP();
+            $mail->Host = $host;
+            $mail->Port = $port;
+
+            if ($user !== '' && $pass !== '') {
+                $mail->SMTPAuth = true;
+                $mail->Username = $user;
+                $mail->Password = $pass;
+            } else {
+                $mail->SMTPAuth = false;
+            }
+
+            if ($encryption === 'ssl') {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            $mail->CharSet = 'UTF-8';
+            $mail->setFrom($from, $fromName);
+            $mail->addAddress($to);
+            $mail->Subject = $subject;
+            $mail->isHTML(false);
+            $mail->Body = $message;
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /* ================================================================
+     *  Registrar envío simulado de email (fallback)
+     * ================================================================ */
+    private function logSimulatedEmail($to, $subject, $code, $tipo) {
 
         $logDir = __DIR__ . '/../../storage/logs';
         if (!is_dir($logDir)) {

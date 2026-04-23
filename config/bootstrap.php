@@ -4,8 +4,19 @@
  * Incluir al inicio de cada página
  */
 
-define('BASE_URL', '/AppEgresados');
-define('ASSETS_URL', BASE_URL . '/assets');
+$appBasePath = getenv('APP_BASE_PATH') ?: '/AppEgresados';
+$appBasePath = trim($appBasePath);
+
+if ($appBasePath === '' || $appBasePath === '/') {
+    $appBasePath = '';
+} else {
+    $appBasePath = '/' . trim($appBasePath, '/');
+}
+
+if (!defined('BASE_URL')) {
+    define('BASE_URL', $appBasePath);
+    define('ASSETS_URL', $appBasePath . '/public/assets');
+}
 
 // URLs de CDN Bootstrap
 define('BOOTSTRAP_CSS', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');

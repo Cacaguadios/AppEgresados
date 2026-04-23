@@ -1,16 +1,19 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$baseUrl = '/AppEgresados';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '../admin/inicio.php', 'docente','ti' => '../docente/inicio.php', default => '../egresado/inicio.php' };
+    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
     header('Location: ' . $r);
     exit;
 }
 
 // Verificar que venga del paso 3 (credenciales deben existir en sesión)
 if (!isset($_SESSION['nuevas_credenciales'])) {
-    header('Location: register-step-1.php');
+    header('Location: ' . $baseUrl . '/register-step-1');
     exit;
 }
 
@@ -58,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Redirigir a credenciales exitosas
-            header('Location: credentials-success.php');
+            header('Location: ' . $baseUrl . '/credentials-success');
             exit;
         } else {
             $errorMsg = $result['message'];
@@ -89,9 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 
   <!-- Global Styles -->
-  <link href="../../public/assets/css/global.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/global.css" rel="stylesheet">
   <!-- Auth Styles -->
-  <link href="../../public/assets/css/auth.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/auth.css" rel="stylesheet">
 </head>
 
 <body>
@@ -99,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container py-4 py-md-5">
 
       <!-- Back to login -->
-      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="login.php">
+      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="/AppEgresados/login">
         <i class="bi bi-chevron-left"></i>
         <span>Volver al inicio de sesión</span>
       </a>
@@ -108,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Header -->
         <header class="text-center auth-wizard-header">
           <img class="auth-wizard-icon mb-2"
-               src="../../public/assets/img/utp-logo.png"
+               src="<?= ASSETS_URL ?>/img/utp-logo.png"
                alt="Icono UTP" />
 
           <h1 class="auth-wizard-title mb-2">Verificar Correo</h1>
@@ -240,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../public/assets/js/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/app.js"></script>
 
   <script>
   (function() {

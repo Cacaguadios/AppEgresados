@@ -7,9 +7,36 @@
   'use strict';
 
   function getAppBase() {
+    var current = document.currentScript;
+    if (current && current.src) {
+      try {
+        var scriptPath = new URL(current.src, window.location.origin).pathname;
+        var marker = '/public/assets/';
+        var markerIdx = scriptPath.indexOf(marker);
+        if (markerIdx !== -1) {
+          return scriptPath.substring(0, markerIdx);
+        }
+      } catch (e) {
+        // continuar con deteccion por pathname
+      }
+    }
+
     var path = window.location.pathname;
-    var idx = path.indexOf('/AppEgresados');
-    return idx !== -1 ? path.substring(0, idx) + '/AppEgresados' : '/AppEgresados';
+    var markers = ['/views/', '/public/'];
+
+    for (var i = 0; i < markers.length; i++) {
+      var idx = path.indexOf(markers[i]);
+      if (idx !== -1) {
+        return path.substring(0, idx);
+      }
+    }
+
+    var parts = path.split('/').filter(Boolean);
+    if (parts.length > 0) {
+      return '/' + parts[0];
+    }
+
+    return '';
   }
 
   var API = getAppBase() + '/public/api/notificaciones.php';

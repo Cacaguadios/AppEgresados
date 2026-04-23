@@ -49,7 +49,7 @@ if ($egresado) {
 // Perfil completo (% basado en campos llenados)
 $perfilCompleto = 0;
 if ($egresado) {
-    $camposPerfil = ['matricula', 'correo_personal', 'telefono', 'especialidad', 'generacion', 'habilidades'];
+  $camposPerfil = ['matricula', 'especialidad', 'generacion', 'habilidades'];
     $llenos = 0;
     foreach ($camposPerfil as $campo) {
         if (!empty($egresado[$campo])) $llenos++;
@@ -75,7 +75,7 @@ if ($egresado) {
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <!-- App CSS -->
-  <link href="../../public/assets/css/app-main.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/app-main.css" rel="stylesheet">
 </head>
 
 <body>
@@ -284,10 +284,10 @@ if ($egresado) {
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Shared -->
-  <script src="../../public/assets/js/shared/components-loader.js"></script>
-  <script src="../../public/assets/js/shared/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/components-loader.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
   <!-- Page -->
-  <script src="../../public/assets/js/egresado/inicio.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/egresado/inicio.js"></script>
   
   <!-- Inicializar recordatorio de actualización -->
   <script>

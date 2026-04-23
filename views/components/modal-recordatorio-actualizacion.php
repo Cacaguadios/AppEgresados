@@ -10,29 +10,28 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
 <!-- Modal Recordatorio de Actualización -->
 <div class="modal fade" id="modalRecordatorioActualizacion" tabindex="-1" aria-labelledby="modalRecordatorioLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content border-0 shadow-lg">
-      <!-- Header con color de alerta -->
-      <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-        <div class="d-flex align-items-center gap-3" style="width: 100%;">
-          <div class="icon-wrapper" style="font-size: 2.5rem;">
-            <i class="bi bi-exclamation-circle-fill text-white"></i>
+    <div class="modal-content utp-modal utp-reminder-modal-content">
+      <div class="modal-header utp-reminder-modal-header border-0">
+        <div class="d-flex align-items-center gap-3 w-100">
+          <div class="utp-miniicon utp-empty-icon cyan utp-shrink-0">
+            <i class="bi bi-info-circle"></i>
           </div>
           <div>
-            <h5 class="modal-title text-white mb-0" id="modalRecordatorioLabel">
+            <h5 class="modal-title utp-reminder-modal-title mb-0" id="modalRecordatorioLabel">
               Actualiza tu Información
             </h5>
-            <small class="text-white-50">Te pedimos que revises tus datos laborales</small>
+            <small class="utp-reminder-modal-subtitle">Te pedimos que revises tus datos laborales</small>
           </div>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <!-- Body -->
       <div class="modal-body p-4">
-        <div class="alert alert-info border-start border-4 border-info mb-4" role="alert">
+        <div class="utp-reminder-banner mb-4" role="alert">
           <i class="bi bi-info-circle me-2"></i>
           <strong>Completitud de perfil: <span id="completitudPorcentaje">0</span>%</strong>
-          <p class="mb-0 mt-2 small">
+          <p class="mb-0 mt-2">
             Solo tienes el <span id="completitudMensaje">50%</span> de tu información laboral completada.
           </p>
         </div>
@@ -40,14 +39,14 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
         <!-- Progress bar -->
         <div class="mb-4">
           <div class="d-flex justify-content-between mb-2">
-            <label class="form-label small fw-bold">Progreso de completitud</label>
-            <span class="badge bg-primary" id="badgeCampos">0/0</span>
+            <label class="form-label fw-semibold mb-0">Progreso de completitud</label>
+            <span class="badge text-bg-primary" id="badgeCampos">0/0</span>
           </div>
-          <div class="progress" style="height: 25px;">
-            <div class="progress-bar bg-gradient" id="progressBarCompletudinformacion" role="progressbar" 
-                 style="width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%)" 
+          <div class="progress utp-reminder-progress">
+            <div class="progress-bar" id="progressBarCompletudinformacion" role="progressbar"
+                 style="width: 0%;"
                  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-              <span class="text-white fw-bold small" id="progressText">0%</span>
+              <span class="fw-semibold small" id="progressText">0%</span>
             </div>
           </div>
         </div>
@@ -59,7 +58,7 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
               <i class="bi bi-clipboard-check text-info me-2"></i>
               Campos que faltan completar:
             </h6>
-            <ul id="listaCamposFaltantes" class="list-unstyled">
+            <ul id="listaCamposFaltantes" class="list-unstyled mb-0 utp-reminder-missing-list">
               <!-- Se llenará dinámicamente -->
             </ul>
           </div>
@@ -73,7 +72,7 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
               No hemos visto cambios en tu información laboral en los últimos 3 meses. 
               Ayúdanos a mantener nuestra base de datos actualizada.
             </p>
-            <div class="bg-light p-3 rounded">
+            <div class="bg-light p-3 rounded-4">
               <small class="d-block mb-2"><strong>Información que podría cambiar:</strong></small>
               <ul class="list-unstyled small ms-2">
                 <li><i class="bi bi-briefcase me-2 text-primary"></i> Empresa donde trabajas</li>
@@ -86,7 +85,7 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
         </div>
 
         <!-- Información adicional -->
-        <div class="card bg-light border-0 mb-4">
+        <div class="card bg-light border-0 mb-0 rounded-4">
           <div class="card-body">
             <small class="text-muted d-block mb-2">
               <i class="bi bi-lightbulb me-2"></i>
@@ -105,11 +104,11 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer border-top bg-light">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="marcarRecordatorioVisto()">
+      <div class="modal-footer border-top bg-light rounded-bottom-4">
+        <button type="button" class="btn btn-utp-outline-gray" data-bs-dismiss="modal" onclick="marcarRecordatorioVisto()">
           <i class="bi bi-x-circle me-2"></i> Recordarme después
         </button>
-        <a href="perfil.php" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+        <a href="perfil.php" class="btn btn-utp-red">
           <i class="bi bi-pencil-square me-2"></i> Actualizar información
         </a>
       </div>
@@ -150,7 +149,7 @@ function inicializarRecordatorio(estadoRecordatorio) {
 
   // Si es por completitud baja, mostrar campos faltantes
   if (razon.includes('completitud') && estadoRecordatorio.campos_faltantes > 0) {
-    mostrarCamposFaltantes(estadoRecordatorio.campos_faltantes);
+    mostrarCamposFaltantes(estadoRecordatorio.campos_faltantes_detalle || []);
   }
 
   // Mostrar el modal
@@ -162,26 +161,27 @@ function inicializarRecordatorio(estadoRecordatorio) {
  * Mostrar lista de campos faltantes (simulada, ajustar según datos disponibles)
  */
 function mostrarCamposFaltantes(camposFaltantes) {
-  const campos = [
-    { nombre: 'Correo Electrónico Personal', icon: 'bi-envelope' },
-    { nombre: 'Teléfono de Contacto', icon: 'bi-telephone' },
-    { nombre: 'Empresa Actual', icon: 'bi-briefcase' },
-    { nombre: 'Puesto/Rol Actual', icon: 'bi-person-check' },
-    { nombre: 'Modalidad de Trabajo', icon: 'bi-file-earmark' },
-    { nombre: 'Jornada Laboral', icon: 'bi-clock' },
-    { nombre: 'Habilidades Técnicas', icon: 'bi-hammer' },
-    { nombre: 'Experiencia en TI', icon: 'bi-graph-up' }
-  ];
+  const iconosPorCampo = {
+    'Empresa actual': 'bi-briefcase',
+    'Puesto actual': 'bi-person-badge',
+    'Modalidad de trabajo': 'bi-laptop',
+    'Jornada de trabajo': 'bi-clock',
+    'Tipo de contrato': 'bi-file-earmark-text',
+    'Habilidades tecnicas': 'bi-code-slash',
+    'Experiencia en TI': 'bi-graph-up-arrow',
+    'Especialidad': 'bi-mortarboard'
+  };
 
   const lista = document.getElementById('listaCamposFaltantes');
   lista.innerHTML = '';
 
-  campos.forEach(campo => {
+  camposFaltantes.forEach(nombreCampo => {
     const li = document.createElement('li');
-    li.className = 'p-2 border-bottom d-flex align-items-center';
+    li.className = 'd-flex align-items-center gap-2 py-2 border-bottom';
+    const icono = iconosPorCampo[nombreCampo] || 'bi-dot';
     li.innerHTML = `
-      <i class="bi ${campo.icon} me-2 text-warning"></i>
-      <span>${campo.nombre}</span>
+      <i class="bi ${icono} text-warning"></i>
+      <span>${nombreCampo}</span>
     `;
     lista.appendChild(li);
   });
@@ -210,30 +210,60 @@ function marcarRecordatorioVisto() {
 </script>
 
 <style>
-#modalRecordatorioActualizacion .modal-header {
-  backdrop-filter: blur(10px);
+#modalRecordatorioActualizacion .utp-reminder-modal-content {
+  border-radius: 20px;
 }
 
-#progressBarCompletudinformacion {
+#modalRecordatorioActualizacion .utp-reminder-modal-header {
+  background: #F9FAFB;
+  padding: 20px 24px;
+}
+
+#modalRecordatorioActualizacion .utp-reminder-modal-title {
+  color: #121212;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+#modalRecordatorioActualizacion .utp-reminder-modal-subtitle {
+  color: #757575;
+}
+
+#modalRecordatorioActualizacion .utp-reminder-banner {
+  background: #DFF4FF;
+  border: 1px solid #93D8FF;
+  color: #0B4560;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+#modalRecordatorioActualizacion .utp-reminder-progress {
+  height: 22px;
+  background: #E9ECEF;
+}
+
+#modalRecordatorioActualizacion #progressBarCompletudinformacion {
+  background: #0D6EFD;
+  color: #0B1F33;
+  min-width: 64px;
+  overflow: visible;
   transition: width 0.3s ease;
 }
 
-.icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+#modalRecordatorioActualizacion #progressText {
+  color: #0B1F33;
+  text-shadow: none;
 }
 
-#modalRecordatorioActualizacion .btn-primary {
-  transition: transform 0.2s ease;
+#modalRecordatorioActualizacion .modal-body,
+#modalRecordatorioActualizacion .modal-body p,
+#modalRecordatorioActualizacion .modal-body h6,
+#modalRecordatorioActualizacion .modal-body span,
+#modalRecordatorioActualizacion .modal-body small {
+  color: #1F2937;
 }
 
-#modalRecordatorioActualizacion .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+#modalRecordatorioActualizacion .utp-reminder-missing-list li:last-child {
+  border-bottom: none !important;
 }
 </style>

@@ -30,15 +30,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $msgError = 'Token de seguridad inválido. Recarga la página.';
     } else {
+    $generoInput = trim((string)($_POST['genero'] ?? ''));
+    $genero = $generoInput !== '' ? strtoupper($generoInput) : null;
+    $generosValidos = ['M', 'F'];
+
+    $anioActual = (int)date('Y');
+    $anioNacimientoRaw = trim((string)($_POST['anio_nacimiento'] ?? ($_POST['año_nacimiento'] ?? '')));
+    $anioNacimiento = $anioNacimientoRaw !== '' ? (int)$anioNacimientoRaw : null;
+
+    $generacionRaw = trim((string)($_POST['generacion'] ?? ''));
+    $generacion = $generacionRaw !== '' ? (int)$generacionRaw : null;
+
+    if ($genero !== null && !in_array($genero, $generosValidos, true)) {
+      $msgError = 'El género solo permite dos opciones: Masculino o Femenino.';
+    }
+
+    if ($msgError === '' && $anioNacimientoRaw !== '') {
+      if (!ctype_digit($anioNacimientoRaw) || $anioNacimiento < 1940 || $anioNacimiento > ($anioActual - 15)) {
+        $msgError = 'El año de nacimiento no es válido.';
+      }
+    }
+
+    if ($msgError === '' && $generacionRaw !== '') {
+      if (!ctype_digit($generacionRaw) || $generacion < 1990 || $generacion > ($anioActual + 1)) {
+        $msgError = 'La generación no es válida.';
+      }
+    }
+
+    if ($msgError !== '') {
+      $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+    } else {
         $data = [
-            'correo_personal' => trim($_POST['correo_personal'] ?? ''),
-            'telefono'        => trim($_POST['telefono'] ?? ''),
-            'genero'          => $_POST['genero'] ?? null,
-          'año_nacimiento'  => !empty($_POST['anio_nacimiento'])
-            ? (int)$_POST['anio_nacimiento']
-            : (!empty($_POST['año_nacimiento']) ? (int)$_POST['año_nacimiento'] : null),
+      'genero'          => $genero,
+      'año_nacimiento'  => $anioNacimiento,
             'especialidad'    => trim($_POST['especialidad'] ?? ''),
-            'generacion'      => !empty($_POST['generacion']) ? (int)$_POST['generacion'] : null,
+      'generacion'      => $generacion,
         ];
         $egresadoModel->updatePerfil($_SESSION['usuario_id'], $data);
         $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
@@ -52,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
         $camposFaltantesDetalle = $completitud['campos_faltantes_detalle'] ?? [];
         
         $msgExito = 'Perfil actualizado correctamente.';
+        }
     }
 }
 
@@ -82,7 +109,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_habilidades']
 $habilidadesBlandas = $egresadoModel->getHabilidadesBlandas($_SESSION['usuario_id']);
 
 // Map gender enum to select
-$generoMap = ['M' => 'M', 'F' => 'F', 'Otro' => 'Otro'];
 $curGenero = $perfil['genero'] ?? '';
 ?>
 <!doctype html>
@@ -94,7 +120,7 @@ $curGenero = $perfil['genero'] ?? '';
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../public/assets/css/app-main.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/app-main.css" rel="stylesheet">
 </head>
 
 <body>
@@ -128,7 +154,7 @@ $curGenero = $perfil['genero'] ?? '';
                   <span class="utp-verified-badge">
                     <i class="bi bi-check-lg"></i> Verificado
                   </span>
-                  <span class="utp-profile-hint">Tus datos de matrícula y CURP no se pueden modificar.</span>
+                  <span class="utp-profile-hint">Tus datos de contacto de registro y CURP están protegidos.</span>
                 </div>
               </div>
 
@@ -198,17 +224,10 @@ $curGenero = $perfil['genero'] ?? '';
 
                 <!-- Protected Fields -->
                 <div class="row g-3 mb-4">
-                  <div class="col-12 col-md-6">
+                  <div class="col-12">
                     <div class="utp-form-group">
                       <label class="utp-label">Nombre completo</label>
                       <input type="text" class="utp-input-disabled" value="<?= htmlspecialchars($fullName) ?>" disabled>
-                      <span class="utp-field-hint">Campo protegido</span>
-                    </div>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <div class="utp-form-group">
-                      <label class="utp-label">Matrícula UTP</label>
-                      <input type="text" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['matricula'] ?? '—') ?>" disabled>
                       <span class="utp-field-hint">Campo protegido</span>
                     </div>
                   </div>
@@ -229,14 +248,16 @@ $curGenero = $perfil['genero'] ?? '';
                 <div class="row g-3 mb-4">
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
-                      <label class="utp-label">Correo personal *</label>
-                      <input type="email" name="correo_personal" class="form-control utp-input" value="<?= htmlspecialchars($perfil['correo_personal'] ?? '') ?>" placeholder="tu.correo@gmail.com">
+                      <label class="utp-label">Correo personal (registro)</label>
+                      <input type="email" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['correo_personal'] ?? '') ?>" disabled>
+                      <span class="utp-field-hint">Dato capturado durante el registro</span>
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
-                      <label class="utp-label">Teléfono</label>
-                      <input type="tel" name="telefono" class="form-control utp-input" value="<?= htmlspecialchars($perfil['telefono'] ?? '') ?>" placeholder="222-123-4567">
+                      <label class="utp-label">Teléfono (registro)</label>
+                      <input type="text" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['telefono'] ?? '') ?>" disabled>
+                      <span class="utp-field-hint">Dato capturado durante el registro</span>
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
@@ -246,14 +267,13 @@ $curGenero = $perfil['genero'] ?? '';
                         <option value="">Selecciona</option>
                         <option value="M" <?= $curGenero === 'M' ? 'selected' : '' ?>>Masculino</option>
                         <option value="F" <?= $curGenero === 'F' ? 'selected' : '' ?>>Femenino</option>
-                        <option value="Otro" <?= $curGenero === 'Otro' ? 'selected' : '' ?>>Otro</option>
                       </select>
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
                       <label class="utp-label">Año de nacimiento</label>
-                      <input type="text" name="anio_nacimiento" class="form-control utp-input" value="<?= htmlspecialchars($perfil['año_nacimiento'] ?? '') ?>" placeholder="1999">
+                      <input type="number" name="anio_nacimiento" class="form-control utp-input" value="<?= htmlspecialchars($perfil['año_nacimiento'] ?? '') ?>" min="1940" max="<?= (int)date('Y') - 15 ?>" step="1" placeholder="1999">
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
@@ -272,7 +292,7 @@ $curGenero = $perfil['genero'] ?? '';
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
                       <label class="utp-label">Generación</label>
-                      <input type="text" name="generacion" class="form-control utp-input" value="<?= htmlspecialchars($perfil['generacion'] ?? '') ?>" placeholder="2023">
+                      <input type="number" name="generacion" class="form-control utp-input" value="<?= htmlspecialchars($perfil['generacion'] ?? '') ?>" min="1990" max="<?= (int)date('Y') + 1 ?>" step="1" placeholder="2023">
                     </div>
                   </div>
                 </div>
@@ -349,8 +369,8 @@ $curGenero = $perfil['genero'] ?? '';
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../public/assets/js/shared/components-loader.js"></script>
-  <script src="../../public/assets/js/shared/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/components-loader.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
   
   <!-- Modal de Recordatorio de Actualización -->
   <?php require_once __DIR__ . '/../compartido/modal-recordatorio-actualizacion.php'; ?>

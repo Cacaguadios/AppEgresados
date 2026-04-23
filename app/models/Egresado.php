@@ -266,16 +266,13 @@ class Egresado extends Database {
     /**
      * Calcular porcentaje de completitud de información laboral
      * Campos considerados:
-     * - Información personal: correo_personal, telefono, especialidad
+     * - Información base del perfil: especialidad
      * - Información laboral: trabaja_actualmente, empresa_actual, puesto_actual
      * - Detalles de empleo: modalidad_trabajo, jornada_trabajo, tipo_contrato
      * - Desarrollo: habilidades, anos_experiencia_ti, descripcion_experiencia
      */
     public function calcularCompletudinformacion($egresado_data) {
         $campos_info = [
-            'nombre' => 'Nombre',
-            'correo_personal' => 'Correo personal',
-            'telefono' => 'Telefono',
             'especialidad' => 'Especialidad',
             'empresa_actual' => 'Empresa actual',
             'puesto_actual' => 'Puesto actual',
@@ -283,6 +280,7 @@ class Egresado extends Database {
             'jornada_trabajo' => 'Jornada de trabajo',
             'tipo_contrato' => 'Tipo de contrato',
             'habilidades' => 'Habilidades tecnicas',
+            'anos_experiencia_ti' => 'Experiencia en TI',
         ];
 
         $campos_total = array_keys($campos_info);

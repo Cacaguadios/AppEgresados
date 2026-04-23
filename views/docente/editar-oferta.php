@@ -57,7 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
         $telefonoContacto = trim($_POST['telefono_contacto'] ?? '');
 
         if (empty($titulo) || empty($empresa) || empty($descripcion)) {
-            $msgError = 'Los campos Título, Empresa y Descripción son obligatorios.';
+          $msgError = 'Los campos Título, Empresa y Descripción son obligatorios.';
+        } elseif (empty($contacto) || empty($nombreContacto) || empty($puestoContacto) || empty($telefonoContacto)) {
+          $msgError = 'Toda la información de contacto es obligatoria para guardar la vacante.';
+        } elseif (!filter_var($contacto, FILTER_VALIDATE_EMAIL)) {
+          $msgError = 'El email de contacto no tiene un formato válido.';
         } else {
             // Parse requisitos
             $requisitos = [];
@@ -97,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
                 'salario_min'        => $salarioMin,
                 'salario_max'        => $salarioMax,
                 'vacantes'           => max(1, (int)($_POST['vacantes'] ?? 1)),
-                'contacto'           => $contacto ?: ($_SESSION['usuario_email'] ?? ''),
+                'contacto'           => $contacto,
                 'nombre_contacto'    => $nombreContacto,
                 'puesto_contacto'    => $puestoContacto,
                 'telefono_contacto'  => $telefonoContacto,
@@ -125,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../public/assets/css/app-main.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/app-main.css" rel="stylesheet">
 </head>
 
 <body class="bg-soft">
@@ -291,20 +295,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
                 <h2 class="utp-form-card-title">Información de contacto</h2>
                 <div class="row g-3">
                   <div class="col-12">
-                    <label class="form-label">Email de contacto</label>
-                    <input type="email" name="contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['contacto'] ?? '') ?>">
+                    <label class="form-label">Email de contacto *</label>
+                    <input type="email" name="contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['contacto'] ?? '') ?>" required>
                   </div>
                   <div class="col-12">
-                    <label class="form-label">Nombre del contacto</label>
-                    <input type="text" name="nombre_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['nombre_contacto'] ?? '') ?>">
+                    <label class="form-label">Nombre del contacto *</label>
+                    <input type="text" name="nombre_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['nombre_contacto'] ?? '') ?>" required>
                   </div>
                   <div class="col-12 col-md-6">
-                    <label class="form-label">Puesto del contacto</label>
-                    <input type="text" name="puesto_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['puesto_contacto'] ?? '') ?>">
+                    <label class="form-label">Puesto del contacto *</label>
+                    <input type="text" name="puesto_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['puesto_contacto'] ?? '') ?>" required>
                   </div>
                   <div class="col-12 col-md-6">
-                    <label class="form-label">Teléfono del contacto</label>
-                    <input type="tel" name="telefono_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['telefono_contacto'] ?? '') ?>">
+                    <label class="form-label">Teléfono del contacto *</label>
+                    <input type="tel" name="telefono_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['telefono_contacto'] ?? '') ?>" required>
                   </div>
                 </div>
               </article>
@@ -344,8 +348,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../public/assets/js/shared/components-loader.js"></script>
-  <script src="../../public/assets/js/shared/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/components-loader.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
   <script>
     // Initialize skills with existing data
     let skills = <?= json_encode($habilidades) ?>;

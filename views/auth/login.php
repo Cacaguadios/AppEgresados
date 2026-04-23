@@ -1,13 +1,16 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$baseUrl = '/AppEgresados';
 
 // Si ya está autenticado, redirigir según rol
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     $redirect = match($_SESSION['usuario_rol'] ?? '') {
-        'egresado' => '../egresado/inicio.php',
-        'docente', 'ti' => '../docente/inicio.php',
-        'admin' => '../admin/inicio.php',
-        default => '../egresado/inicio.php'
+        'egresado' => '/AppEgresados/egresado/inicio',
+        'docente', 'ti' => '/AppEgresados/docente/inicio',
+        'admin' => '/AppEgresados/admin/inicio',
+        default => '/AppEgresados/egresado/inicio'
     };
     header('Location: ' . $redirect);
     exit;
@@ -23,10 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($auth->processLogin()) {
         // Redirigir según rol
         $redirect = match($_SESSION['usuario_rol']) {
-            'egresado' => '../egresado/inicio.php',
-            'docente', 'ti' => '../docente/inicio.php',
-            'admin' => '../admin/inicio.php',
-            default => '/AppEgresados/'
+            'egresado' => '/AppEgresados/egresado/inicio',
+            'docente', 'ti' => '/AppEgresados/docente/inicio',
+            'admin' => '/AppEgresados/admin/inicio',
+          default => '/AppEgresados/'
         };
         
         header('Location: ' . $redirect);
@@ -47,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   
   <!-- Global Styles -->
-  <link href="../../public/assets/css/global.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/global.css" rel="stylesheet">
   <!-- Auth Styles -->
-  <link href="../../public/assets/css/auth.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/auth.css" rel="stylesheet">
 </head>
 
 <body>
@@ -58,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       
       <!-- Mobile Hero (solo visible en móvil) -->
       <div class="auth-mobile-hero">
-        <img class="auth-mobile-logo" src="../../public/assets/img/utp-logo.png" alt="UTP Logo" />
+        <img class="auth-mobile-logo" src="<?= ASSETS_URL ?>/img/utp-logo.png" alt="UTP Logo" />
         <h1 class="auth-mobile-title">Sistema de Egresados UTP</h1>
       </div>
 
@@ -70,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="auth-hero-content">
 
               <img class="hero-image mb-4 img-drop-shadow"
-                   src="../../public/assets/img/utp-logo.png"
+                   src="<?= ASSETS_URL ?>/img/utp-logo.png"
                    alt="EGRESADOS UTP" />
 
               <h1 class="hero-title">Sistema de</h1>
@@ -175,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               </div>
 
               <div class="mb-3">
-                <a class="link-utp" href="forgot.php" style="font-size:14px;">¿Olvidaste tu contraseña?</a>
+                <a class="link-utp" href="/AppEgresados/forgot" style="font-size:14px;">¿Olvidaste tu contraseña?</a>
               </div>
 
               <button class="btn btn-utp-green text-white w-100 mb-3" type="submit" style="height: 48px; font-size: 16px; font-weight: 500;">
@@ -186,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span style="color:var(--muted); font-size:14px;">
                   ¿No tienes cuenta?
                 </span>
-                <a class="link-utp" href="register-step-1.php" style="font-size:14px;">
+                <a class="link-utp" href="/AppEgresados/register-step-1" style="font-size:14px;">
                   Regístrate aquí
                 </a>
               </div>
@@ -225,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   
   <!-- Custom Scripts -->
-  <script src="../../public/assets/js/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/app.js"></script>
   
   <!-- Script para mostrar/ocultar contraseña -->
   <script>

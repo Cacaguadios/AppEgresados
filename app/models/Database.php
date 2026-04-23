@@ -4,6 +4,8 @@
  * Usa PDO con prepared statements
  */
 
+require_once __DIR__ . '/../helpers/Security.php';
+
 class Database {
     private $connection;
     private $host;
@@ -41,9 +43,36 @@ class Database {
      * Ejecutar consulta con prepared statement
      */
     public function query($sql, $params = []) {
+        $params = $this->sanitizeQueryParams($params);
         $stmt = $this->connection->prepare($sql);
         $stmt->execute($params);
         return $stmt;
+    }
+
+    /**
+     * Sanitizar parámetros para evitar inyecciones y payloads HTML.
+     */
+    private function sanitizeQueryParams($params) {
+        if (!is_array($params)) {
+            return $params;
+        }
+
+        $cleanParams = [];
+        foreach ($params as $key => $value) {
+            if (is_array($value)) {
+                $cleanParams[$key] = Security::sanitizeRecursive($value);
+                continue;
+            }
+
+            if (is_string($value)) {
+                $cleanParams[$key] = Security::sanitizeForStorage($value);
+                continue;
+            }
+
+            $cleanParams[$key] = $value;
+        }
+
+        return $cleanParams;
     }
     
     /**

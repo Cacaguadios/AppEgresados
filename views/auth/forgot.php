@@ -1,9 +1,12 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$baseUrl = '/AppEgresados';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '../admin/inicio.php', 'docente','ti' => '../docente/inicio.php', default => '../egresado/inicio.php' };
+    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
     header('Location: ' . $r);
     exit;
 }
@@ -34,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['reset_email'] = $email;
 
             // Redirigir a verificación de código
-            header('Location: verify-code.php');
+            header('Location: ' . $baseUrl . '/verify-code');
             exit;
           }
 
@@ -56,9 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 
   <!-- Global Styles -->
-  <link href="../../public/assets/css/global.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/global.css" rel="stylesheet">
   <!-- Auth Styles -->
-  <link href="../../public/assets/css/auth.css" rel="stylesheet">
+  <link href="<?= ASSETS_URL ?>/css/auth.css" rel="stylesheet">
 </head>
 
 <body>
@@ -66,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container py-4 py-md-5">
 
       <!-- Back to login -->
-      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="login.php">
+      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="/AppEgresados/login">
         <i class="bi bi-chevron-left"></i>
         <span>Volver al inicio de sesión</span>
       </a>
@@ -119,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- Link volver -->
         <div class="text-center mt-4">
-          <a class="link-utp" href="login.php">
+          <a class="link-utp" href="/AppEgresados/login">
             <i class="bi bi-arrow-left me-1"></i>Volver al inicio de sesión
           </a>
         </div>
@@ -129,6 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../../public/assets/js/app.js"></script>
+  <script src="<?= ASSETS_URL ?>/js/app.js"></script>
 </body>
 </html>

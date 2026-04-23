@@ -2,7 +2,10 @@
 /**
  * Logout – Cierra la sesión y redirige al login
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$baseUrl = '/AppEgresados';
 
 // Limpiar todas las variables de sesión
 $_SESSION = [];
@@ -25,5 +28,5 @@ if (ini_get('session.use_cookies')) {
 session_destroy();
 
 // Redirigir al login
-header('Location: login.php');
+header('Location: ' . $baseUrl . '/login');
 exit;

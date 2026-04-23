@@ -30,6 +30,15 @@ class Notificacion extends Database {
             return;
         }
 
+        $driver = strtolower((string) (getenv('MAIL_DRIVER') ?: 'log'));
+
+        if ($driver === 'smtp') {
+            if ($this->sendEmailViaSmtp($to, $subject, $message)) {
+                return;
+            }
+            $this->registrarErrorCorreo($to, $subject, $tipo, 'Fallo de envio SMTP en Notificacion::registrarCorreoSimulado');
+        }
+
         $logDir = __DIR__ . '/../../storage/logs';
         if (!is_dir($logDir)) {
             mkdir($logDir, 0755, true);
@@ -40,6 +49,82 @@ class Notificacion extends Database {
         $body = str_replace(["\r", "\n"], [' ', ' '], trim($message));
         $log = "[{$timestamp}] TO: {$to} | SUBJECT: {$subject} | TYPE: {$tipo} | MESSAGE: {$body}\n";
         file_put_contents($logFile, $log, FILE_APPEND);
+    }
+
+    /**
+     * Registrar error de envio de correo.
+     */
+    private function registrarErrorCorreo($to, $subject, $tipo, $error) {
+        $logDir = __DIR__ . '/../../storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        $logFile = $logDir . '/emails.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $detalle = str_replace(["\r", "\n"], [' ', ' '], trim((string)$error));
+        $log = "[{$timestamp}] ERROR_SMTP TO: {$to} | SUBJECT: {$subject} | TYPE: {$tipo} | ERROR: {$detalle}\n";
+        file_put_contents($logFile, $log, FILE_APPEND);
+    }
+
+    /**
+     * Enviar correo por SMTP usando la configuracion de entorno.
+     */
+    private function sendEmailViaSmtp($to, $subject, $message) {
+        $autoload = __DIR__ . '/../../vendor/autoload.php';
+        if (file_exists($autoload)) {
+            require_once $autoload;
+        }
+
+        if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+            return false;
+        }
+
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+
+            $host = getenv('MAIL_HOST') ?: '';
+            $port = (int) (getenv('MAIL_PORT') ?: 587);
+            $user = getenv('MAIL_USER') ?: '';
+            $pass = getenv('MAIL_PASS') ?: '';
+            $from = getenv('MAIL_FROM') ?: $user;
+            $fromName = getenv('MAIL_FROM_NAME') ?: (getenv('APP_NAME') ?: 'AppEgresados UTP');
+            $encryption = strtolower((string) (getenv('MAIL_ENCRYPTION') ?: 'tls'));
+
+            if ($host === '' || $from === '') {
+                return false;
+            }
+
+            $mail->isSMTP();
+            $mail->Host = $host;
+            $mail->Port = $port;
+
+            if ($user !== '' && $pass !== '') {
+                $mail->SMTPAuth = true;
+                $mail->Username = $user;
+                $mail->Password = $pass;
+            } else {
+                $mail->SMTPAuth = false;
+            }
+
+            if ($encryption === 'ssl') {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            $mail->CharSet = 'UTF-8';
+            $mail->setFrom($from, $fromName);
+            $mail->addAddress($to);
+            $mail->Subject = $subject;
+            $mail->isHTML(false);
+            $mail->Body = $message;
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -165,8 +250,19 @@ class Notificacion extends Database {
 
     /**
      * Egresado se postula → notifica al docente/ti creador de la oferta
+     * y envía correo al email de contacto de la oferta con los datos del egresado.
      */
-    public function onPostulacion($ofertaTitulo, $idCreadorOferta, $egresadoNombre, $correoCreador = null) {
+    public function onPostulacion(
+        $ofertaTitulo,
+        $idCreadorOferta,
+        $egresadoNombre,
+        $correoCreador = null,
+        $correoContacto = null,
+        $egresadoEmail = null,
+        $egresadoTelefono = null,
+        $mensajePostulacion = null,
+        $datosEgresado = []
+    ) {
         $mensaje = "{$egresadoNombre} se postuló a tu oferta \"{$ofertaTitulo}\".";
         $this->crear(
             $idCreadorOferta,
@@ -176,12 +272,53 @@ class Notificacion extends Database {
             '../../views/docente/postulantes.php'
         );
 
+        // Notificar al creador de la oferta
         $this->registrarCorreoSimulado(
             $correoCreador,
             'Nueva postulación recibida - UTP',
             $mensaje,
             'nueva_postulacion'
         );
+
+        // Notificar al correo de contacto con los datos del egresado
+        if (!empty($correoContacto)) {
+            $detalles = [];
+            $detalles[] = "Nombre: {$egresadoNombre}";
+            if (!empty($egresadoEmail)) {
+                $detalles[] = "Email institucional: {$egresadoEmail}";
+            }
+            if (!empty($datosEgresado['correo_personal'] ?? null)) {
+                $detalles[] = "Email personal: " . $datosEgresado['correo_personal'];
+            }
+            if (!empty($datosEgresado['matricula'] ?? null)) {
+                $detalles[] = "Matrícula: " . $datosEgresado['matricula'];
+            }
+            if (!empty($datosEgresado['especialidad'] ?? null)) {
+                $detalles[] = "Especialidad: " . $datosEgresado['especialidad'];
+            }
+            if (!empty($datosEgresado['generacion'] ?? null)) {
+                $detalles[] = "Generación: " . $datosEgresado['generacion'];
+            }
+            if (!empty($egresadoTelefono)) {
+                $detalles[] = "Teléfono: {$egresadoTelefono}";
+            }
+            if (!empty($datosEgresado['cv_path'] ?? null)) {
+                $detalles[] = "CV: " . $datosEgresado['cv_path'];
+            }
+            if (!empty($mensajePostulacion)) {
+                $detalles[] = "Mensaje del egresado: {$mensajePostulacion}";
+            }
+
+            $mensajeContacto = "Nueva postulación para \"{$ofertaTitulo}\"." . PHP_EOL
+                . implode(PHP_EOL, $detalles);
+
+            $this->registrarCorreoSimulado(
+                $correoContacto,
+                'Nueva postulación recibida - UTP',
+                $mensajeContacto,
+                'nueva_postulacion'
+            );
+        }
     }
 
     /**

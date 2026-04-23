@@ -1,0 +1,15 @@
+RewriteEngine On
+
+# Bloquear acceso directo a carpetas sensibles
+RewriteRule ^(app|config|database|storage|tests|vendor|docs)/ - [F,L,NC]
+
+# Solo archivos físicos existentes se sirven directamente (NO directorios)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Assets y API → redirigir a public/
+RewriteRule ^assets/(.*)$ public/assets/$1 [L,NC,QSA]
+RewriteRule ^api/(.*)$ public/api/$1 [L,NC,QSA]
+
+# Front controller
+RewriteRule ^ public/index.php [L,QSA]
