@@ -44,8 +44,36 @@ class Egresado extends Database {
      * Guardar habilidades blandas (soft skills)
      */
     public function updateHabilidadesBlandas($id_usuario, $habilidades) {
-        $data = ['habilidades_blandas' => is_array($habilidades) ? json_encode($habilidades) : $habilidades];
+        $sanitizadas = [];
+
+        foreach ((array)$habilidades as $habilidad) {
+            $limpia = $this->sanitizeHabilidadBlanda($habilidad);
+            if ($limpia === '') {
+                continue;
+            }
+            $key = mb_strtolower($limpia, 'UTF-8');
+            $sanitizadas[$key] = $limpia;
+        }
+
+        $data = [
+            'habilidades_blandas' => json_encode(array_values($sanitizadas), JSON_UNESCAPED_UNICODE)
+        ];
         $this->update('egresados', $data, ['id_usuario' => $id_usuario]);
+    }
+
+    /**
+     * Normaliza y elimina tags/carácteres de control de una habilidad blanda.
+     */
+    private function sanitizeHabilidadBlanda($habilidad) {
+        $habilidad = strip_tags((string)$habilidad);
+        $habilidad = preg_replace('/[\x00-\x1F\x7F]/u', '', $habilidad) ?? '';
+        $habilidad = preg_replace('/\s+/u', ' ', trim($habilidad)) ?? '';
+
+        if ($habilidad === '') {
+            return '';
+        }
+
+        return mb_substr($habilidad, 0, 80, 'UTF-8');
     }
 
     /**

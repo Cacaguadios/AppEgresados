@@ -186,7 +186,9 @@ class RegisterController {
 
             if ($role === 'egresado') {
                 $curp = $verificacionData['curp'] ?? null;
-                $this->usuarioModel->createEgresado($idUsuario, null, $curp);
+                $correoPersonal = $verificacionData['email'] ?? null;
+                $telefono = $verificacionData['telefono'] ?? null;
+                $this->usuarioModel->createEgresado($idUsuario, null, $curp, $correoPersonal, $telefono);
             }
         } catch (\Exception $e) {
             if (!empty($idUsuario)) {

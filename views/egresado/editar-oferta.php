@@ -233,7 +233,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
                   <?php foreach ($requisitos as $r): ?>
                     <div class="d-flex gap-2 mb-2">
                       <input type="text" name="requisitos[]" class="form-control utp-input" value="<?= htmlspecialchars($r) ?>">
-                      <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+                      <button type="button" class="btn btn-sm btn-utp-outline-red" onclick="this.parentElement.remove()">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -251,7 +251,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
                   <?php foreach ($beneficios as $b): ?>
                     <div class="d-flex gap-2 mb-2">
                       <input type="text" name="beneficios[]" class="form-control utp-input" value="<?= htmlspecialchars($b) ?>">
-                      <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+                      <button type="button" class="btn btn-sm btn-utp-outline-red" onclick="this.parentElement.remove()">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -266,7 +266,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
               <article class="utp-form-card mb-4">
                 <h2 class="utp-form-card-title">Habilidades requeridas</h2>
                 <div class="d-flex gap-2">
-                  <input type="text" class="form-control utp-input flex-grow-1" id="skillInput" placeholder="Agregar habilidad (ej: React, Node.js)">
+                  <input type="text" class="form-control utp-input flex-grow-1" id="skillInput" maxlength="60" placeholder="Agregar habilidad (ej: React, Node.js)">
                   <button type="button" class="btn btn-utp-green d-flex align-items-center gap-2" onclick="addSkill()">
                     <i class="bi bi-plus-lg"></i> Agregar
                   </button>
@@ -292,7 +292,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Teléfono del contacto</label>
-                    <input type="tel" name="telefono_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['telefono_contacto'] ?? '') ?>">
+                    <input type="tel" name="telefono_contacto" class="form-control utp-input" value="<?= htmlspecialchars($oferta['telefono_contacto'] ?? '') ?>" inputmode="tel" pattern="^[0-9+()\-\s]{7,20}$" maxlength="20">
                   </div>
                 </div>
               </article>
@@ -335,49 +335,60 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
   
   <script>
     // Skills management
-    const skillsData = <?= json_encode($habilidades) ?>;
-    
-    function initSkills() {
-      const container = document.getElementById('skillsContainer');
-      container.innerHTML = '';
-      skillsData.forEach(skill => {
-        addSkillChip(skill);
-      });
+    const skillsData = (<?= json_encode($habilidades) ?> || []).map(function(s) {
+      return String(s || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    }).filter(Boolean);
+
+    function normalizeSkill(rawSkill) {
+      const normalized = String(rawSkill || '').replace(/\s+/g, ' ').trim();
+      return normalized.slice(0, 60);
     }
 
-    function addSkillChip(skill) {
+    function updateHabilidadesJson() {
+      document.getElementById('habilidadesJson').value = JSON.stringify(skillsData);
+    }
+
+    function renderSkills() {
       const container = document.getElementById('skillsContainer');
-      const chip = document.createElement('span');
-      chip.className = 'utp-skill-chip-editable';
-      chip.innerHTML = `${skill}<button type="button" class="btn btn-sm p-0 border-0 bg-transparent" onclick="removeSkill(this)"><i class="bi bi-x-lg"></i></button>`;
-      container.appendChild(chip);
+      container.innerHTML = '';
+      skillsData.forEach(function(skill, idx) {
+        const chip = document.createElement('span');
+        chip.className = 'utp-skill-chip-editable';
+        chip.dataset.index = String(idx);
+
+        const label = document.createElement('span');
+        label.textContent = skill;
+        chip.appendChild(label);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm p-0 border-0 bg-transparent';
+        removeBtn.setAttribute('aria-label', 'Quitar habilidad');
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-x-lg';
+        removeBtn.appendChild(icon);
+        chip.appendChild(removeBtn);
+
+        container.appendChild(chip);
+      });
       updateHabilidadesJson();
     }
 
     function addSkill() {
       const input = document.getElementById('skillInput');
-      const skill = input.value.trim();
+      const skill = normalizeSkill(input.value);
       if (!skill) return;
-      if (skillsData.includes(skill)) {
+      const exists = skillsData.some(function(s) {
+        return s.toLowerCase() === skill.toLowerCase();
+      });
+      if (exists) {
         alert('Esta habilidad ya está agregada');
         return;
       }
       skillsData.push(skill);
-      addSkillChip(skill);
       input.value = '';
-    }
-
-    function removeSkill(btn) {
-      const chip =  btn.closest('.utp-skill-chip');
-      const text = chip.textContent.trim().slice(0, -1).trim();
-      const idx = skillsData.indexOf(text);
-      if (idx >= 0) skillsData.splice(idx, 1);
-      chip.remove();
-      updateHabilidadesJson();
-    }
-
-    function updateHabilidadesJson() {
-      document.getElementById('habilidadesJson').value = JSON.stringify(skillsData);
+      renderSkills();
     }
 
     function addDynamicItem(containerId, name, label) {
@@ -386,7 +397,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
       div.className = 'd-flex gap-2 mb-2';
       div.innerHTML = `
         <input type="text" name="${name}" class="form-control utp-input" placeholder="${label}">
-        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+        <button type="button" class="btn btn-sm btn-utp-outline-red" onclick="this.parentElement.remove()">
           <i class="bi bi-trash"></i>
         </button>
       `;
@@ -395,7 +406,19 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', function() {
-      initSkills();
+      document.getElementById('skillsContainer').addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('button[aria-label="Quitar habilidad"]');
+        if (!removeBtn) return;
+        const chip = removeBtn.closest('.utp-skill-chip-editable');
+        if (!chip) return;
+        const idx = parseInt(chip.dataset.index || '-1', 10);
+        if (!Number.isNaN(idx) && idx >= 0 && idx < skillsData.length) {
+          skillsData.splice(idx, 1);
+          renderSkills();
+        }
+      });
+
+      renderSkills();
       document.getElementById('skillInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();

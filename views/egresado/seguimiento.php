@@ -18,6 +18,12 @@ $egresadoModel = new Egresado();
 $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
 $prestacionesArr = json_decode($perfil['prestaciones'] ?? '[]', true) ?: [];
 $habilidadesArr  = json_decode($perfil['habilidades'] ?? '[]', true) ?: [];
+$allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Reparto de utilidades','Fondo de ahorro','Seguro gastos médicos'];
+$allowedModalidad = ['presencial', 'hibrido', 'remoto'];
+$allowedJornada = ['completo', 'parcial', 'freelance'];
+$allowedTipoContrato = ['indefinido', 'temporal', 'proyecto', 'honorarios'];
+$allowedRangoSalarial = ['0-8000', '8001-12000', '12001-18000', '18001-25000', '25001-35000', '35001+'];
+$allowedAniosExperiencia = ['0', '0-1', '1-2', '2-3', '3-5', '5+'];
 
 // Handle save
 $msgExito = '';
@@ -26,46 +32,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_seguimiento']
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $msgError = 'Token de seguridad inválido.';
     } else {
-        // Collect benefit chips
-        $prestacionesPost = json_decode($_POST['prestaciones_json'] ?? '[]', true) ?: [];
-    $habilidadesPost = json_decode($_POST['habilidades_json'] ?? '[]', true) ?: [];
-    $habilidadesPost = array_values(array_unique(array_filter(array_map('trim', $habilidadesPost))));
+    $trabajaActualmente = !empty($_POST['trabaja_actualmente']) ? 1 : 0;
+    $trabajaEnTi = !empty($_POST['trabaja_en_ti']) ? 1 : 0;
 
-        $data = [
-            'trabaja_actualmente'  => !empty($_POST['trabaja_actualmente']) ? 1 : 0,
-            'trabaja_en_ti'        => !empty($_POST['trabaja_en_ti']) ? 1 : 0,
-            'empresa_actual'       => trim($_POST['empresa_actual'] ?? ''),
-            'puesto_actual'        => trim($_POST['puesto_actual'] ?? ''),
-            'modalidad_trabajo'    => $_POST['modalidad_trabajo'] ?? null,
-            'jornada_trabajo'      => $_POST['jornada_trabajo'] ?? null,
-            'ubicacion_trabajo'    => trim($_POST['ubicacion_trabajo'] ?? ''),
-            'tipo_contrato'        => $_POST['tipo_contrato'] ?? null,
-            'fecha_inicio_empleo'  => !empty($_POST['fecha_inicio_empleo']) ? $_POST['fecha_inicio_empleo'] : null,
-            'rango_salarial'       => $_POST['rango_salarial'] ?? '',
-            'prestaciones'         => json_encode($prestacionesPost),
-            'habilidades'          => json_encode($habilidadesPost),
-            'anos_experiencia_ti'  => $_POST['anos_experiencia_ti'] ?? '',
-            'descripcion_experiencia' => trim($_POST['descripcion_experiencia'] ?? ''),
-            'campo_adicional_1'    => trim($_POST['campo_adicional_1'] ?? ''),
-            'campo_adicional_2'    => trim($_POST['campo_adicional_2'] ?? ''),
-        ];
-        $egresadoModel->updateSeguimiento($_SESSION['usuario_id'], $data);
-        $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
-        $prestacionesArr = json_decode($perfil['prestaciones'] ?? '[]', true) ?: [];
-          $habilidadesArr  = json_decode($perfil['habilidades'] ?? '[]', true) ?: [];
-        
-        // Actualizar próximo recordatorio de información (3 meses)
-        $egresadoModel->setProximoRecordatorio($_SESSION['usuario_id']);
-        
-        // Recalcular completitud
-        $egresadoModel->actualizarCompletudinformacion($_SESSION['usuario_id']);
-        
-        $msgExito = 'Seguimiento guardado correctamente.';
+    $empresaActual = trim((string)($_POST['empresa_actual'] ?? ''));
+    $puestoActual = trim((string)($_POST['puesto_actual'] ?? ''));
+    $ubicacionTrabajo = trim((string)($_POST['ubicacion_trabajo'] ?? ''));
+    $descripcionExperiencia = trim((string)($_POST['descripcion_experiencia'] ?? ''));
+    $campoAdicional1 = trim((string)($_POST['campo_adicional_1'] ?? ''));
+    $campoAdicional2 = trim((string)($_POST['campo_adicional_2'] ?? ''));
+
+    $modalidadTrabajo = trim((string)($_POST['modalidad_trabajo'] ?? ''));
+    $jornadaTrabajo = trim((string)($_POST['jornada_trabajo'] ?? ''));
+    $tipoContrato = trim((string)($_POST['tipo_contrato'] ?? ''));
+    $rangoSalarial = trim((string)($_POST['rango_salarial'] ?? ''));
+    $aniosExperienciaTi = trim((string)($_POST['anos_experiencia_ti'] ?? ''));
+    $fechaInicioEmpleo = trim((string)($_POST['fecha_inicio_empleo'] ?? ''));
+
+    if ($modalidadTrabajo !== '' && !in_array($modalidadTrabajo, $allowedModalidad, true)) {
+      $msgError = 'La modalidad de trabajo no es válida.';
+    } elseif ($jornadaTrabajo !== '' && !in_array($jornadaTrabajo, $allowedJornada, true)) {
+      $msgError = 'La jornada de trabajo no es válida.';
+    } elseif ($tipoContrato !== '' && !in_array($tipoContrato, $allowedTipoContrato, true)) {
+      $msgError = 'El tipo de contrato no es válido.';
+    } elseif ($rangoSalarial !== '' && !in_array($rangoSalarial, $allowedRangoSalarial, true)) {
+      $msgError = 'El rango salarial no es válido.';
+    } elseif ($aniosExperienciaTi !== '' && !in_array($aniosExperienciaTi, $allowedAniosExperiencia, true)) {
+      $msgError = 'Los años de experiencia en TI no son válidos.';
+    }
+
+    $fechaInicioValida = null;
+    if ($msgError === '' && $fechaInicioEmpleo !== '') {
+      $date = \DateTime::createFromFormat('Y-m-d', $fechaInicioEmpleo);
+      $isValidDate = $date && $date->format('Y-m-d') === $fechaInicioEmpleo;
+      if (!$isValidDate) {
+        $msgError = 'La fecha de inicio no es válida.';
+      } else {
+        $fechaInicioValida = $fechaInicioEmpleo;
+      }
+    }
+
+    $prestacionesRaw = json_decode($_POST['prestaciones_json'] ?? '[]', true);
+    $prestacionesRaw = is_array($prestacionesRaw) ? $prestacionesRaw : [];
+    $prestacionesPost = [];
+    foreach ($prestacionesRaw as $prestacion) {
+      $benefit = trim((string)$prestacion);
+      if ($benefit === 'Seguro gastos medicos') {
+        $benefit = 'Seguro gastos médicos';
+      }
+      if ($benefit !== '' && in_array($benefit, $allBenefits, true)) {
+        $prestacionesPost[$benefit] = $benefit;
+      }
+    }
+    $prestacionesPost = array_values($prestacionesPost);
+
+    $habilidadesRaw = json_decode($_POST['habilidades_json'] ?? '[]', true);
+    $habilidadesRaw = is_array($habilidadesRaw) ? $habilidadesRaw : [];
+    $habilidadesPost = [];
+    foreach ($habilidadesRaw as $habilidad) {
+      $skill = strip_tags((string)$habilidad);
+      $skill = preg_replace('/[\x00-\x1F\x7F]/u', '', $skill) ?? '';
+      $skill = preg_replace('/\s+/u', ' ', trim($skill)) ?? '';
+      if ($skill === '') {
+        continue;
+      }
+      $skill = mb_substr($skill, 0, 60, 'UTF-8');
+      $habilidadesPost[mb_strtolower($skill, 'UTF-8')] = $skill;
+    }
+    $habilidadesPost = array_values($habilidadesPost);
+
+    if ($msgError === '') {
+      $data = [
+        'trabaja_actualmente'  => $trabajaActualmente,
+        'trabaja_en_ti'        => $trabajaEnTi,
+        'empresa_actual'       => mb_substr($empresaActual, 0, 255, 'UTF-8'),
+        'puesto_actual'        => mb_substr($puestoActual, 0, 255, 'UTF-8'),
+        'modalidad_trabajo'    => $modalidadTrabajo !== '' ? $modalidadTrabajo : null,
+        'jornada_trabajo'      => $jornadaTrabajo !== '' ? $jornadaTrabajo : null,
+        'ubicacion_trabajo'    => mb_substr($ubicacionTrabajo, 0, 255, 'UTF-8'),
+        'tipo_contrato'        => $tipoContrato !== '' ? $tipoContrato : null,
+        'fecha_inicio_empleo'  => $fechaInicioValida,
+        'rango_salarial'       => $rangoSalarial,
+        'prestaciones'         => json_encode($prestacionesPost, JSON_UNESCAPED_UNICODE),
+        'habilidades'          => json_encode($habilidadesPost, JSON_UNESCAPED_UNICODE),
+        'anos_experiencia_ti'  => $aniosExperienciaTi,
+        'descripcion_experiencia' => mb_substr($descripcionExperiencia, 0, 2000, 'UTF-8'),
+        'campo_adicional_1'    => mb_substr($campoAdicional1, 0, 255, 'UTF-8'),
+        'campo_adicional_2'    => mb_substr($campoAdicional2, 0, 255, 'UTF-8'),
+      ];
+      $egresadoModel->updateSeguimiento($_SESSION['usuario_id'], $data);
+      $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
+      $prestacionesArr = json_decode($perfil['prestaciones'] ?? '[]', true) ?: [];
+      $habilidadesArr  = json_decode($perfil['habilidades'] ?? '[]', true) ?: [];
+
+      // Actualizar próximo recordatorio de información (3 meses)
+      $egresadoModel->setProximoRecordatorio($_SESSION['usuario_id']);
+
+      // Recalcular completitud
+      $egresadoModel->actualizarCompletudinformacion($_SESSION['usuario_id']);
+
+      $msgExito = 'Seguimiento guardado correctamente.';
+    }
     }
 }
 
 $lastUpdate = $perfil['fecha_actualizacion_seguimiento'] ?? null;
-$allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Reparto de utilidades','Fondo de ahorro','Seguro gastos médicos'];
+$allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Reparto de utilidades','Fondo de ahorro','Seguro gastos medicos'];
 ?>
 <!doctype html>
 <html lang="es">
@@ -284,7 +356,7 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
                 <div class="utp-form-group">
                   <label class="utp-label mb-2">Tecnologías principales que dominas</label>
                   <div class="d-flex gap-2 mb-2">
-                    <input type="text" id="skillInputSeguimiento" class="form-control utp-input" placeholder="Escribe una tecnología y presiona Enter (ej: React)">
+                    <input type="text" id="skillInputSeguimiento" class="form-control utp-input" maxlength="60" placeholder="Escribe una tecnología y presiona Enter (ej: React)">
                     <button type="button" class="btn btn-utp-green" id="addSkillBtnSeguimiento">
                       <i class="bi bi-plus-lg"></i>
                     </button>
@@ -377,6 +449,14 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
       habilidadesInput.value = JSON.stringify(skillsData);
     }
 
+    function normalizeSkill(rawSkill) {
+      const normalized = String(rawSkill || '')
+        .replace(/[<>]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return normalized.slice(0, 60);
+    }
+
     function renderSkills() {
       skillsContainer.innerHTML = '';
 
@@ -392,9 +472,14 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
       skillsData.forEach(function(skill, index) {
         const chip = document.createElement('span');
         chip.className = 'utp-tech-chip d-inline-flex align-items-center gap-1';
-        chip.innerHTML =
-          '<span>' + skill.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
-          '<i class="bi bi-x utp-clickable" data-index="' + index + '"></i>';
+        const label = document.createElement('span');
+        label.textContent = skill;
+        chip.appendChild(label);
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-x utp-clickable';
+        icon.setAttribute('data-index', String(index));
+        chip.appendChild(icon);
         skillsContainer.appendChild(chip);
       });
 
@@ -402,7 +487,7 @@ $allBenefits = ['IMSS','Vales de despensa','Bonos','Aguinaldo','Vacaciones','Rep
     }
 
     function addSkill() {
-      const value = (skillInput.value || '').trim();
+      const value = normalizeSkill(skillInput.value);
       if (!value) return;
 
       const exists = skillsData.some(function(s) {

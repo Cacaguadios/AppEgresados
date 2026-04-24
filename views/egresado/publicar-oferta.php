@@ -243,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
               <article class="utp-form-card mb-4">
                 <h2 class="utp-form-card-title">Habilidades requeridas</h2>
                 <div class="d-flex gap-2">
-                  <input type="text" class="form-control utp-input flex-grow-1" id="skillInput" placeholder="Agregar habilidad (ej: React, Node.js)">
+                  <input type="text" class="form-control utp-input flex-grow-1" id="skillInput" maxlength="60" placeholder="Agregar habilidad (ej: React, Node.js)">
                   <button type="button" class="btn btn-utp-green d-flex align-items-center gap-2" onclick="addSkill()">
                     <i class="bi bi-plus-lg"></i> Agregar
                   </button>
@@ -269,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Teléfono del contacto</label>
-                    <input type="tel" name="telefono_contacto" class="form-control utp-input" placeholder="Ej: +52 123 456 7890">
+                    <input type="tel" name="telefono_contacto" class="form-control utp-input" placeholder="Ej: +52 123 456 7890" inputmode="tel" pattern="^[0-9+()\-\s]{7,20}$" maxlength="20">
                   </div>
                 </div>
               </article>
@@ -313,23 +313,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
   <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
   <script>
     // Dynamic list items (requisitos, beneficios)
-    let itemCounters = {};
     function addDynamicItem(containerId, nameAttr, label) {
       const container = document.getElementById(containerId);
       const count = container.children.length + 1;
       const div = document.createElement('div');
       div.className = 'd-flex gap-2 mb-2';
       div.innerHTML = '<input type="text" name="' + nameAttr + '" class="form-control utp-input" placeholder="' + label + ' ' + count + '">'
-        + '<button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>';
+        + '<button type="button" class="btn btn-utp-outline-red btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>';
       container.appendChild(div);
     }
 
     // Skills
     const skills = [];
+    function normalizeSkill(rawSkill) {
+      const normalized = String(rawSkill || '').replace(/\s+/g, ' ').trim();
+      return normalized.slice(0, 60);
+    }
+
     function addSkill() {
       const input = document.getElementById('skillInput');
-      const value = input.value.trim();
-      if (!value || skills.includes(value)) { input.value = ''; return; }
+      const value = normalizeSkill(input.value);
+      if (!value || skills.some(s => s.toLowerCase() === value.toLowerCase())) { input.value = ''; return; }
       skills.push(value);
       input.value = '';
       renderSkills();
@@ -344,7 +348,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
       skills.forEach(function(s, i) {
         const chip = document.createElement('span');
         chip.className = 'utp-skill-chip-sm d-inline-flex align-items-center gap-1';
-        chip.innerHTML = s + ' <i class="bi bi-x utp-clickable" onclick="removeSkill(' + i + ')"></i>';
+        const label = document.createElement('span');
+        label.textContent = s;
+        chip.appendChild(label);
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-x utp-clickable';
+        icon.setAttribute('onclick', 'removeSkill(' + i + ')');
+        chip.appendChild(icon);
         container.appendChild(chip);
       });
       document.getElementById('habilidadesJson').value = JSON.stringify(skills);

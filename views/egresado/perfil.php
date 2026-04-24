@@ -18,6 +18,15 @@ $egresadoModel = new Egresado();
 $perfil = $egresadoModel->getByUsuarioId($_SESSION['usuario_id']);
 $estadoRecordatorio = $perfil ? $egresadoModel->obtenerEstadoRecordatorio($_SESSION['usuario_id']) : null;
 
+$edadCalculada = null;
+if (!empty($perfil['año_nacimiento']) && ctype_digit((string)$perfil['año_nacimiento'])) {
+  $anioNacimientoPerfil = (int)$perfil['año_nacimiento'];
+  $anioActualPerfil = (int)date('Y');
+  if ($anioNacimientoPerfil >= 1900 && $anioNacimientoPerfil <= $anioActualPerfil) {
+    $edadCalculada = max(0, $anioActualPerfil - $anioNacimientoPerfil);
+  }
+}
+
 // Calcular completitud de perfil
 $completitud = $egresadoModel->calcularCompletudinformacion($perfil);
 $porcentajeCompletitud = $completitud['porcentaje'] ?? 0;
@@ -249,14 +258,14 @@ $curGenero = $perfil['genero'] ?? '';
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
                       <label class="utp-label">Correo personal (registro)</label>
-                      <input type="email" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['correo_personal'] ?? '') ?>" disabled>
+                      <input type="email" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['correo_personal'] ?? ($perfil['email'] ?? '')) ?>" disabled>
                       <span class="utp-field-hint">Dato capturado durante el registro</span>
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
                     <div class="utp-form-group">
                       <label class="utp-label">Teléfono (registro)</label>
-                      <input type="text" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['telefono'] ?? '') ?>" disabled>
+                      <input type="text" class="utp-input-disabled" value="<?= htmlspecialchars($perfil['telefono'] ?? ($_SESSION['usuario_telefono'] ?? '')) ?>" disabled>
                       <span class="utp-field-hint">Dato capturado durante el registro</span>
                     </div>
                   </div>
@@ -274,6 +283,13 @@ $curGenero = $perfil['genero'] ?? '';
                     <div class="utp-form-group">
                       <label class="utp-label">Año de nacimiento</label>
                       <input type="number" name="anio_nacimiento" class="form-control utp-input" value="<?= htmlspecialchars($perfil['año_nacimiento'] ?? '') ?>" min="1940" max="<?= (int)date('Y') - 15 ?>" step="1" placeholder="1999">
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="utp-form-group">
+                      <label class="utp-label">Edad (calculada)</label>
+                      <input type="text" class="utp-input-disabled" value="<?= $edadCalculada !== null ? (int)$edadCalculada . ' años' : '—' ?>" disabled>
+                      <span class="utp-field-hint">Dato visual calculado desde tu año de nacimiento</span>
                     </div>
                   </div>
                   <div class="col-12 col-md-6">
@@ -402,6 +418,11 @@ $curGenero = $perfil['genero'] ?? '';
     const skillsContainer = document.getElementById('soft-skills-container');
     const hiddenInput = document.getElementById('habilidades-blandas-input');
 
+    function normalizeSkill(rawSkill) {
+      const normalized = String(rawSkill || '').replace(/\s+/g, ' ').trim();
+      return normalized.slice(0, 80);
+    }
+
     function updateHiddenInput() {
       const skills = Array.from(document.querySelectorAll('.utp-skill-chip-editable')).map(el => el.dataset.skill);
       const inputElements = Array.from(document.querySelectorAll('input[name="habilidades_blandas[]"]'));
@@ -417,10 +438,16 @@ $curGenero = $perfil['genero'] ?? '';
     }
 
     function addSkill(skill) {
-      if (!skill.trim()) return;
+      const normalizedSkill = normalizeSkill(skill);
+      if (!normalizedSkill) return;
+
+      if (/[<>]/.test(normalizedSkill)) {
+        alert('No se permiten etiquetas HTML en las habilidades.');
+        return;
+      }
       
       const existing = Array.from(document.querySelectorAll('.utp-skill-chip-editable'))
-        .some(el => el.dataset.skill.toLowerCase() === skill.toLowerCase());
+        .some(el => el.dataset.skill.toLowerCase() === normalizedSkill.toLowerCase());
       
       if (existing) {
         alert('Esta habilidad ya está agregada');
@@ -429,10 +456,14 @@ $curGenero = $perfil['genero'] ?? '';
 
       const chip = document.createElement('span');
       chip.className = 'utp-skill-chip-editable';
-      chip.dataset.skill = skill;
-      chip.innerHTML = `${skill}<i class="bi bi-x ms-1"></i>`;
+      chip.dataset.skill = normalizedSkill;
+      chip.appendChild(document.createTextNode(normalizedSkill));
+
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-x ms-1';
+      chip.appendChild(icon);
       
-      chip.querySelector('i').addEventListener('click', function() {
+      icon.addEventListener('click', function() {
         chip.remove();
         updateHiddenInput();
       });

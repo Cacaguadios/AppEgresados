@@ -13,13 +13,33 @@ class Database {
     private $db_user;
     private $db_pass;
     private $db_port;
+
+    private function envValue($primary, $secondary, $default = '') {
+        $candidates = [$primary, $secondary];
+        foreach ($candidates as $key) {
+            if (!$key) {
+                continue;
+            }
+            $fromGetEnv = getenv($key);
+            if ($fromGetEnv !== false && $fromGetEnv !== '') {
+                return $fromGetEnv;
+            }
+            if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+                return $_ENV[$key];
+            }
+            if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+                return $_SERVER[$key];
+            }
+        }
+        return $default;
+    }
     
     public function __construct() {
-        $this->host = getenv('APP_DB_HOST') ?: getenv('DB_HOST') ?: 'localhost';
-        $this->db_name = getenv('APP_DB_NAME') ?: getenv('DB_NAME') ?: 'bolsa_trabajo_utp';
-        $this->db_user = getenv('APP_DB_USER') ?: getenv('DB_USER') ?: 'root';
-        $this->db_pass = getenv('APP_DB_PASS') ?: getenv('DB_PASS') ?: '';
-        $this->db_port = getenv('APP_DB_PORT') ?: getenv('DB_PORT') ?: '3306';
+        $this->host = $this->envValue('APP_DB_HOST', 'DB_HOST', 'localhost');
+        $this->db_name = $this->envValue('APP_DB_NAME', 'DB_NAME', 'bolsa_trabajo_utp');
+        $this->db_user = $this->envValue('APP_DB_USER', 'DB_USER', 'root');
+        $this->db_pass = $this->envValue('APP_DB_PASS', 'DB_PASS', '');
+        $this->db_port = $this->envValue('APP_DB_PORT', 'DB_PORT', '3306');
 
         try {
             $dsn = "mysql:host=" . $this->host . ";port=" . $this->db_port . ";dbname=" . $this->db_name . ";charset=utf8mb4";

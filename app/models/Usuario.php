@@ -58,11 +58,13 @@ class Usuario extends Database {
     /**
      * Crear registro en tabla egresados vinculado al usuario
      */
-    public function createEgresado($idUsuario, $matricula, $curp) {
+    public function createEgresado($idUsuario, $matricula, $curp, $correoPersonal = null, $telefono = null) {
         $data = [
             'id_usuario' => $idUsuario,
             'matricula'  => $matricula,
             'curp'       => $curp,
+            'correo_personal' => $correoPersonal,
+            'telefono'   => $telefono,
         ];
         return $this->insert('egresados', $data);
     }

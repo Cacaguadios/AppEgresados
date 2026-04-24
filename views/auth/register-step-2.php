@@ -153,6 +153,9 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
                        name="telefono"
                        placeholder="10 dígitos"
                        inputmode="numeric"
+                    pattern="\d{10}"
+                    minlength="10"
+                    maxlength="10"
                        value="<?php echo htmlspecialchars($_POST['telefono'] ?? ''); ?>"
                        required />
               </div>

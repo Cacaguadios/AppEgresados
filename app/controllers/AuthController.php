@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../models/Egresado.php';
 require_once __DIR__ . '/../helpers/Security.php';
 
 class AuthController {
@@ -92,6 +93,16 @@ class AuthController {
         $_SESSION['usuario_verificacion_estado'] = $usuario['verificacion_estado'] ?? 'pendiente';
         $_SESSION['logged_in']        = true;
         $_SESSION['requiere_cambio_pass'] = !empty($usuario['requiere_cambio_pass']);
+
+        if ($rol === 'egresado') {
+            try {
+                $egresadoModel = new Egresado();
+                $perfilEgresado = $egresadoModel->getByUsuarioId($usuario['id']);
+                $_SESSION['usuario_telefono'] = $perfilEgresado['telefono'] ?? '';
+            } catch (\Throwable $e) {
+                $_SESSION['usuario_telefono'] = '';
+            }
+        }
         
         $_SESSION['success'] = '✅ ¡Bienvenido ' . $usuario['nombre'] . '!';
         
