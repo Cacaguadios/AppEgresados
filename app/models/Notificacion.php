@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/../helpers/EmailTemplate.php';
 
 class Notificacion extends Database {
 
@@ -30,13 +31,14 @@ class Notificacion extends Database {
             return;
         }
 
-        $driver = strtolower((string) (getenv('MAIL_DRIVER') ?: 'log'));
+        $htmlBody = EmailTemplate::buildSystemEmailHtml($subject, $message, $tipo);
+        $textBody = EmailTemplate::buildSystemEmailText($subject, $message, $tipo);
+        $driver = strtolower((string) $this->envValue('MAIL_DRIVER', 'log'));
 
         if ($driver === 'smtp') {
-            if ($this->sendEmailViaSmtp($to, $subject, $message)) {
+            if ($this->sendEmailViaSmtp($to, $subject, $htmlBody, $textBody, $tipo)) {
                 return;
             }
-            $this->registrarErrorCorreo($to, $subject, $tipo, 'Fallo de envio SMTP en Notificacion::registrarCorreoSimulado');
         }
 
         $logDir = __DIR__ . '/../../storage/logs';
@@ -70,34 +72,38 @@ class Notificacion extends Database {
     /**
      * Enviar correo por SMTP usando la configuracion de entorno.
      */
-    private function sendEmailViaSmtp($to, $subject, $message) {
+    private function sendEmailViaSmtp($to, $subject, $htmlBody, $textBody = '', $tipo = 'general') {
         $autoload = __DIR__ . '/../../vendor/autoload.php';
         if (file_exists($autoload)) {
             require_once $autoload;
         }
 
         if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+            $this->registrarErrorCorreo($to, $subject, $tipo, 'PHPMailer no disponible. Ejecuta composer install en el servidor.');
             return false;
         }
 
         try {
             $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
 
-            $host = getenv('MAIL_HOST') ?: '';
-            $port = (int) (getenv('MAIL_PORT') ?: 587);
-            $user = getenv('MAIL_USER') ?: '';
-            $pass = getenv('MAIL_PASS') ?: '';
-            $from = getenv('MAIL_FROM') ?: $user;
-            $fromName = getenv('MAIL_FROM_NAME') ?: (getenv('APP_NAME') ?: 'AppEgresados UTP');
-            $encryption = strtolower((string) (getenv('MAIL_ENCRYPTION') ?: 'tls'));
+            $host = (string) $this->envValue('MAIL_HOST', '');
+            $port = (int) $this->envValue('MAIL_PORT', '587');
+            $user = (string) $this->envValue('MAIL_USER', '');
+            $pass = (string) $this->envValue('MAIL_PASS', '');
+            $from = (string) $this->envValue('MAIL_FROM', $user);
+            $fromName = (string) $this->envValue('MAIL_FROM_NAME', (string) $this->envValue('APP_NAME', 'AppEgresados UTP'));
+            $encryption = strtolower((string) $this->envValue('MAIL_ENCRYPTION', 'tls'));
 
             if ($host === '' || $from === '') {
+                $this->registrarErrorCorreo($to, $subject, $tipo, 'Configuracion SMTP incompleta: MAIL_HOST o MAIL_FROM vacio.');
                 return false;
             }
 
             $mail->isSMTP();
             $mail->Host = $host;
             $mail->Port = $port;
+            $mail->Timeout = 20;
+            $mail->SMTPAutoTLS = true;
 
             if ($user !== '' && $pass !== '') {
                 $mail->SMTPAuth = true;
@@ -109,21 +115,79 @@ class Notificacion extends Database {
 
             if ($encryption === 'ssl') {
                 $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } elseif ($encryption === 'none' || $encryption === '') {
+                $mail->SMTPSecure = false;
             } else {
                 $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            if ((string) $this->envValue('MAIL_ALLOW_SELF_SIGNED', '0') === '1') {
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true,
+                    ],
+                ];
             }
 
             $mail->CharSet = 'UTF-8';
             $mail->setFrom($from, $fromName);
             $mail->addAddress($to);
             $mail->Subject = $subject;
-            $mail->isHTML(false);
-            $mail->Body = $message;
+            $mail->isHTML(true);
+            $mail->Body = $htmlBody;
+            $mail->AltBody = $textBody !== '' ? $textBody : trim(strip_tags($htmlBody));
 
             $mail->send();
             return true;
         } catch (Exception $e) {
+            $errorInfo = isset($mail) ? (string) $mail->ErrorInfo : '';
+            $this->registrarErrorCorreo(
+                $to,
+                $subject,
+                $tipo,
+                'Excepcion SMTP: ' . $e->getMessage() . ($errorInfo !== '' ? ' | PHPMailer: ' . $errorInfo : '')
+            );
             return false;
+        }
+    }
+
+    private function envValue($key, $default = '') {
+        $this->ensureEnvLoaded();
+
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return $_ENV[$key];
+        }
+
+        $value = getenv($key);
+        if ($value !== false && $value !== '') {
+            return $value;
+        }
+
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return $_SERVER[$key];
+        }
+
+        return $default;
+    }
+
+    private function ensureEnvLoaded() {
+        static $loaded = false;
+        if ($loaded) {
+            return;
+        }
+        $loaded = true;
+
+        $mailDriverEnv = isset($_ENV['MAIL_DRIVER']) && $_ENV['MAIL_DRIVER'] !== '';
+        $mailDriverGetenv = getenv('MAIL_DRIVER');
+        if ($mailDriverEnv || ($mailDriverGetenv !== false && $mailDriverGetenv !== '')) {
+            return;
+        }
+
+        $envFile = __DIR__ . '/../../config/env.php';
+        if (file_exists($envFile)) {
+            require_once $envFile;
         }
     }
 

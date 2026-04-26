@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/EmailTemplate.php';
 
 class VerificationController {
 
@@ -263,14 +264,13 @@ class VerificationController {
             ? 'Código de verificación - Registro UTP' 
             : 'Código de recuperación - UTP';
 
-        $message = $tipo === 'registro'
-            ? "Tu código de verificación es: {$code}. Expira en 10 minutos."
-            : "Tu código de recuperación es: {$code}. Expira en 10 minutos.";
+        $htmlBody = EmailTemplate::buildVerificationEmailHtml($code, $tipo);
+        $textBody = EmailTemplate::buildVerificationEmailText($code, $tipo);
 
-        $driver = strtolower((string) (getenv('MAIL_DRIVER') ?: 'log'));
+        $driver = strtolower((string) $this->envValue('MAIL_DRIVER', 'log'));
 
         if ($driver === 'smtp') {
-            if ($this->sendEmailViaSmtp($to, $subject, $message)) {
+            if ($this->sendEmailViaSmtp($to, $subject, $htmlBody, $textBody)) {
                 return [
                     'success' => true,
                     'message' => 'Código de verificación enviado a ' . $to
@@ -291,34 +291,38 @@ class VerificationController {
         ];
     }
 
-    private function sendEmailViaSmtp($to, $subject, $message) {
+    private function sendEmailViaSmtp($to, $subject, $htmlBody, $textBody = '') {
         $autoload = __DIR__ . '/../../vendor/autoload.php';
         if (file_exists($autoload)) {
             require_once $autoload;
         }
 
         if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+            $this->logMailError('PHPMailer no disponible. Ejecuta composer install en el servidor.');
             return false;
         }
 
         try {
             $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
 
-            $host = getenv('MAIL_HOST') ?: '';
-            $port = (int) (getenv('MAIL_PORT') ?: 587);
-            $user = getenv('MAIL_USER') ?: '';
-            $pass = getenv('MAIL_PASS') ?: '';
-            $from = getenv('MAIL_FROM') ?: $user;
-            $fromName = getenv('MAIL_FROM_NAME') ?: (getenv('APP_NAME') ?: 'AppEgresados UTP');
-            $encryption = strtolower((string) (getenv('MAIL_ENCRYPTION') ?: 'tls'));
+            $host = (string) $this->envValue('MAIL_HOST', '');
+            $port = (int) $this->envValue('MAIL_PORT', '587');
+            $user = (string) $this->envValue('MAIL_USER', '');
+            $pass = (string) $this->envValue('MAIL_PASS', '');
+            $from = (string) $this->envValue('MAIL_FROM', $user);
+            $fromName = (string) $this->envValue('MAIL_FROM_NAME', (string) $this->envValue('APP_NAME', 'AppEgresados UTP'));
+            $encryption = strtolower((string) $this->envValue('MAIL_ENCRYPTION', 'tls'));
 
             if ($host === '' || $from === '') {
+                $this->logMailError('Configuracion SMTP incompleta: MAIL_HOST o MAIL_FROM vacio.');
                 return false;
             }
 
             $mail->isSMTP();
             $mail->Host = $host;
             $mail->Port = $port;
+            $mail->Timeout = 20;
+            $mail->SMTPAutoTLS = true;
 
             if ($user !== '' && $pass !== '') {
                 $mail->SMTPAuth = true;
@@ -330,22 +334,87 @@ class VerificationController {
 
             if ($encryption === 'ssl') {
                 $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } elseif ($encryption === 'none' || $encryption === '') {
+                $mail->SMTPSecure = false;
             } else {
                 $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            if ((string) $this->envValue('MAIL_ALLOW_SELF_SIGNED', '0') === '1') {
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true,
+                    ],
+                ];
             }
 
             $mail->CharSet = 'UTF-8';
             $mail->setFrom($from, $fromName);
             $mail->addAddress($to);
             $mail->Subject = $subject;
-            $mail->isHTML(false);
-            $mail->Body = $message;
+            $mail->isHTML(true);
+            $mail->Body = $htmlBody;
+            $mail->AltBody = $textBody !== '' ? $textBody : trim(strip_tags($htmlBody));
 
             $mail->send();
             return true;
         } catch (Exception $e) {
+            $errorInfo = isset($mail) ? (string) $mail->ErrorInfo : '';
+            $this->logMailError('Excepcion SMTP: ' . $e->getMessage() . ($errorInfo !== '' ? ' | PHPMailer: ' . $errorInfo : ''));
             return false;
         }
+    }
+
+    private function envValue($key, $default = '') {
+        $this->ensureEnvLoaded();
+
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return $_ENV[$key];
+        }
+
+        $value = getenv($key);
+        if ($value !== false && $value !== '') {
+            return $value;
+        }
+
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return $_SERVER[$key];
+        }
+
+        return $default;
+    }
+
+    private function ensureEnvLoaded() {
+        static $loaded = false;
+        if ($loaded) {
+            return;
+        }
+        $loaded = true;
+
+        $mailDriverEnv = isset($_ENV['MAIL_DRIVER']) && $_ENV['MAIL_DRIVER'] !== '';
+        $mailDriverGetenv = getenv('MAIL_DRIVER');
+        if ($mailDriverEnv || ($mailDriverGetenv !== false && $mailDriverGetenv !== '')) {
+            return;
+        }
+
+        $envFile = __DIR__ . '/../../config/env.php';
+        if (file_exists($envFile)) {
+            require_once $envFile;
+        }
+    }
+
+    private function logMailError($error) {
+        $logDir = __DIR__ . '/../../storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        $logFile = $logDir . '/emails.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $detalle = str_replace(["\r", "\n"], [' ', ' '], trim((string) $error));
+        file_put_contents($logFile, "[{$timestamp}] ERROR_SMTP VerificationController: {$detalle}\n", FILE_APPEND);
     }
 
     /* ================================================================
