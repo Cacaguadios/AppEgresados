@@ -121,7 +121,7 @@ $tasaVerif         = $totalUsuarios > 0 ? round(($totalVerificados / $totalUsuar
             <h2 class="utp-h2 mb-3">Acciones prioritarias</h2>
             <div class="row g-3">
               <div class="col-12 col-lg-6">
-                <a class="utp-actioncard" href="moderacion/list.php">
+                <a class="utp-actioncard" href="<?= appUrl('/admin/moderacion') ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon yellow"><i class="bi bi-hourglass-split"></i></div>
                     <span class="badge bg-warning text-dark rounded-pill"><?= $ofertasPendientes ?></span>
@@ -131,7 +131,7 @@ $tasaVerif         = $totalUsuarios > 0 ? round(($totalVerificados / $totalUsuar
                 </a>
               </div>
               <div class="col-12 col-lg-6">
-                <a class="utp-actioncard" href="verificacion/list.php">
+                <a class="utp-actioncard" href="<?= appUrl('/admin/verificacion') ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon blue"><i class="bi bi-patch-check"></i></div>
                     <span class="badge bg-primary rounded-pill"><?= $pendVerif ?></span>
@@ -148,7 +148,7 @@ $tasaVerif         = $totalUsuarios > 0 ? round(($totalVerificados / $totalUsuar
             <h2 class="utp-h2 mb-3">Gestión del sistema</h2>
             <div class="row g-3">
               <div class="col-12 col-lg-4">
-                <a class="utp-actioncard" href="seguimiento/list.php">
+                <a class="utp-actioncard" href="<?= appUrl('/admin/seguimiento') ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon green"><i class="bi bi-graph-up"></i></div>
                     <i class="bi bi-chevron-right text-muted"></i>

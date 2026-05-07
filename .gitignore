@@ -1,15 +1,54 @@
+# ============================================
+# ARCHIVOS DE ENTORNO (NUNCA subir a Git)
+# ============================================
 .env
 .env.local
+.env.*.local
 config/env.php
-vendor/
+
+# ============================================
+# DEPENDENCIAS (comentar si NO subes vendor)
+# ============================================
+#vendor/
 node_modules/
+
+# ============================================
+# ARCHIVOS SUBIDOS POR USUARIOS Y CACHÉ
+# ============================================
 public/assets/uploads/*
 storage/logs/*
 storage/cache/*
+storage/framework/*
+*.log
+
+# ============================================
+# ARCHIVOS TEMPORALES DEL SISTEMA
+# ============================================
 .DS_Store
 Thumbs.db
-*.log
+*.swp
+*.swo
+*~
+*.tmp
+
+# ============================================
+# CONFIGURACIÓN DE EDITORES
+# ============================================
 .vscode/
 .idea/
-*.swp
-.zip
+*.sublime-*
+
+# ============================================
+# ARCHIVOS COMPRIMIDOS
+# ============================================
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# ============================================
+# ARCHIVOS DE DOCKER (opcional, si son locales)
+# ============================================
+docker-compose.override.yml
+.env.docker

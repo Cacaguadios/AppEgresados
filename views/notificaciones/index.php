@@ -86,6 +86,51 @@ function getNotifColor($tipo) {
     ];
     return $map[$tipo] ?? 'blue';
 }
+
+  function resolveNotifUrl($url) {
+    if (!$url || $url === '#') {
+      return '#';
+    }
+
+    if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
+      return $url;
+    }
+
+    $routeMap = [
+      '../../views/admin/inicio.php' => appUrl('/admin/inicio'),
+      '../../views/admin/moderacion/list.php' => appUrl('/admin/moderacion'),
+      '../../views/admin/verificacion/list.php' => appUrl('/admin/verificacion'),
+      '../../views/admin/seguimiento/list.php' => appUrl('/admin/seguimiento'),
+      '../../views/admin/users.php' => appUrl('/admin/usuarios'),
+      '../../views/docente/postulantes.php' => appUrl('/docente/postulantes'),
+      '../../views/docente/mis-ofertas.php' => appUrl('/docente/mis-ofertas'),
+      '../../views/docente/inicio.php' => appUrl('/docente/inicio'),
+      '../../views/egresado/invitaciones.php' => appUrl('/egresado/invitaciones'),
+      '../../views/egresado/ofertas.php' => appUrl('/egresado/ofertas'),
+      '../../views/egresado/oferta-detalle.php' => appUrl('/egresado/ofertas'),
+      '../../views/egresado/postulaciones.php' => appUrl('/egresado/postulaciones'),
+      '../../views/egresado/perfil.php' => appUrl('/egresado/perfil'),
+    ];
+
+    if (isset($routeMap[$url])) {
+      return $routeMap[$url];
+    }
+
+    $normalized = str_replace('../../views/', '/', $url);
+    $normalized = preg_replace('#\.php$#', '', $normalized);
+
+    if ($normalized === '/admin/moderacion/list') {
+      return appUrl('/admin/moderacion');
+    }
+    if ($normalized === '/admin/verificacion/list') {
+      return appUrl('/admin/verificacion');
+    }
+    if ($normalized === '/admin/seguimiento/list') {
+      return appUrl('/admin/seguimiento');
+    }
+
+    return appUrl($normalized);
+  }
 ?>
 <!doctype html>
 <html lang="es">
@@ -243,11 +288,7 @@ function getNotifColor($tipo) {
                       $ampm     = date('A', $fechaRaw) === 'AM' ? 'a.m.' : 'p.m.';
                       $fecha    = date('j/n/Y, g:i:s ', $fechaRaw) . $ampm;
 
-                      // Fix relative URLs - ensure they work from /views/notificaciones/
-                      if ($url && $url !== '#' && strpos($url, 'http') !== 0) {
-                          // URLs stored as ../../views/X — from notificaciones/ we need ../X
-                          $url = str_replace('../../views/', '../', $url);
-                      }
+                      $url = resolveNotifUrl($url);
                     ?>
                     <div class="notif-item <?= $isUnread ? 'unread' : '' ?>"
                          data-notif-id="<?= (int)$n['id'] ?>"

@@ -498,6 +498,7 @@ switch ($request) {
         break;
         
     case '/admin/moderacion':
+    case '/admin/moderacion/list':
     case '/admin/ofertas-pendientes':
         if ($user_logged && $user_role === 'admin') {
             require __DIR__ . '/../views/admin/moderacion/list.php';
@@ -507,6 +508,7 @@ switch ($request) {
         break;
 
     case '/admin/verificacion':
+    case '/admin/verificacion/list':
         if ($user_logged && $user_role === 'admin') {
             require __DIR__ . '/../views/admin/verificacion/list.php';
         } else {
@@ -515,6 +517,7 @@ switch ($request) {
         break;
         
     case '/admin/seguimiento':
+    case '/admin/seguimiento/list':
     case '/admin/egresados':
         if ($user_logged && $user_role === 'admin') {
             require __DIR__ . '/../views/admin/seguimiento/list.php';
