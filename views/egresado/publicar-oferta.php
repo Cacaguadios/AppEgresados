@@ -18,18 +18,23 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
 $msgExito = '';
 $msgError = '';
 
+$defaultContacto = $_SESSION['usuario_email'] ?? '';
+$defaultNombreContacto = $fullName;
+$contacto = $defaultContacto;
+$nombreContacto = $defaultNombreContacto;
+
 // Handle POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $msgError = 'Token de seguridad inválido. Recarga la página.';
     } else {
-        $titulo      = trim($_POST['titulo'] ?? '');
-        $empresa     = trim($_POST['empresa'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        $contacto    = trim($_POST['contacto'] ?? '');
-        $nombreContacto = trim($_POST['nombre_contacto'] ?? '');
-        $puestoContacto = trim($_POST['puesto_contacto'] ?? '');
-        $telefonoContacto = trim($_POST['telefono_contacto'] ?? '');
+        $titulo          = trim($_POST['titulo'] ?? '');
+        $empresa         = trim($_POST['empresa'] ?? '');
+        $descripcion     = trim($_POST['descripcion'] ?? '');
+        $contacto        = trim($_POST['contacto'] ?? '') ?: $contacto;
+        $nombreContacto  = trim($_POST['nombre_contacto'] ?? '') ?: $nombreContacto;
+        $puestoContacto  = trim($_POST['puesto_contacto'] ?? '');
+        $telefonoContacto= trim($_POST['telefono_contacto'] ?? '');
 
         if (empty($titulo) || empty($empresa) || empty($descripcion) || empty($contacto)) {
             $msgError = 'Los campos Título, Empresa, Descripción y Email de contacto son obligatorios.';
@@ -73,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                 'salario_min'        => $salarioMin,
                 'salario_max'        => $salarioMax,
                 'vacantes'           => max(1, (int)($_POST['vacantes'] ?? 1)),
-                'contacto'           => $contacto ?: ($_SESSION['usuario_email'] ?? ''),
-                'nombre_contacto'    => $nombreContacto,
+                'contacto'           => $contacto ?: $defaultContacto,
+                'nombre_contacto'    => $nombreContacto ?: $defaultNombreContacto,
                 'puesto_contacto'    => $puestoContacto,
                 'telefono_contacto'  => $telefonoContacto,
                 'estado'             => 'pendiente_aprobacion',
@@ -243,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
               <article class="utp-form-card mb-4">
                 <h2 class="utp-form-card-title">Habilidades requeridas</h2>
                 <div class="d-flex gap-2">
-                  <input type="text" class="form-control utp-input flex-grow-1" id="skillInput" maxlength="60" placeholder="Agregar habilidad (ej: React, Node.js)">
+                  <input type="text" class="form-control utp-input flex-grow-1" id="skillInput" placeholder="Agregar habilidad (ej: React, Node.js)">
                   <button type="button" class="btn btn-utp-green d-flex align-items-center gap-2" onclick="addSkill()">
                     <i class="bi bi-plus-lg"></i> Agregar
                   </button>
@@ -257,11 +262,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                 <div class="row g-3">
                   <div class="col-12">
                     <label class="form-label">Email de contacto</label>
-                    <input type="email" name="contacto" class="form-control utp-input" placeholder="contacto@empresa.com" required>
+                    <input type="email" name="contacto" class="form-control utp-input" placeholder="contacto@empresa.com" value="<?= htmlspecialchars($contacto ?? $defaultContacto) ?>" required>
                   </div>
                   <div class="col-12">
                     <label class="form-label">Nombre del contacto</label>
-                    <input type="text" name="nombre_contacto" class="form-control utp-input" placeholder="Nombre completo">
+                    <input type="text" name="nombre_contacto" class="form-control utp-input" placeholder="Nombre completo" value="<?= htmlspecialchars($nombreContacto ?? $defaultNombreContacto) ?>">
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Puesto del contacto</label>
@@ -269,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label">Teléfono del contacto</label>
-                    <input type="tel" name="telefono_contacto" class="form-control utp-input" placeholder="Ej: +52 123 456 7890" inputmode="tel" pattern="^[0-9+()\-\s]{7,20}$" maxlength="20">
+                    <input type="tel" name="telefono_contacto" class="form-control utp-input" placeholder="Ej: +52 123 456 7890">
                   </div>
                 </div>
               </article>
@@ -313,27 +318,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
   <script src="<?= ASSETS_URL ?>/js/shared/app.js"></script>
   <script>
     // Dynamic list items (requisitos, beneficios)
+    let itemCounters = {};
     function addDynamicItem(containerId, nameAttr, label) {
       const container = document.getElementById(containerId);
       const count = container.children.length + 1;
       const div = document.createElement('div');
       div.className = 'd-flex gap-2 mb-2';
       div.innerHTML = '<input type="text" name="' + nameAttr + '" class="form-control utp-input" placeholder="' + label + ' ' + count + '">'
-        + '<button type="button" class="btn btn-utp-outline-red btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>';
+        + '<button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>';
       container.appendChild(div);
     }
 
     // Skills
     const skills = [];
-    function normalizeSkill(rawSkill) {
-      const normalized = String(rawSkill || '').replace(/\s+/g, ' ').trim();
-      return normalized.slice(0, 60);
-    }
-
     function addSkill() {
       const input = document.getElementById('skillInput');
-      const value = normalizeSkill(input.value);
-      if (!value || skills.some(s => s.toLowerCase() === value.toLowerCase())) { input.value = ''; return; }
+      const value = input.value.trim();
+      if (!value || skills.includes(value)) { input.value = ''; return; }
       skills.push(value);
       input.value = '';
       renderSkills();
@@ -348,14 +349,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
       skills.forEach(function(s, i) {
         const chip = document.createElement('span');
         chip.className = 'utp-skill-chip-sm d-inline-flex align-items-center gap-1';
-        const label = document.createElement('span');
-        label.textContent = s;
-        chip.appendChild(label);
-
-        const icon = document.createElement('i');
-        icon.className = 'bi bi-x utp-clickable';
-        icon.setAttribute('onclick', 'removeSkill(' + i + ')');
-        chip.appendChild(icon);
+        chip.innerHTML = s + ' <i class="bi bi-x utp-clickable" onclick="removeSkill(' + i + ')"></i>';
         container.appendChild(chip);
       });
       document.getElementById('habilidadesJson').value = JSON.stringify(skills);
