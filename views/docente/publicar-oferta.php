@@ -14,6 +14,8 @@ $apellidos = $_SESSION['usuario_apellidos'] ?? '';
 $fullName  = trim($nombre . ' ' . $apellidos);
 $initials  = mb_strtoupper(mb_substr($nombre,0,1) . mb_substr($apellidos,0,1));
 $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
+$inicioUrl = appUrl('/docente/inicio');
+$misOfertasUrl = appUrl('/docente/mis-ofertas');
 
 $msgExito = '';
 $msgError = '';
@@ -95,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                 $notifModel = new Notificacion();
                 $notifModel->onOfertaCreada($titulo, $fullName);
 
-                header('Location: mis-ofertas.php?creada=1');
+                header('Location: ' . $misOfertasUrl . '?creada=1');
                 exit;
             } else {
                 $msgError = 'Error al crear la oferta. Intenta de nuevo.';
@@ -139,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
 
           <!-- Header -->
           <section class="mb-4">
-            <a href="inicio.php" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
+            <a href="<?= htmlspecialchars($inicioUrl) ?>" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
               <i class="bi bi-chevron-left"></i> Volver
             </a>
             <h1 class="utp-h1 mb-2">Crear Nueva Oferta</h1>
@@ -287,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publicar_oferta'])) {
                   <button type="submit" class="btn btn-utp-green d-flex align-items-center justify-content-center gap-2">
                     <i class="bi bi-send"></i> Enviar para aprobación
                   </button>
-                  <a href="inicio.php" class="btn btn-link text-dark">Cancelar</a>
+                  <a href="<?= htmlspecialchars($inicioUrl) ?>" class="btn btn-link text-dark">Cancelar</a>
                 </div>
                 <div class="utp-info-box mt-4">
                   <p class="mb-0">Tu oferta será revisada por un administrador antes de publicarse.</p>

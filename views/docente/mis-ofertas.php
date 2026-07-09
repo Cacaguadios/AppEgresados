@@ -30,6 +30,7 @@ $vacanteBadge = [
 ];
 
 $msgCreada = isset($_GET['creada']);
+$publicarOfertaUrl = appUrl('/docente/publicar-oferta');
 ?>
 <!doctype html>
 <html lang="es">
@@ -71,7 +72,7 @@ $msgCreada = isset($_GET['creada']);
               <h1 class="utp-h1 mb-1">Mis Ofertas</h1>
               <p class="text-muted mb-0"><?= count($ofertas) ?> oferta<?= count($ofertas) !== 1 ? 's' : '' ?> publicada<?= count($ofertas) !== 1 ? 's' : '' ?></p>
             </div>
-            <a href="publicar-oferta.php" class="btn btn-utp-green d-inline-flex align-items-center gap-2">
+            <a href="<?= htmlspecialchars($publicarOfertaUrl) ?>" class="btn btn-utp-green d-inline-flex align-items-center gap-2">
               <i class="bi bi-plus-lg"></i> Nueva oferta
             </a>
           </section>
@@ -90,7 +91,7 @@ $msgCreada = isset($_GET['creada']);
               </div>
               <h3 style="font-size:20px; font-weight:600; color:#121212;">Aún no tienes ofertas</h3>
               <p style="color:#757575; font-size:16px; margin-top:8px;">Publica tu primera oferta para comenzar a recibir postulaciones.</p>
-              <a href="publicar-oferta.php" class="btn btn-utp-green mt-2">
+              <a href="<?= htmlspecialchars($publicarOfertaUrl) ?>" class="btn btn-utp-green mt-2">
                 <i class="bi bi-plus-lg me-2"></i> Crear oferta
               </a>
             </div>
@@ -166,7 +167,7 @@ $msgCreada = isset($_GET['creada']);
                 <!-- Acciones -->
                 <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
                   <?php if ($o['estado'] === 'aprobada' && !$expirada && $o['activo'] == 1): ?>
-                    <a href="publicar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                    <a href="<?= htmlspecialchars($publicarOfertaUrl) ?>?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
                       <i class="bi bi-eye me-1"></i> Ver
                     </a>
                     <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">

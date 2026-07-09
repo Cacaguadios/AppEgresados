@@ -17,6 +17,8 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
 $ofertaModel = new Oferta();
 $stats = $ofertaModel->getStatsByUser($_SESSION['usuario_id']);
 $totalPostulantes = $ofertaModel->getTotalPostulantesByUser($_SESSION['usuario_id']);
+$publicarOfertaUrl = appUrl('/docente/publicar-oferta');
+$misOfertasUrl = appUrl('/docente/mis-ofertas');
 ?>
 <!doctype html>
 <html lang="es">
@@ -57,7 +59,7 @@ $totalPostulantes = $ofertaModel->getTotalPostulantesByUser($_SESSION['usuario_i
               <h1 class="utp-h1 mb-2">Panel de ofertas</h1>
               <p class="utp-subtitle mb-0">Gestiona tus ofertas laborales y candidatos</p>
             </div>
-            <a href="publicar-oferta.php" class="btn btn-utp-green d-inline-flex align-items-center gap-2">
+            <a href="<?= htmlspecialchars($publicarOfertaUrl) ?>" class="btn btn-utp-green d-inline-flex align-items-center gap-2">
               <i class="bi bi-plus-lg"></i>
               Nueva oferta
             </a>
@@ -115,7 +117,7 @@ $totalPostulantes = $ofertaModel->getTotalPostulantesByUser($_SESSION['usuario_i
             <h2 class="utp-h2 mb-3">Acciones rápidas</h2>
             <div class="row g-3">
               <div class="col-12 col-lg-6">
-                <a class="utp-actioncard" href="publicar-oferta.php">
+                <a class="utp-actioncard" href="<?= htmlspecialchars($publicarOfertaUrl) ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon green"><i class="bi bi-plus-circle"></i></div>
                     <i class="bi bi-chevron-right text-muted"></i>
@@ -125,7 +127,7 @@ $totalPostulantes = $ofertaModel->getTotalPostulantesByUser($_SESSION['usuario_i
                 </a>
               </div>
               <div class="col-12 col-lg-6">
-                <a class="utp-actioncard" href="mis-ofertas.php">
+                <a class="utp-actioncard" href="<?= htmlspecialchars($misOfertasUrl) ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon red"><i class="bi bi-briefcase"></i></div>
                     <i class="bi bi-chevron-right text-muted"></i>
