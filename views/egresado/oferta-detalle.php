@@ -93,26 +93,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['postularse'])) {
 
         // Notificar al creador de la oferta
         $notifModel = new Notificacion();
-        $cvPath = trim((string)($egresado['cv_path'] ?? ''));
-        $cvUrl = $cvPath !== ''
-          ? ((defined('BASE_URL') ? BASE_URL : '/AppEgresados') . '/' . ltrim($cvPath, '/'))
-          : '';
+        $correoCreadorOferta = trim((string) ($oferta['creador_email'] ?? ''));
+        $correoContactoOferta = trim((string) ($oferta['contacto'] ?? ''));
         $notifModel->onPostulacion(
             $oferta['titulo'],
             $oferta['id_usuario_creador'],
             $fullName,
-            $oferta['creador_email'] ?? null,
-            $oferta['contacto'] ?? null,
+            $correoCreadorOferta,
+            $correoContactoOferta,
             $_SESSION['usuario_email'] ?? null,
             $egresado['telefono'] ?? null,
-          trim($_POST['mensaje_postulacion'] ?? ''),
-          [
-            'correo_personal' => $egresado['correo_personal'] ?? null,
-            'matricula' => $egresado['matricula'] ?? null,
-            'especialidad' => $egresado['especialidad'] ?? null,
-            'generacion' => $egresado['generacion'] ?? null,
-            'cv_path' => $cvUrl,
-          ]
+            trim($_POST['mensaje_postulacion'] ?? '')
         );
 
         // Si el perfil no cumple, avisar al egresado

@@ -283,12 +283,97 @@ class VerificationController {
             ];
         }
 
-        $this->logSimulatedEmail($to, $subject, $code, $tipo);
+        $this->logSystemEmail($to, $subject, 'Código: ' . $code, $tipo);
 
         return [
             'success' => true,
             'message' => 'Código generado en modo local (MAIL_DRIVER=log). Revisa storage/logs/emails.log para ver el código.'
         ];
+    }
+
+    public function sendUserCredentialsEmail($to, $usuario, $password, $nombre = '', $apellidos = '') {
+        $fullName = trim(($nombre ? $nombre : '') . ' ' . ($apellidos ? $apellidos : '')) ?: 'Usuario';
+        $subject = 'Tus credenciales de acceso - Bolsa de Trabajo UTP';
+
+        $message = "Hola {$fullName},\n\n" .
+            "Tu cuenta en Bolsa de Trabajo UTP ha sido creada correctamente. " .
+            "Puedes iniciar sesión con las siguientes credenciales:\n\n" .
+            "Usuario: {$usuario}\n" .
+            "Contraseña temporal: {$password}\n\n" .
+            "Por seguridad, debes cambiar tu contraseña en el primer acceso.\n\n" .
+            "Si no solicitaste esta cuenta, ignora este mensaje.";
+
+        return $this->sendSystemEmail($to, $subject, $message, 'general');
+    }
+
+    public function sendSystemEmail($to, $subject, $message, $tipo = 'general') {
+        $htmlBody = EmailTemplate::buildSystemEmailHtml($subject, $message, $tipo);
+        $textBody = EmailTemplate::buildSystemEmailText($subject, $message, $tipo);
+        $driver = strtolower((string) $this->envValue('MAIL_DRIVER', 'log'));
+
+        if ($driver === 'smtp') {
+            if ($this->sendEmailViaSmtp($to, $subject, $htmlBody, $textBody)) {
+                return [
+                    'success' => true,
+                    'message' => 'Correo enviado a ' . $to
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'No se pudo enviar el correo. Verifica la configuración SMTP.'
+            ];
+        }
+
+        $this->logSystemEmail($to, $subject, $message, $tipo);
+        return [
+            'success' => true,
+            'message' => 'Correo generado en modo local (MAIL_DRIVER=log). Revisa storage/logs/emails.log.'
+        ];
+    }
+
+    public function sendStyledNotificationEmail($to, $subject, $message, $tipo = 'general', array $details = []) {
+        $htmlBody = EmailTemplate::buildStyledNotificationEmailHtml($subject, $message, $tipo, $details);
+        $textBody = EmailTemplate::buildSystemEmailText($subject, $message, $tipo);
+        $driver = strtolower((string) $this->envValue('MAIL_DRIVER', 'log'));
+
+        if ($driver === 'smtp') {
+            if ($this->sendEmailViaSmtp($to, $subject, $htmlBody, $textBody)) {
+                return [
+                    'success' => true,
+                    'message' => 'Correo enviado a ' . $to
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'No se pudo enviar el correo. Verifica la configuración SMTP.'
+            ];
+        }
+
+        $this->logSystemEmail($to, $subject, $message, $tipo);
+        return [
+            'success' => true,
+            'message' => 'Correo generado en modo local (MAIL_DRIVER=log). Revisa storage/logs/emails.log.'
+        ];
+    }
+
+    private function logSystemEmail($to, $subject, $message, $tipo = 'general') {
+        $logDir = __DIR__ . '/../../storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        $logFile = $logDir . '/emails.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $contenido = sprintf(
+            "%s | %s | %s | %s\n",
+            $timestamp,
+            $to,
+            str_replace(["\r", "\n"], [' ', ' '], trim($subject)),
+            str_replace(["\r", "\n"], [' ', ' '], trim($message))
+        );
+        file_put_contents($logFile, $contenido, FILE_APPEND);
     }
 
     private function sendEmailViaSmtp($to, $subject, $htmlBody, $textBody = '') {

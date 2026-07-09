@@ -5,7 +5,7 @@
  */
 
 require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/../helpers/EmailTemplate.php';
+require_once __DIR__ . '/../controllers/VerificationController.php';
 
 class Notificacion extends Database {
 
@@ -24,171 +24,17 @@ class Notificacion extends Database {
     }
 
     /**
-     * Registrar un correo simulado en el log local.
+     * Enviar el correo de notificación mediante el sistema de emails del proyecto.
+     * En local se registra en storage/logs/emails.log; en producción puede enviarse por SMTP.
      */
-    private function registrarCorreoSimulado($to, $subject, $message, $tipo) {
-        if (empty($to)) {
+    private function enviarCorreoNotificacion($to, $subject, $message, $tipo, array $details = []) {
+        $to = trim((string) ($to ?? ''));
+        if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return;
         }
 
-        $htmlBody = EmailTemplate::buildSystemEmailHtml($subject, $message, $tipo);
-        $textBody = EmailTemplate::buildSystemEmailText($subject, $message, $tipo);
-        $driver = strtolower((string) $this->envValue('MAIL_DRIVER', 'log'));
-
-        if ($driver === 'smtp') {
-            if ($this->sendEmailViaSmtp($to, $subject, $htmlBody, $textBody, $tipo)) {
-                return;
-            }
-        }
-
-        $logDir = __DIR__ . '/../../storage/logs';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-
-        $logFile = $logDir . '/emails.log';
-        $timestamp = date('Y-m-d H:i:s');
-        $body = str_replace(["\r", "\n"], [' ', ' '], trim($message));
-        $log = "[{$timestamp}] TO: {$to} | SUBJECT: {$subject} | TYPE: {$tipo} | MESSAGE: {$body}\n";
-        file_put_contents($logFile, $log, FILE_APPEND);
-    }
-
-    /**
-     * Registrar error de envio de correo.
-     */
-    private function registrarErrorCorreo($to, $subject, $tipo, $error) {
-        $logDir = __DIR__ . '/../../storage/logs';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-
-        $logFile = $logDir . '/emails.log';
-        $timestamp = date('Y-m-d H:i:s');
-        $detalle = str_replace(["\r", "\n"], [' ', ' '], trim((string)$error));
-        $log = "[{$timestamp}] ERROR_SMTP TO: {$to} | SUBJECT: {$subject} | TYPE: {$tipo} | ERROR: {$detalle}\n";
-        file_put_contents($logFile, $log, FILE_APPEND);
-    }
-
-    /**
-     * Enviar correo por SMTP usando la configuracion de entorno.
-     */
-    private function sendEmailViaSmtp($to, $subject, $htmlBody, $textBody = '', $tipo = 'general') {
-        $autoload = __DIR__ . '/../../vendor/autoload.php';
-        if (file_exists($autoload)) {
-            require_once $autoload;
-        }
-
-        if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
-            $this->registrarErrorCorreo($to, $subject, $tipo, 'PHPMailer no disponible. Ejecuta composer install en el servidor.');
-            return false;
-        }
-
-        try {
-            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-
-            $host = (string) $this->envValue('MAIL_HOST', '');
-            $port = (int) $this->envValue('MAIL_PORT', '587');
-            $user = (string) $this->envValue('MAIL_USER', '');
-            $pass = (string) $this->envValue('MAIL_PASS', '');
-            $from = (string) $this->envValue('MAIL_FROM', $user);
-            $fromName = (string) $this->envValue('MAIL_FROM_NAME', (string) $this->envValue('APP_NAME', 'AppEgresados UTP'));
-            $encryption = strtolower((string) $this->envValue('MAIL_ENCRYPTION', 'tls'));
-
-            if ($host === '' || $from === '') {
-                $this->registrarErrorCorreo($to, $subject, $tipo, 'Configuracion SMTP incompleta: MAIL_HOST o MAIL_FROM vacio.');
-                return false;
-            }
-
-            $mail->isSMTP();
-            $mail->Host = $host;
-            $mail->Port = $port;
-            $mail->Timeout = 20;
-            $mail->SMTPAutoTLS = true;
-
-            if ($user !== '' && $pass !== '') {
-                $mail->SMTPAuth = true;
-                $mail->Username = $user;
-                $mail->Password = $pass;
-            } else {
-                $mail->SMTPAuth = false;
-            }
-
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'none' || $encryption === '') {
-                $mail->SMTPSecure = false;
-            } else {
-                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            }
-
-            if ((string) $this->envValue('MAIL_ALLOW_SELF_SIGNED', '0') === '1') {
-                $mail->SMTPOptions = [
-                    'ssl' => [
-                        'verify_peer' => false,
-                        'verify_peer_name' => false,
-                        'allow_self_signed' => true,
-                    ],
-                ];
-            }
-
-            $mail->CharSet = 'UTF-8';
-            $mail->setFrom($from, $fromName);
-            $mail->addAddress($to);
-            $mail->Subject = $subject;
-            $mail->isHTML(true);
-            $mail->Body = $htmlBody;
-            $mail->AltBody = $textBody !== '' ? $textBody : trim(strip_tags($htmlBody));
-
-            $mail->send();
-            return true;
-        } catch (Exception $e) {
-            $errorInfo = isset($mail) ? (string) $mail->ErrorInfo : '';
-            $this->registrarErrorCorreo(
-                $to,
-                $subject,
-                $tipo,
-                'Excepcion SMTP: ' . $e->getMessage() . ($errorInfo !== '' ? ' | PHPMailer: ' . $errorInfo : '')
-            );
-            return false;
-        }
-    }
-
-    private function envValue($key, $default = '') {
-        $this->ensureEnvLoaded();
-
-        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
-            return $_ENV[$key];
-        }
-
-        $value = getenv($key);
-        if ($value !== false && $value !== '') {
-            return $value;
-        }
-
-        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-            return $_SERVER[$key];
-        }
-
-        return $default;
-    }
-
-    private function ensureEnvLoaded() {
-        static $loaded = false;
-        if ($loaded) {
-            return;
-        }
-        $loaded = true;
-
-        $mailDriverEnv = isset($_ENV['MAIL_DRIVER']) && $_ENV['MAIL_DRIVER'] !== '';
-        $mailDriverGetenv = getenv('MAIL_DRIVER');
-        if ($mailDriverEnv || ($mailDriverGetenv !== false && $mailDriverGetenv !== '')) {
-            return;
-        }
-
-        $envFile = __DIR__ . '/../../config/env.php';
-        if (file_exists($envFile)) {
-            require_once $envFile;
-        }
+        $controller = new VerificationController();
+        $controller->sendStyledNotificationEmail($to, $subject, $message, $tipo, $details);
     }
 
     /**
@@ -324,8 +170,7 @@ class Notificacion extends Database {
         $correoContacto = null,
         $egresadoEmail = null,
         $egresadoTelefono = null,
-        $mensajePostulacion = null,
-        $datosEgresado = []
+        $mensajePostulacion = null
     ) {
         $mensaje = "{$egresadoNombre} se postuló a tu oferta \"{$ofertaTitulo}\".";
         $this->crear(
@@ -336,51 +181,46 @@ class Notificacion extends Database {
             '../../views/docente/postulantes.php'
         );
 
+        if (empty($correoCreador) && !empty($idCreadorOferta)) {
+            $usuarioCreador = $this->fetchOne('SELECT email FROM usuarios WHERE id = ?', [$idCreadorOferta]);
+            $correoCreador = $usuarioCreador['email'] ?? null;
+        }
+
+        $detallesCorreo = [
+            'Candidato' => $egresadoNombre,
+            'Vacante' => $ofertaTitulo,
+            'Correo del postulante' => $egresadoEmail ?: 'No informado',
+            'Teléfono' => $egresadoTelefono ?: 'No informado',
+        ];
+
         // Notificar al creador de la oferta
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoCreador,
-            'Nueva postulación recibida - UTP',
+            '¡Tienes un nuevo postulante!',
             $mensaje,
-            'nueva_postulacion'
+            'nueva_postulacion',
+            $detallesCorreo
         );
 
         // Notificar al correo de contacto con los datos del egresado
         if (!empty($correoContacto)) {
-            $detalles = [];
-            $detalles[] = "Nombre: {$egresadoNombre}";
+            $detalles  = "Nombre: {$egresadoNombre}";
             if (!empty($egresadoEmail)) {
-                $detalles[] = "Email institucional: {$egresadoEmail}";
-            }
-            if (!empty($datosEgresado['correo_personal'] ?? null)) {
-                $detalles[] = "Email personal: " . $datosEgresado['correo_personal'];
-            }
-            if (!empty($datosEgresado['matricula'] ?? null)) {
-                $detalles[] = "Matrícula: " . $datosEgresado['matricula'];
-            }
-            if (!empty($datosEgresado['especialidad'] ?? null)) {
-                $detalles[] = "Especialidad: " . $datosEgresado['especialidad'];
-            }
-            if (!empty($datosEgresado['generacion'] ?? null)) {
-                $detalles[] = "Generación: " . $datosEgresado['generacion'];
+                $detalles .= " | Email: {$egresadoEmail}";
             }
             if (!empty($egresadoTelefono)) {
-                $detalles[] = "Teléfono: {$egresadoTelefono}";
-            }
-            if (!empty($datosEgresado['cv_path'] ?? null)) {
-                $detalles[] = "CV: " . $datosEgresado['cv_path'];
+                $detalles .= " | Teléfono: {$egresadoTelefono}";
             }
             if (!empty($mensajePostulacion)) {
-                $detalles[] = "Mensaje del egresado: {$mensajePostulacion}";
+                $detalles .= " | Mensaje: {$mensajePostulacion}";
             }
-
-            $mensajeContacto = "Nueva postulación para \"{$ofertaTitulo}\"." . PHP_EOL
-                . implode(PHP_EOL, $detalles);
-
-            $this->registrarCorreoSimulado(
+            $mensajeContacto = "Nueva postulación para \"{$ofertaTitulo}\". {$detalles}.";
+            $this->enviarCorreoNotificacion(
                 $correoContacto,
-                'Nueva postulación recibida - UTP',
+                '¡Tienes un nuevo postulante!',
                 $mensajeContacto,
-                'nueva_postulacion'
+                'nueva_postulacion',
+                $detallesCorreo
             );
         }
     }
@@ -399,7 +239,7 @@ class Notificacion extends Database {
             $urlOferta ?: '../../views/egresado/oferta-detalle.php'
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoEgresado,
             'Invitación a postularse - UTP',
             $mensaje,
@@ -420,7 +260,7 @@ class Notificacion extends Database {
             '../../views/egresado/postulaciones.php'
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoEgresado,
             'Seleccionado en vacante - UTP',
             $mensaje,
@@ -441,7 +281,7 @@ class Notificacion extends Database {
             '../../views/egresado/postulaciones.php'
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoEgresado,
             'Estado de postulación - UTP',
             $mensaje,
@@ -462,7 +302,7 @@ class Notificacion extends Database {
             "../../views/egresado/invitaciones.php"
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoEgresado,
             'Invitación a vacante - UTP',
             $mensaje,
@@ -483,7 +323,7 @@ class Notificacion extends Database {
             '../../views/docente/postulantes.php'
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoDocente,
             'Postulación recibida - UTP',
             $mensaje,
@@ -504,7 +344,7 @@ class Notificacion extends Database {
             '../../views/egresado/perfil.php'
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoEgresado,
             'Tu perfil y la oferta - UTP',
             $mensaje,
@@ -525,7 +365,7 @@ class Notificacion extends Database {
             "../../views/docente/postulantes.php?feedback={$postulacionId}"
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoCreador,
             'Resultado del contacto - UTP',
             $mensaje,
@@ -546,7 +386,7 @@ class Notificacion extends Database {
             '../../views/docente/postulantes.php'
         );
 
-        $this->registrarCorreoSimulado(
+        $this->enviarCorreoNotificacion(
             $correoDocente,
             'Postulación retirada - UTP',
             $mensaje,

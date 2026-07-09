@@ -33,6 +33,15 @@ class EmailTemplate {
         return $text;
     }
 
+    public static function buildStyledNotificationEmailHtml(string $subject, string $message, string $tipo = 'general', array $details = []): string {
+        $title = self::escape($subject);
+        $paragraphs = [self::escape(self::introTextForTipo($tipo))];
+        $accentLabel = self::labelForTipo($tipo);
+
+        $bodyHtml = self::styledBodyExtra($tipo, $message, $details);
+        return self::baseLayout($title, $accentLabel, $paragraphs, $bodyHtml);
+    }
+
     public static function buildVerificationEmailHtml(string $code, string $tipo = 'registro'): string {
         $title = $tipo === 'registro' ? 'Código de verificación' : 'Código de recuperación';
         $intro = $tipo === 'registro'
@@ -105,6 +114,10 @@ class EmailTemplate {
     }
 
     private static function systemBodyExtra(string $tipo, string $message): string {
+        return self::styledBodyExtra($tipo, $message, []);
+    }
+
+    private static function styledBodyExtra(string $tipo, string $message, array $details = []): string {
         $positiveTypes = ['oferta_aprobada', 'oferta_nueva', 'postulacion_seleccionada', 'invitacion_oferta', 'invitacion_vacante', 'nueva_postulacion'];
         $warningTypes = ['oferta_rechazada', 'postulacion_rechazada', 'perfil_no_cumple', 'postulacion_retirada'];
 
@@ -118,10 +131,27 @@ class EmailTemplate {
         $boxBg = $isPositive ? '#F3FBF5' : '#FAFAFA';
         $boxBorder = $isPositive ? '1px solid rgba(0,133,62,.22)' : '1px solid rgba(122,21,1,.12)';
 
+        $detailHtml = '';
+        if ($tipo === 'nueva_postulacion' && $details !== []) {
+            $rows = '';
+            foreach ($details as $label => $value) {
+                $rows .= '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(122,21,1,.08);">'
+                    . '<span style="font-size:13px;line-height:20px;color:' . self::MUTED . ';font-weight:600;">' . self::escape((string) $label) . '</span>'
+                    . '<span style="font-size:13px;line-height:20px;color:' . self::TEXT . ';font-weight:600;text-align:right;">' . self::escape((string) $value) . '</span>'
+                    . '</div>';
+            }
+
+            $detailHtml = '<div style="margin-top:16px;padding:14px 16px;background:#ffffff;border:1px solid rgba(122,21,1,.12);border-radius:14px;">'
+                . '<div style="font-size:12px;line-height:18px;color:' . self::MUTED . ';font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Resumen</div>'
+                . $rows
+                . '</div>';
+        }
+
         $footer = self::footerText($tipo);
         $messageHtml = '<div style="margin:22px 0 18px;padding:18px 18px 18px 20px;background:' . $boxBg . ';' . $boxBorder . ';border-left:5px solid ' . $accent . ';border-radius:16px;">'
             . '<div style="font-size:13px;line-height:20px;color:' . self::MUTED . ';font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">' . $title . '</div>'
             . '<div style="font-size:16px;line-height:25px;color:' . self::TEXT . ';">' . self::paragraphsFromPlainText($message) . '</div>'
+            . $detailHtml
             . '</div>';
 
         if ($footer === '') {
