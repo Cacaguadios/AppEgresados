@@ -105,13 +105,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- RIGHT / FORM -->
         <section class="col-12 col-lg-6 d-flex align-items-center justify-content-center py-5 px-3 px-md-5">
-          <div class="auth-card w-100">
+          <div class="auth-card w-100 d-flex flex-column" style="max-width: 426px; padding: 33px; gap: 32px; background: rgba(255, 255, 255, 0.85); box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25); border-radius: 24px; outline: 1px rgba(255, 255, 255, 0.30) solid; outline-offset: -1px;">
 
-            <header class="mb-4">
-              <h3 class="mb-2" style="font-size:30px; font-weight:700; line-height:36px;">
+            <div class="text-center">
+              <img src="<?= ASSETS_URL ?>/img/ibbt-big.png"
+                   alt="Egresados EXA TIID"
+                   style="width: 104.47px; height: 148px; object-fit: contain; display: inline-block;">
+            </div>
+
+            <header class="d-flex flex-column gap-2">
+              <h3 class="mb-0 text-center" style="font-size:30px; font-weight:700; line-height:36px; color: var(--text);">
                 Inicio de Sesión
               </h3>
-              <p class="mb-0" style="color:var(--muted); font-size:16px; line-height:24px;">
+              <p class="mb-0 text-center" style="color:var(--muted); font-size:16px; line-height:24px;">
                 Ingresa tus credenciales para continuar
               </p>
             </header>
@@ -136,27 +142,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <?php unset($_SESSION['success']); ?>
             <?php endif; ?>
 
-            <form class="needs-validation" method="POST" action="">
+            <form class="needs-validation d-flex flex-column" method="POST" action="" style="gap: 24px;">
               
               <!-- CSRF Token -->
               <?= Security::csrfField() ?>
               
-              <div class="mb-3">
-                <label class="form-label" style="font-size:14px; font-weight:500;">
-                  Usuario o correo electrónico
+              <div>
+                <label class="form-label" style="font-size:14px; font-weight:500; color: var(--text); line-height: 14px; margin-bottom: 8px;">
+                  Usuario
                 </label>
                 <input class="form-control auth-input"
                        type="text"
                        name="identifier"
-                       placeholder="Ingresa tu usuario o email"
+                       placeholder="Ingresa tu usuario"
                        required
                        autocomplete="username"
                        value="<?= htmlspecialchars($_POST['identifier'] ?? $_SESSION['login_prefill_user'] ?? '') ?>" />
                 <?php unset($_SESSION['login_prefill_user']); ?>
               </div>
 
-              <div class="mb-3">
-                <label class="form-label" style="font-size:14px; font-weight:500;">
+              <div>
+                <label class="form-label" style="font-size:14px; font-weight:500; color: var(--text); line-height: 14px; margin-bottom: 8px;">
                   Contraseña
                 </label>
 
@@ -177,19 +183,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
               </div>
 
-              <div class="mb-3">
-                <a class="link-utp" href="/AppEgresados/forgot" style="font-size:14px;">¿Olvidaste tu contraseña?</a>
+              <div>
+                <a class="link-utp" href="/AppEgresados/forgot" style="font-size:16px; line-height:24px; font-weight:500;">¿Olvidaste tu contraseña?</a>
               </div>
 
-              <button class="btn btn-utp-green text-white w-100 mb-3" type="submit" style="height: 48px; font-size: 16px; font-weight: 500;">
+              <button class="btn btn-utp-green text-white w-100" type="submit" style="height: 48px; border-radius: 20px; font-size: 16px; font-weight: 500; line-height: 24px;">
                 Iniciar Sesión
               </button>
 
               <div class="text-center">
-                <span style="color:var(--muted); font-size:14px;">
+                <span style="color:var(--muted); font-size:14px; line-height:20px; font-weight:400;">
                   ¿No tienes cuenta?
                 </span>
-                <a class="link-utp" href="/AppEgresados/register-step-1" style="font-size:14px;">
+                <a class="link-utp" href="/AppEgresados/register-step-1" style="font-size:16px; line-height:24px; font-weight:500;">
                   Regístrate aquí
                 </a>
               </div>
