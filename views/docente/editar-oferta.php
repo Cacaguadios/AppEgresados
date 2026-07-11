@@ -42,6 +42,12 @@ $msgError = '';
 $requisitos = json_decode($oferta['requisitos'] ?? '[]', true) ?: [];
 $beneficios = json_decode($oferta['beneficios'] ?? '[]', true) ?: [];
 $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
+$coloresEstado = [
+    'pendiente_aprobacion' => '#ffc107',
+    'aprobada' => '#28a745',
+    'rechazada' => '#dc3545',
+];
+$colorEstado = $coloresEstado[$oferta['estado']] ?? '#6c757d';
 
 // Handle POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
@@ -330,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
                 <h3 class="utp-form-card-subtitle">Estado de la oferta</h3>
                 <div class="utp-info-box">
                   <p class="mb-2"><strong>Estado:</strong></p>
-                  <span class="badge" style="background-color: <?= match($oferta['estado']) { 'pendiente_aprobacion' => '#ffc107', 'aprobada' => '#28a745', 'rechazada' => '#dc3545', default => '#6c757d' } ?>">
+                  <span class="badge" style="background-color: <?= $colorEstado ?>">
                     <?= ucfirst(str_replace('_', ' ', $oferta['estado'])) ?>
                   </span>
                   <?php if ($oferta['estado'] === 'pendiente_aprobacion'): ?>

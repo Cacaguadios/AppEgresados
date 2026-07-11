@@ -161,11 +161,15 @@ if (!$user_logged && !in_array($request, $public_routes) &&
 // Helper: redirect según rol
 // ============================================
 function getDashboardUrl($role) {
-    return match($role) {
-        'admin' => appUrl('/admin/inicio'),
-        'docente', 'ti' => appUrl('/docente/inicio'),
-        default => appUrl('/egresado/inicio'),
-    };
+    switch ($role) {
+        case 'admin':
+            return appUrl('/admin/inicio');
+        case 'docente':
+        case 'ti':
+            return appUrl('/docente/inicio');
+        default:
+            return appUrl('/egresado/inicio');
+    }
 }
 
 // ============================================

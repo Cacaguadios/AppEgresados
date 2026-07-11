@@ -6,7 +6,14 @@ $baseUrl = '/AppEgresados';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
+    $role = $_SESSION['usuario_rol'] ?? '';
+    if ($role === 'admin') {
+        $r = '/AppEgresados/admin/inicio';
+    } elseif ($role === 'docente' || $role === 'ti') {
+        $r = '/AppEgresados/docente/inicio';
+    } else {
+        $r = '/AppEgresados/egresado/inicio';
+    }
     header('Location: ' . $r);
     exit;
 }
