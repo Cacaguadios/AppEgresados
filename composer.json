@@ -1,13 +1,25 @@
 {
     "name": "utp/bolsa-trabajo",
     "description": "Plataforma de bolsa de trabajo y seguimiento de egresados",
+    "license": "MPL-2.0",
     "type": "project",
     "require": {
-        "php": ">=8.0",
-        "phpmailer/phpmailer": "^6.5"
+        "php": ">=7.4",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "phpmailer/phpmailer": "^6.12"
+    },
+    "config": {
+        "platform-check": true,
+        "platform": {
+            "php": "7.4.0"
+        }
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0"
+        "phpunit/phpunit": "^9.6"
     },
     "autoload": {
         "psr-4": {

@@ -34,7 +34,7 @@ La aplicación permite publicar y moderar ofertas laborales, registrar postulaci
 
 ## Tecnologías
 
-- PHP 8.x
+- PHP 7.4
 - MySQL 8 o MariaDB compatible
 - Apache 2 con `mod_rewrite`
 - PDO MySQL
@@ -43,7 +43,7 @@ La aplicación permite publicar y moderar ofertas laborales, registrar postulaci
 - Bootstrap 5
 - JavaScript y CSS sin proceso de compilación
 
-Aunque `composer.json` conserva compatibilidad declarada con PHP 7.4, las comprobaciones y la documentación de despliegue del proyecto requieren PHP 8.0 o posterior. Se recomienda PHP 8.2.
+PHP 7.4 es la plataforma mínima de producción y la versión usada para resolver y validar las dependencias de Composer.
 
 ## Estructura del proyecto
 
@@ -70,7 +70,7 @@ AppEgresados/
 
 ## Requisitos
 
-- PHP 8.0 o posterior.
+- PHP 7.4 o posterior.
 - Extensiones PHP: `pdo`, `pdo_mysql`, `mbstring`, `openssl` y `json`.
 - MySQL o MariaDB.
 - Composer.
@@ -248,12 +248,20 @@ La guía detallada para Apache, MySQL y Ubuntu está disponible en [docs/DEPLOY_
 Flujo resumido:
 
 ```bash
-composer install --no-dev --optimize-autoloader
+composer install --no-dev --classmap-authoritative
 cp config/env.example.php config/env.php
 php database/_server_preflight.php
 # Respaldar la base y aplicar únicamente las migraciones pendientes
 sudo systemctl reload apache2
 ```
+
+## Política de dependencias
+
+- `composer.lock` es la fuente reproducible para CI y despliegues; `vendor/` no se versiona.
+- Dependabot revisa las dependencias de Composer semanalmente.
+- CI ejecuta `composer validate --strict`, `composer audit --locked` y revisa las licencias de producción.
+- Las actualizaciones deben conservar PHP 7.4 y pasar el smoke test antes de integrarse.
+- Una vulnerabilidad o licencia incompatible bloquea la integración, salvo una excepción temporal documentada en el pull request con riesgo, mitigación, responsable y fecha de vencimiento.
 
 ## Estado actual
 

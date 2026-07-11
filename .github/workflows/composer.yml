@@ -1,0 +1,46 @@
+name: Composer
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 9 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar PHP 7.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "7.4"
+          extensions: json, mbstring, openssl, pdo, pdo_mysql
+          tools: composer:v2
+          coverage: none
+
+      - name: Validar manifiesto y lockfile
+        run: composer validate --strict
+
+      - name: Instalar dependencias bloqueadas
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Comprobar sintaxis PHP 7.4
+        run: find app config database public tests views -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Auditar vulnerabilidades
+        run: composer audit --locked --no-interaction
+
+      - name: Revisar licencias de produccion
+        run: composer licenses --no-dev
+
+      - name: Verificar instalacion reproducible de produccion
+        run: |
+          lock_hash="$(sha256sum composer.lock)"
+          rm -rf vendor
+          composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist
+          test "$lock_hash" = "$(sha256sum composer.lock)"

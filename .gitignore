@@ -7,9 +7,9 @@
 config/env.php
 
 # ============================================
-# DEPENDENCIAS (comentar si NO subes vendor)
+# DEPENDENCIAS (se reconstruyen desde composer.lock)
 # ============================================
-#vendor/
+vendor/
 node_modules/
 
 # ============================================

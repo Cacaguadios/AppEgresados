@@ -4,14 +4,23 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $baseUrl = '/AppEgresados';
 
+function login_redirect_for_role($role, $baseUrl) {
+    switch ($role) {
+        case 'egresado':
+            return $baseUrl . '/egresado/inicio';
+        case 'docente':
+        case 'ti':
+            return $baseUrl . '/docente/inicio';
+        case 'admin':
+            return $baseUrl . '/admin/inicio';
+        default:
+            return $baseUrl . '/egresado/inicio';
+    }
+}
+
 // Si ya está autenticado, redirigir según rol
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $redirect = match($_SESSION['usuario_rol'] ?? '') {
-        'egresado' => '/AppEgresados/egresado/inicio',
-        'docente', 'ti' => '/AppEgresados/docente/inicio',
-        'admin' => '/AppEgresados/admin/inicio',
-        default => '/AppEgresados/egresado/inicio'
-    };
+    $redirect = login_redirect_for_role($_SESSION['usuario_rol'] ?? '', $baseUrl);
     header('Location: ' . $redirect);
     exit;
 }
@@ -25,12 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $auth = new AuthController();
     if ($auth->processLogin()) {
         // Redirigir según rol
-        $redirect = match($_SESSION['usuario_rol']) {
-            'egresado' => '/AppEgresados/egresado/inicio',
-            'docente', 'ti' => '/AppEgresados/docente/inicio',
-            'admin' => '/AppEgresados/admin/inicio',
-          default => '/AppEgresados/'
-        };
+        $redirect = login_redirect_for_role($_SESSION['usuario_rol'], $baseUrl);
         
         header('Location: ' . $redirect);
         exit;
