@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -19,7 +19,7 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
 // Get offer ID
 $ofertaId = (int)($_GET['oferta'] ?? $_POST['oferta'] ?? 0);
 if (!$ofertaId) {
-    header('Location: mis-ofertas.php');
+    header('Location: ' . appUrl('/docente/mis-ofertas'));
     exit;
 }
 
@@ -28,7 +28,7 @@ $oferta = $ofertaModel->getById($ofertaId);
 
 // Verify ownership
 if (!$oferta || (int)$oferta['id_usuario_creador'] !== (int)$_SESSION['usuario_id']) {
-    header('Location: mis-ofertas.php');
+    header('Location: ' . appUrl('/docente/mis-ofertas'));
     exit;
 }
 
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_invitaciones']
       if ($invitacionesCreadas > 0) {
         $msgExito = "Se enviaron $invitacionesCreadas invitación(es) exitosamente.";
         // Reload to refresh available egresados
-        header("Location: invitar-egresados.php?oferta=$ofertaId&enviadas=1");
+        header('Location: ' . appUrl('/docente/invitar-egresados') . '?oferta=' . $ofertaId . '&enviadas=1');
         exit;
       } else {
         $msgError = 'No se pudieron enviar invitaciones.';
@@ -125,7 +125,7 @@ $msgEnviadas = isset($_GET['enviadas']);
 
           <!-- Header -->
           <section class="mb-4">
-            <a href="mis-ofertas.php" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
+            <a href="<?= appUrl('/docente/mis-ofertas') ?>" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
               <i class="bi bi-chevron-left"></i> Volver
             </a>
             <h1 class="utp-h1 mb-2">Invitar Egresados</h1>
@@ -208,7 +208,7 @@ $msgEnviadas = isset($_GET['enviadas']);
                   </button>
                 </div>
                 <div class="col-auto">
-                  <a href="mis-ofertas.php" class="btn btn-outline-secondary">
+                  <a href="<?= appUrl('/docente/mis-ofertas') ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-x-lg me-2"></i>Cancelar
                   </a>
                 </div>

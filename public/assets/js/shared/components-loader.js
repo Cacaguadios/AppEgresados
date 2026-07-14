@@ -8,6 +8,10 @@
 
   // Datos inyectados por PHP en la página
   const DATA = window.UTP_DATA || {};
+  const LOADER_SCRIPT_URL =
+    document.currentScript && document.currentScript.src
+      ? document.currentScript.src
+      : "";
   const THEME_STORAGE_KEY = "utp-theme-mode";
   let darkReaderPromise = null;
 
@@ -20,11 +24,13 @@
     }
 
     // Derivar desde la URL del script cargado
-    var current = document.currentScript;
-    if (current && current.src) {
+    if (LOADER_SCRIPT_URL) {
       try {
-        var scriptPath = new URL(current.src, window.location.origin).pathname;
-        var marker = "/public/assets/";
+        var scriptPath = new URL(
+          LOADER_SCRIPT_URL,
+          window.location.origin
+        ).pathname;
+        var marker = "/assets/";
         var markerIdx = scriptPath.indexOf(marker);
         if (markerIdx !== -1) {
           return scriptPath.substring(0, markerIdx);
@@ -44,7 +50,7 @@
       }
     }
 
-    // Fallback para rutas limpias tipo /AppEgresados/egresado/inicio
+    // Fallback para rutas limpias con un posible prefijo de instalacion.
     var parts = path.split("/").filter(Boolean);
     if (parts.length > 0) {
       return "/" + parts[0];
@@ -53,14 +59,14 @@
     return "";
   }
 
-  /** Ruta a la carpeta compartido/ (componentes HTML) */
+  /** Ruta a los componentes HTML publicos. */
   function getComponentsBase() {
-    return getAppBase() + "/views/compartido/";
+    return getAssetBase() + "components/";
   }
 
-  /** Ruta a public/assets/ */
+  /** Ruta publica a los assets. */
   function getAssetBase() {
-    return getAppBase() + "/public/assets/";
+    return getAppBase() + "/assets/";
   }
 
   /** Ruta a la carpeta de vistas del rol activo */
@@ -338,7 +344,8 @@
     loads.push(loadComponent("utp-topbar-container", "topbar.html"));
 
     // Sidebar según rol
-    var sidebarFile = "sidebar-" + (DATA.role || "egresado") + ".html";
+    var sidebarRole = DATA.role === "ti" ? "docente" : DATA.role || "egresado";
+    var sidebarFile = "sidebar-" + sidebarRole + ".html";
     loads.push(loadComponent("utp-sidebar-container", sidebarFile));
 
     await Promise.all(loads);

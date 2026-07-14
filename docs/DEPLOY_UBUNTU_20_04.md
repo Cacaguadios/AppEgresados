@@ -62,6 +62,11 @@ Crear `/etc/apache2/sites-available/appegresados.conf`:
 </VirtualHost>
 ```
 
+Con este VirtualHost configura `APP_BASE_PATH=''`. Las rutas visibles serán
+`/assets/...` y `/api/...`; nunca deben incluir `/public`. Por ejemplo,
+`/assets/css/global.css` debe responder directamente desde
+`/var/www/AppEgresados/public/assets/css/global.css`.
+
 Alternativa compatible (si quieres mantener `DocumentRoot /var/www/AppEgresados`):
 
 - Mantener la configuracion de [/.htaccess](.htaccess) en la raiz del proyecto.
@@ -94,6 +99,11 @@ php database/run_016.php
 
 ```bash
 php database/_server_preflight.php
+curl -I https://tu-dominio.com/assets/css/global.css
+curl -I https://tu-dominio.com/assets/js/app.js
+curl -I https://tu-dominio.com/assets/components/topbar.html
 ```
 
-Si todo sale en `[OK]`, la instancia esta lista.
+Los recursos públicos deben responder `200`. Los endpoints de `/api/` pueden
+responder `401`, `403` o `405` sin una sesión válida, pero no `404`. Si todo sale
+en `[OK]`, la instancia está lista.

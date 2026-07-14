@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -60,10 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_invitacion']))
           (int)$egresadoUsuarioId,
           trim(($egresado['nombre_usuario'] ?? '') . ' ' . ($egresado['apellidos'] ?? '')),
           $egresado['email'] ?? null,
-          '../../views/egresado/oferta-detalle.php?id=' . (int)$oferta['id']
+          '/egresado/oferta-detalle?id=' . (int)$oferta['id']
         );
 
-        header('Location: directorio.php?invitacion=1');
+        header('Location: ' . appUrl('/docente/directorio') . '?invitacion=1');
         exit;
       }
     }

@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../config/application.php';
 
 // ─── Guard: requiere autenticación (cualquier rol) ───
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -22,6 +22,7 @@ if ($apellidos) $initials .= mb_substr($apellidos, 0, 1);
 $initials = mb_strtoupper($initials);
 
 $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
+$notificationsUrl = BASE_URL . '/notificaciones';
 
 // ─── Acciones POST ───
 $notifModel = new Notificacion();
@@ -29,7 +30,7 @@ $notifModel = new Notificacion();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $_SESSION['flash_error'] = 'Token de seguridad inválido.';
-        header('Location: index.php');
+        header('Location: ' . $notificationsUrl);
         exit;
     }
 
@@ -41,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notifModel->marcarTodasLeidas($userId);
     }
 
-    header('Location: index.php');
+    header('Location: ' . $notificationsUrl);
     exit;
 }
 
@@ -320,7 +321,7 @@ function getNotifColor($tipo) {
   </div><!-- .utp-layout -->
 
   <!-- Hidden form for marking individual notifications as read -->
-  <form id="markReadForm" method="POST" style="display:none;">
+  <form id="markReadForm" method="POST" action="<?= htmlspecialchars($notificationsUrl, ENT_QUOTES, 'UTF-8') ?>" style="display:none;">
     <?= Security::csrfField() ?>
     <input type="hidden" name="action" value="mark_read">
     <input type="hidden" name="notif_id" id="markReadNotifId" value="">
@@ -348,7 +349,7 @@ function getNotifColor($tipo) {
           if (url && url !== '#') {
             // Use fetch to mark read, then navigate
             var formData = new FormData(form);
-            fetch('index.php', {
+            fetch(<?= json_encode($notificationsUrl) ?>, {
               method: 'POST',
               body: formData
             }).then(function() {

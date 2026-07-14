@@ -7,11 +7,16 @@
   'use strict';
 
   function getAppBase() {
+    var data = window.UTP_DATA || {};
+    if (typeof data.appBase === 'string') {
+      return data.appBase;
+    }
+
     var current = document.currentScript;
     if (current && current.src) {
       try {
         var scriptPath = new URL(current.src, window.location.origin).pathname;
-        var marker = '/public/assets/';
+        var marker = '/assets/';
         var markerIdx = scriptPath.indexOf(marker);
         if (markerIdx !== -1) {
           return scriptPath.substring(0, markerIdx);
@@ -39,7 +44,7 @@
     return '';
   }
 
-  var API = getAppBase() + '/public/api/notificaciones.php';
+  var API = getAppBase() + '/api/notificaciones.php';
   var POLL_INTERVAL = 30000; // 30 segundos
 
   function updateBadge() {

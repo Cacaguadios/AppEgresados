@@ -3,11 +3,11 @@ require_once __DIR__ . '/../../config/application.php';
 
 // ─── Guard: requiere autenticación + rol egresado ───
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 if (($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -178,7 +178,7 @@ if ($egresado) {
               </h2>
               <div class="row g-3">
                 <div class="col-12 col-md-6">
-                  <a class="utp-actioncard h-100" href="ofertas.php">
+                  <a class="utp-actioncard h-100" href="<?= appUrl('/egresado/ofertas') ?>">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon green">
                         <i class="bi bi-briefcase"></i>
@@ -189,7 +189,7 @@ if ($egresado) {
                   </a>
                 </div>
                 <div class="col-12 col-md-6">
-                  <a class="utp-actioncard h-100" href="postulaciones.php">
+                  <a class="utp-actioncard h-100" href="<?= appUrl('/egresado/postulaciones') ?>">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon blue">
                         <i class="bi bi-file-earmark"></i>
@@ -200,7 +200,7 @@ if ($egresado) {
                   </a>
                 </div>
                 <div class="col-12 col-md-6">
-                  <a class="utp-actioncard h-100" href="perfil.php">
+                  <a class="utp-actioncard h-100" href="<?= appUrl('/egresado/perfil') ?>">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon yellow">
                         <i class="bi bi-person"></i>
@@ -211,7 +211,7 @@ if ($egresado) {
                   </a>
                 </div>
                 <div class="col-12 col-md-6">
-                  <a class="utp-actioncard h-100" href="seguimiento.php">
+                  <a class="utp-actioncard h-100" href="<?= appUrl('/egresado/seguimiento') ?>">
                     <div class="d-flex align-items-center gap-3 mb-3">
                       <div class="utp-miniicon orange">
                         <i class="bi bi-graph-up"></i>
@@ -237,7 +237,7 @@ if ($egresado) {
                     Un perfil completo aumenta tus posibilidades de selección. Le falta <?= (100 - $perfilCompleto) ?>% para completarlo.
                   </p>
                 </div>
-                <a href="perfil.php" class="btn btn-utp-red utp-shrink-0 utp-nowrap">
+                <a href="<?= appUrl('/egresado/perfil') ?>" class="btn btn-utp-red utp-shrink-0 utp-nowrap">
                   Completar ahora
                 </a>
               </div>
@@ -269,7 +269,7 @@ if ($egresado) {
           </p>
         </div>
         <div class="d-flex flex-column gap-2">
-          <a href="seguridad.php" class="btn btn-utp-red btn-utp-lg w-100">
+          <a href="<?= appUrl('/egresado/seguridad') ?>" class="btn btn-utp-red btn-utp-lg w-100">
             Cambiar contraseña ahora
           </a>
           <button type="button" class="btn btn-utp-outline-red btn-utp-lg w-100" data-bs-dismiss="modal">

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
@@ -205,8 +205,8 @@ $curGenero = $perfil['genero'] ?? '';
                 <div class="utp-tabs" role="tablist">
                   <button class="utp-tab active" data-tab="personal" role="tab" aria-selected="true">Datos personales</button>
                   <button class="utp-tab" data-tab="habilidades" role="tab" aria-selected="false">Habilidades</button>
-                  <a class="utp-tab utp-link-clean" href="seguimiento.php">Seguimiento</a>
-                  <a class="utp-tab utp-link-clean" href="seguridad.php">Seguridad</a>
+                  <a class="utp-tab utp-link-clean" href="<?= appUrl('/egresado/seguimiento') ?>">Seguimiento</a>
+                  <a class="utp-tab utp-link-clean" href="<?= appUrl('/egresado/seguridad') ?>">Seguridad</a>
                 </div>
               </div>
 

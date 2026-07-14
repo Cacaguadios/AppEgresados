@@ -17,7 +17,42 @@ if ($appBasePath === '' || $appBasePath === '/') {
 
 if (!defined('BASE_URL')) {
     define('BASE_URL', $appBasePath);
-    define('ASSETS_URL', $appBasePath . '/public/assets');
+}
+if (!defined('ASSETS_URL')) {
+    define('ASSETS_URL', $appBasePath . '/assets');
+}
+if (!defined('API_URL')) {
+    define('API_URL', $appBasePath . '/api');
+}
+
+if (!function_exists('appUrl')) {
+    function appUrl($path = '/') {
+        $path = '/' . ltrim((string) $path, '/');
+
+        if (BASE_URL === '') {
+            return $path;
+        }
+
+        if ($path === '/') {
+            return BASE_URL . '/';
+        }
+
+        return BASE_URL . $path;
+    }
+}
+
+if (!function_exists('getDashboardUrl')) {
+    function getDashboardUrl($role) {
+        switch ($role) {
+            case 'admin':
+                return appUrl('/admin/inicio');
+            case 'docente':
+            case 'ti':
+                return appUrl('/docente/inicio');
+            default:
+                return appUrl('/egresado/inicio');
+        }
+    }
 }
 
 // Polyfills para las funciones de cadenas incorporadas en PHP 8.
@@ -75,10 +110,13 @@ function include_js($url) {
 
 // Función para crear Nav Bar de Bootstrap
 function render_navbar($title = 'AppEgresados') {
+    $homeUrl = appUrl('/');
+    $loginUrl = appUrl('/login');
+
     return <<<HTML
     <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--utp-red);">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{BASE_URL}/">
+            <a class="navbar-brand" href="$homeUrl">
                 <i class="bi bi-mortarboard-fill"></i> $title
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -87,10 +125,10 @@ function render_navbar($title = 'AppEgresados') {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{BASE_URL}/">Inicio</a>
+                        <a class="nav-link" href="$homeUrl">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{BASE_URL}/views/auth/login.php">Login</a>
+                        <a class="nav-link" href="$loginUrl">Login</a>
                     </li>
                 </ul>
             </div>

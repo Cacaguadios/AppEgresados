@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
@@ -179,7 +179,7 @@ sort($allLocations);
                         <span class="utp-tech-tag"><?= htmlspecialchars($skill) ?></span>
                       <?php endforeach; ?>
                     </div>
-                    <a href="oferta-detalle.php?id=<?= (int)$oferta['id'] ?>" class="btn btn-utp-red btn-utp-rounded">Ver detalles</a>
+                    <a href="<?= appUrl('/egresado/oferta-detalle') ?>?id=<?= (int)$oferta['id'] ?>" class="btn btn-utp-red btn-utp-rounded">Ver detalles</a>
                   </article>
                   </div>
                   <?php endforeach; ?>

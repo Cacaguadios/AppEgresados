@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
           <div class="utp-profile-card d-none" id="tab-seguridad">
             <h2 class="utp-section-title mb-4">Seguridad</h2>
             <p class="text-muted mb-3">Cambia tu contraseña y gestiona la seguridad de tu cuenta.</p>
-            <a href="seguridad.php" class="btn btn-utp-red btn-utp-rounded">
+            <a href="<?= appUrl('/docente/seguridad') ?>" class="btn btn-utp-red btn-utp-rounded">
               <i class="bi bi-lock me-2"></i>Ir a Seguridad
             </a>
           </div>

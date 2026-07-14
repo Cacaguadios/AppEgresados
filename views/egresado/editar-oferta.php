@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || $_SESSION['usuario_rol'] !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -16,7 +16,7 @@ $requirePasswordChange = !empty($_SESSION['requiere_cambio_pass']);
 
 $ofertaId = (int)($_GET['id'] ?? 0);
 if (!$ofertaId) {
-    header('Location: mis-ofertas.php');
+    header('Location: ' . appUrl('/egresado/mis-ofertas'));
     exit;
 }
 
@@ -24,13 +24,13 @@ $ofertaModel = new Oferta();
 $oferta = $ofertaModel->getById($ofertaId);
 
 if (!$oferta) {
-    header('Location: mis-ofertas.php');
+    header('Location: ' . appUrl('/egresado/mis-ofertas'));
     exit;
 }
 
 // Validar que es el propietario
 if ($oferta['id_usuario_creador'] != $_SESSION['usuario_id']) {
-    header('Location: mis-ofertas.php');
+    header('Location: ' . appUrl('/egresado/mis-ofertas'));
     exit;
 }
 
@@ -142,7 +142,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
 
           <!-- Header -->
           <section class="mb-4">
-            <a href="mis-ofertas.php" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
+            <a href="<?= appUrl('/egresado/mis-ofertas') ?>" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
               <i class="bi bi-chevron-left"></i> Volver
             </a>
             <h1 class="utp-h1 mb-2">Editar Oferta</h1>
@@ -306,7 +306,7 @@ $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
                   <button type="submit" class="btn btn-utp-green d-flex align-items-center justify-content-center gap-2">
                     <i class="bi bi-floppy"></i> Guardar cambios
                   </button>
-                  <a href="mis-ofertas.php" class="btn btn-link text-dark">Cancelar</a>
+                  <a href="<?= appUrl('/egresado/mis-ofertas') ?>" class="btn btn-link text-dark">Cancelar</a>
                 </div>
               </article>
 

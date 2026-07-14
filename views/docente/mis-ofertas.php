@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -170,16 +170,16 @@ $publicarOfertaUrl = appUrl('/docente/publicar-oferta');
                     <a href="<?= htmlspecialchars($publicarOfertaUrl) ?>?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
                       <i class="bi bi-eye me-1"></i> Ver
                     </a>
-                    <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
+                    <a href="<?= appUrl('/docente/editar-oferta') ?>?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
                       <i class="bi bi-pencil me-1"></i> Editar
                     </a>
-                    <a href="invitar-egresados.php?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
+                    <a href="<?= appUrl('/docente/invitar-egresados') ?>?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
                       <i class="bi bi-hand-thumbs-up me-1"></i> Invitar
                     </a>
                     <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius:8px;" onclick="confirmarBaja(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
                       <i class="bi bi-x-circle me-1"></i> Dar de baja
                     </button>
-                    <a href="postulantes.php?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto" style="border-radius:8px;">
+                    <a href="<?= appUrl('/docente/postulantes') ?>?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto" style="border-radius:8px;">
                       <i class="bi bi-people me-1"></i> <?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?>
                     </a>
                   <?php elseif ($o['activo'] == 0): ?>
@@ -212,7 +212,7 @@ $publicarOfertaUrl = appUrl('/docente/publicar-oferta');
   <script>
     function confirmarBaja(ofertaId, titulo) {
       if (confirm('Confirmas que deseas dar de baja la oferta: ' + titulo + '?\n\nEsto ocultará la oferta pero podrás reactivarla después.')) {
-        fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
+        fetch('<?= API_URL ?>/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -237,7 +237,7 @@ $publicarOfertaUrl = appUrl('/docente/publicar-oferta');
 
     function confirmarActivacion(ofertaId, titulo) {
       if (confirm('Confirmas que deseas reactivar la oferta: ' + titulo + '?')) {
-        fetch('../../public/api/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
+        fetch('<?= API_URL ?>/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

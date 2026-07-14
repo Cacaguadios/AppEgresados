@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -133,7 +133,7 @@ $statusMap = [
                     <p class="utp-empty-text">
                       Explora las ofertas disponibles y postúlate a las que te interesen.
                     </p>
-                    <a href="ofertas.php" class="btn btn-utp-red btn-utp-rounded mt-2">Explorar ofertas</a>
+                    <a href="<?= appUrl('/egresado/ofertas') ?>" class="btn btn-utp-red btn-utp-rounded mt-2">Explorar ofertas</a>
                   </div>
                 </div>
                 <?php else: ?>
@@ -235,7 +235,7 @@ $statusMap = [
                       <span class="utp-app-meta"><i class="bi bi-cash-stack me-1"></i><?= $salarioTxt ?></span>
                       <?php endif; ?>
                       <span class="utp-app-meta"><i class="bi bi-calendar3 me-1"></i>Postulado: <?= $fechaPost ?></span>
-                      <?php $ofertaUrl = 'oferta-detalle.php?id=' . (int)$p['oferta_id']; ?>
+                      <?php $ofertaUrl = appUrl('/egresado/oferta-detalle') . '?id=' . (int)$p['oferta_id']; ?>
                       <a href="<?= htmlspecialchars($ofertaUrl) ?>" class="ms-auto btn btn-sm btn-outline-secondary utp-btn-compact">
                         Ver oferta <i class="bi bi-arrow-right ms-1"></i>
                       </a>
@@ -300,7 +300,7 @@ $statusMap = [
 
     function confirmarRetiro(postulacionId, titulo) {
       if (confirm('Confirmas que deseas retirar tu postulación a: ' + titulo + '?\n\nNo podrás deshacer esta acción.')) {
-        postAction('../../public/api/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId,
+        postAction('<?= API_URL ?>/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación dada de baja correctamente');
       }
@@ -308,7 +308,7 @@ $statusMap = [
 
     function restaurarPostulacion(postulacionId) {
       if (confirm('¿Deseas restaurar esta postulación?')) {
-        postAction('../../public/api/postulaciones-update.php?action=restaurar&postulacion_id=' + postulacionId,
+        postAction('<?= API_URL ?>/postulaciones-update.php?action=restaurar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación restaurada correctamente');
       }
@@ -316,7 +316,7 @@ $statusMap = [
 
     function eliminarPostulacion(postulacionId, titulo) {
       if (confirm('¿Eliminar permanentemente la postulación a ' + titulo + '?\n\nEsta acción no se puede deshacer.')) {
-        postAction('../../public/api/postulaciones-update.php?action=eliminar&postulacion_id=' + postulacionId,
+        postAction('<?= API_URL ?>/postulaciones-update.php?action=eliminar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación eliminada correctamente');
       }
@@ -326,7 +326,7 @@ $statusMap = [
       var nuevoMensaje = prompt('Edita tu mensaje de postulación:', mensajeActual || '');
       if (nuevoMensaje === null) return;
 
-      postAction('../../public/api/postulaciones-update.php?action=editar_mensaje&postulacion_id=' + postulacionId,
+      postAction('<?= API_URL ?>/postulaciones-update.php?action=editar_mensaje&postulacion_id=' + postulacionId,
         {postulacion_id: postulacionId, mensaje: nuevoMensaje},
         'Mensaje actualizado correctamente');
     }

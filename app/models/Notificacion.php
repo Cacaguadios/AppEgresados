@@ -119,7 +119,7 @@ class Notificacion extends Database {
             'nueva_postulacion',
             'Nueva oferta por moderar',
             "{$creadorNombre} publicó la oferta \"{$ofertaTitulo}\". Revísala para aprobarla.",
-            '../../views/admin/moderacion/list.php'
+            '/admin/moderacion'
         );
     }
 
@@ -133,7 +133,7 @@ class Notificacion extends Database {
             'oferta_aprobada',
             'Tu oferta fue aprobada',
             "La oferta \"{$ofertaTitulo}\" ha sido aprobada y ya es visible para los egresados.",
-            '../../views/docente/mis-ofertas.php'
+            '/docente/mis-ofertas'
         );
 
         // Notificar a todos los egresados
@@ -141,7 +141,7 @@ class Notificacion extends Database {
             'oferta_nueva',
             '¡Nueva oferta disponible!',
             "Se publicó la oferta \"{$ofertaTitulo}\". ¡Revísala y postúlate!",
-            "../../views/egresado/oferta-detalle.php?id={$ofertaId}"
+            "/egresado/oferta-detalle?id={$ofertaId}"
         );
     }
 
@@ -154,7 +154,7 @@ class Notificacion extends Database {
             'oferta_rechazada',
             'Oferta rechazada',
             "La oferta \"{$ofertaTitulo}\" fue rechazada. Motivo: {$razon}",
-            '../../views/docente/mis-ofertas.php'
+            '/docente/mis-ofertas'
         );
     }
 
@@ -178,7 +178,7 @@ class Notificacion extends Database {
             'nueva_postulacion',
             'Nuevo postulante',
             $mensaje,
-            '../../views/docente/postulantes.php'
+            '/docente/postulantes'
         );
 
         if (empty($correoCreador) && !empty($idCreadorOferta)) {
@@ -236,7 +236,7 @@ class Notificacion extends Database {
             'general',
             'Invitación a vacante',
             $mensaje,
-            $urlOferta ?: '../../views/egresado/oferta-detalle.php'
+            $urlOferta ?: '/egresado/oferta-detalle'
         );
 
         $this->enviarCorreoNotificacion(
@@ -257,7 +257,7 @@ class Notificacion extends Database {
             'postulacion_seleccionada',
             '¡Has sido seleccionado!',
             $mensaje,
-            '../../views/egresado/postulaciones.php'
+            '/egresado/postulaciones'
         );
 
         $this->enviarCorreoNotificacion(
@@ -278,7 +278,7 @@ class Notificacion extends Database {
             'postulacion_rechazada',
             'Postulación no seleccionada',
             $mensaje,
-            '../../views/egresado/postulaciones.php'
+            '/egresado/postulaciones'
         );
 
         $this->enviarCorreoNotificacion(
@@ -299,7 +299,7 @@ class Notificacion extends Database {
             'invitacion_oferta',
             '¡Invitación a postularte!',
             $mensaje,
-            "../../views/egresado/invitaciones.php"
+            '/egresado/invitaciones'
         );
 
         $this->enviarCorreoNotificacion(
@@ -320,7 +320,7 @@ class Notificacion extends Database {
             'nueva_postulacion',
             'Invitado aceptó y se postuló',
             $mensaje,
-            '../../views/docente/postulantes.php'
+            '/docente/postulantes'
         );
 
         $this->enviarCorreoNotificacion(
@@ -341,7 +341,7 @@ class Notificacion extends Database {
             'general',
             'Perfil no coincide con la oferta',
             $mensaje,
-            '../../views/egresado/perfil.php'
+            '/egresado/perfil'
         );
 
         $this->enviarCorreoNotificacion(
@@ -362,7 +362,7 @@ class Notificacion extends Database {
             'feedback_pendiente',
             '¿Cómo resultó el contacto?',
             $mensaje,
-            "../../views/docente/postulantes.php?feedback={$postulacionId}"
+            "/docente/postulantes?feedback={$postulacionId}"
         );
 
         $this->enviarCorreoNotificacion(
@@ -383,7 +383,7 @@ class Notificacion extends Database {
             'postulacion_retirada',
             'Postulación retirada',
             $mensaje,
-            '../../views/docente/postulantes.php'
+            '/docente/postulantes'
         );
 
         $this->enviarCorreoNotificacion(

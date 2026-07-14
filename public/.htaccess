@@ -3,6 +3,10 @@ RewriteEngine On
 # Nunca publicar utilidades de diagnostico.
 RewriteRule ^test-bootstrap\.php$ - [F,L,NC]
 
+# Compatibilidad con URLs generadas antes de usar public/ como DocumentRoot.
+RewriteRule ^public/assets/(.*)$ assets/$1 [R=301,L,NE]
+RewriteRule ^public/api/(.*)$ api/$1 [L,NC,QSA]
+
 # Servir assets y endpoints fisicos autorizados.
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]

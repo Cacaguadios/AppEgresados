@@ -2,18 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+$baseUrl = BASE_URL;
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     $role = $_SESSION['usuario_rol'] ?? '';
-    if ($role === 'admin') {
-        $r = '/AppEgresados/admin/inicio';
-    } elseif ($role === 'docente' || $role === 'ti') {
-        $r = '/AppEgresados/docente/inicio';
-    } else {
-        $r = '/AppEgresados/egresado/inicio';
-    }
+    $r = getDashboardUrl($role);
     header('Location: ' . $r);
     exit;
 }
@@ -89,7 +83,7 @@ $roleActual = $_SESSION['registro_rol'] ?? 'egresado';
     <div class="container py-4 py-md-5">
 
       <!-- Back to login -->
-      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="/AppEgresados/login">
+      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="<?= htmlspecialchars(appUrl('/login'), ENT_QUOTES, 'UTF-8') ?>">
         <i class="bi bi-chevron-left"></i>
         <span>Volver al inicio de sesión</span>
       </a>

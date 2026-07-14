@@ -2,18 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+$baseUrl = BASE_URL;
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     $role = $_SESSION['usuario_rol'] ?? '';
-    if ($role === 'admin') {
-        $r = '/AppEgresados/admin/inicio';
-    } elseif ($role === 'docente' || $role === 'ti') {
-        $r = '/AppEgresados/docente/inicio';
-    } else {
-        $r = '/AppEgresados/egresado/inicio';
-    }
+    $r = getDashboardUrl($role);
     header('Location: ' . $r);
     exit;
 }
@@ -156,7 +150,7 @@ unset($_SESSION['registro_verificacion']);
 
         <!-- Acciones -->
         <section class="mt-4">
-          <a class="btn btn-utp-green text-white w-100 auth-cta" href="/AppEgresados/login">
+          <a class="btn btn-utp-green text-white w-100 auth-cta" href="<?= htmlspecialchars(appUrl('/login'), ENT_QUOTES, 'UTF-8') ?>">
             Continuar al inicio de sesión
           </a>
 

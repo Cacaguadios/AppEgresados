@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../config/application.php';
 /**
  * Logout – Cierra la sesión y redirige al login
  */
-$baseUrl = '/AppEgresados';
+$baseUrl = BASE_URL;
 
 app_logout();
 

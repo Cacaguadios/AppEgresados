@@ -113,6 +113,14 @@ set_env_if_missing('APP_DB_PASS', 'contraseña_db');
 
 Usa `APP_BASE_PATH=''` cuando el `DocumentRoot` apunte directamente a `public/`. Si la aplicación se publica en `http://localhost/AppEgresados`, usa `/AppEgresados`.
 
+Las URLs públicas se construyen sin exponer el nombre de la carpeta `public`:
+
+- Recursos estáticos: `${APP_BASE_PATH}/assets/...`
+- Endpoints HTTP: `${APP_BASE_PATH}/api/...`
+
+Por ejemplo, con `APP_BASE_PATH=''`, la hoja global se sirve desde
+`/assets/css/global.css`, no desde `/public/assets/css/global.css`.
+
 `config/env.php` contiene secretos y está excluido de Git. No debe incorporarse al repositorio.
 En producción este archivo se ignora: define las variables en el proceso de
 Apache siguiendo [docs/PRODUCTION_SECRETS.md](docs/PRODUCTION_SECRETS.md).

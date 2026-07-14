@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -328,7 +328,7 @@ $estadoPostBadge = [
       var trabajo   = document.querySelector('input[name="fb_trabajo"]:checked')?.value ?? null;
       var postId    = document.getElementById('feedbackPostId').value;
       var comentario= document.getElementById('feedbackComentario').value;
-      fetch('../../public/api/feedback-postulacion.php', {
+      fetch('<?= API_URL ?>/feedback-postulacion.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.UTP_CSRF_TOKEN || '' },
         body: JSON.stringify({
@@ -352,7 +352,7 @@ $estadoPostBadge = [
         return;
       }
 
-      fetch('../../public/api/postulaciones-update.php?action=actualizar_estado&postulacion_id=' + postulacionId, {
+      fetch('<?= API_URL ?>/postulaciones-update.php?action=actualizar_estado&postulacion_id=' + postulacionId, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

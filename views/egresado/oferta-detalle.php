@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 $nombre    = $_SESSION['usuario_nombre']   ?? '';
@@ -18,11 +18,11 @@ require_once __DIR__ . '/../../app/models/Notificacion.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $ofertaId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-if (!$ofertaId) { header('Location: ofertas.php'); exit; }
+if (!$ofertaId) { header('Location: ' . appUrl('/egresado/ofertas')); exit; }
 
 $ofertaModel = new Oferta();
 $oferta = $ofertaModel->getById($ofertaId);
-if (!$oferta) { header('Location: ofertas.php'); exit; }
+if (!$oferta) { header('Location: ' . appUrl('/egresado/ofertas')); exit; }
 
 // Check if current user already applied
 $egresadoModel = new Egresado();
@@ -116,11 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['postularse'])) {
         }
 
         if ($ofertaEliminada) {
-            header('Location: ofertas.php?cupo_lleno=1');
+            header('Location: ' . appUrl('/egresado/ofertas') . '?cupo_lleno=1');
         } else {
             // Actualizar estado de vacante
             $ofertaModel->updateVacancyStatus($ofertaId);
-            $redir = 'oferta-detalle.php?id=' . $ofertaId . '&postulado=1';
+            $redir = appUrl('/egresado/oferta-detalle') . '?id=' . $ofertaId . '&postulado=1';
             if ($validacion === 'no_cumple') {
                 $redir .= '&aviso=perfil';
             }
@@ -200,7 +200,7 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
             <div class="px-0 py-3 py-md-4 utp-content-wrap">
 
               <!-- Volver a ofertas -->
-              <a href="ofertas.php" class="utp-back-link mb-3 d-inline-flex align-items-center gap-2">
+              <a href="<?= appUrl('/egresado/ofertas') ?>" class="utp-back-link mb-3 d-inline-flex align-items-center gap-2">
                 <i class="bi bi-chevron-left"></i>
                 <span>Volver a ofertas</span>
               </a>
@@ -320,7 +320,7 @@ $matchPercent = count($habilidades) > 0 ? round((1 - count($missingSkills)/count
                       </div>
                       <h3 class="utp-applied-title">Ya aplicaste a esta oferta</h3>
                       <p class="utp-applied-text">Estado: <strong><?= htmlspecialchars(ucfirst($aplicacion['estado'])) ?></strong></p>
-                      <p class="utp-applied-text">Revisa el estado en <a href="postulaciones.php">"Mis Postulaciones"</a></p>
+                      <p class="utp-applied-text">Revisa el estado en <a href="<?= appUrl('/egresado/postulaciones') ?>">"Mis Postulaciones"</a></p>
                     </div>
                   </div>
                   <?php elseif ($oferta['estado'] === 'aprobada' && (int)($oferta['activo'] ?? 1) === 1 && (int)($oferta['vacantes'] ?? 0) > 0 && $oferta['estado_vacante'] !== 'rojo'): ?>

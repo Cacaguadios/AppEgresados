@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -91,7 +91,7 @@ $promedioAniosLaborando = $promedioMesesLaborando > 0 ? round($promedioMesesLabo
       requirePasswordChange: <?= $requirePasswordChange ? 'true' : 'false' ?>
     };
     window.UTP_REPORTES = {
-      apiUrl: <?= json_encode('../../public/api/reportes.php') ?>
+      apiUrl: <?= json_encode(API_URL . '/reportes.php') ?>
     };
   </script>
 
@@ -111,16 +111,16 @@ $promedioAniosLaborando = $promedioMesesLaborando > 0 ? round($promedioMesesLabo
               <p class="utp-subtitle mb-0">Consulta gráficas, listas exportables y métricas del sistema</p>
             </div>
             <div class="d-flex flex-wrap gap-2">
-              <a class="btn btn-outline-success" href="../../public/api/exportar-egresados.php?dataset=egresados&format=csv">
+              <a class="btn btn-outline-success" href="<?= API_URL ?>/exportar-egresados.php?dataset=egresados&amp;format=csv">
                 <i class="bi bi-filetype-csv me-1"></i>CSV egresados
               </a>
-              <a class="btn btn-success" href="../../public/api/exportar-egresados.php?dataset=egresados&format=excel">
+              <a class="btn btn-success" href="<?= API_URL ?>/exportar-egresados.php?dataset=egresados&amp;format=excel">
                 <i class="bi bi-file-earmark-excel me-1"></i>Excel egresados
               </a>
-              <a class="btn btn-outline-primary" href="../../public/api/exportar-egresados.php?dataset=empleadores&format=csv">
+              <a class="btn btn-outline-primary" href="<?= API_URL ?>/exportar-egresados.php?dataset=empleadores&amp;format=csv">
                 <i class="bi bi-download me-1"></i>CSV empresas
               </a>
-              <a class="btn btn-primary" href="../../public/api/exportar-egresados.php?dataset=empleadores&format=excel">
+              <a class="btn btn-primary" href="<?= API_URL ?>/exportar-egresados.php?dataset=empleadores&amp;format=excel">
                 <i class="bi bi-building-check me-1"></i>Excel empresas
               </a>
             </div>

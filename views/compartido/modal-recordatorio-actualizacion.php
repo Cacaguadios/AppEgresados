@@ -94,7 +94,7 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
         <button type="button" class="btn btn-utp-outline-gray" data-bs-dismiss="modal" onclick="marcarRecordatorioVisto()">
           <i class="bi bi-x-circle me-2"></i> Recordarme después
         </button>
-        <a href="perfil.php" class="btn btn-utp-red">
+        <a href="<?= appUrl('/egresado/perfil') ?>" class="btn btn-utp-red">
           <i class="bi bi-pencil-square me-2"></i> Actualizar información
         </a>
       </div>
@@ -168,7 +168,7 @@ function mostrarCamposFaltantes(camposFaltantes) {
  * Marcar el recordatorio como visto
  */
 function marcarRecordatorioVisto() {
-  fetch('../../public/api/marcar-recordatorio.php', {
+  fetch('<?= API_URL ?>/marcar-recordatorio.php', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

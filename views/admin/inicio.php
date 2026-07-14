@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -158,7 +158,7 @@ $tasaVerif         = $totalUsuarios > 0 ? round(($totalVerificados / $totalUsuar
                 </a>
               </div>
               <div class="col-12 col-lg-4">
-                <a class="utp-actioncard" href="reportes.php">
+                <a class="utp-actioncard" href="<?= appUrl('/admin/reportes') ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon yellow"><i class="bi bi-bar-chart-line"></i></div>
                     <i class="bi bi-chevron-right text-muted"></i>
@@ -168,7 +168,7 @@ $tasaVerif         = $totalUsuarios > 0 ? round(($totalVerificados / $totalUsuar
                 </a>
               </div>
               <div class="col-12 col-lg-4">
-                <a class="utp-actioncard" href="users.php">
+                <a class="utp-actioncard" href="<?= appUrl('/admin/usuarios') ?>">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="utp-miniicon blue"><i class="bi bi-people-fill"></i></div>
                     <i class="bi bi-chevron-right text-muted"></i>

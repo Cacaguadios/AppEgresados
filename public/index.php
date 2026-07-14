@@ -10,26 +10,7 @@ require_once dirname(__DIR__) . '/config/application.php';
 // ============================================
 // Configurar ruta base (dominio raiz o subcarpeta)
 // ============================================
-$appBasePath = defined('BASE_URL') ? BASE_URL : '/AppEgresados';
-
-function appUrl($path = '/') {
-    global $appBasePath;
-
-    $path = '/' . ltrim((string) $path, '/');
-    if ($path === '//') {
-        $path = '/';
-    }
-
-    if ($appBasePath === '') {
-        return $path;
-    }
-
-    if ($path === '/') {
-        return $appBasePath . '/';
-    }
-
-    return $appBasePath . $path;
-}
+$appBasePath = BASE_URL;
 
 // ============================================
 // Variables de sesión
@@ -55,6 +36,18 @@ $request = rtrim($request, '/');
 
 if (empty($request)) {
     $request = '/';
+}
+
+// Compatibilidad para enlaces cacheados de la instalacion historica en subcarpeta.
+if ($appBasePath === '' && ($request === '/AppEgresados' || str_starts_with($request, '/AppEgresados/'))) {
+    $legacyRequest = substr($request, strlen('/AppEgresados')) ?: '/';
+    $queryString = $_SERVER['QUERY_STRING'] ?? '';
+    $target = appUrl($legacyRequest);
+    if ($queryString !== '') {
+        $target .= '?' . $queryString;
+    }
+    header('Location: ' . $target, true, 301);
+    exit;
 }
 
 // Compatibilidad general para URLs legacy con .php
@@ -83,6 +76,26 @@ if (str_ends_with($request, '.php')) {
         } elseif ($normalized === '/views/notificaciones/index') {
             $normalized = '/notificaciones';
         }
+    } elseif (str_starts_with($normalized, '/auth/')) {
+        $legacyAuthName = substr($normalized, strlen('/auth/'));
+        $legacyAuthRoutes = [
+            'login' => '/login',
+            'logout' => '/logout',
+            'forgot' => '/forgot',
+            'verify-code' => '/verify-code',
+            'reset-password' => '/reset-password',
+            'password-updated' => '/password-updated',
+            'register-step-1' => '/register-step-1',
+            'register-step-2' => '/register-step-2',
+            'register-step-3' => '/register-step-3',
+            'register-step-4' => '/register-step-4',
+            'credentials-success' => '/credentials-success',
+        ];
+        $normalized = $legacyAuthRoutes[$legacyAuthName] ?? '/login';
+    }
+
+    if ($normalized === '/admin/users') {
+        $normalized = '/admin/usuarios';
     }
 
     $queryString = $_SERVER['QUERY_STRING'] ?? '';
@@ -111,6 +124,11 @@ $legacyAuthMap = [
 ];
 if (isset($legacyAuthMap[$request])) {
     header('Location: ' . appUrl($legacyAuthMap[$request]), true, 301);
+    exit;
+}
+
+if ($request === '/admin/users') {
+    header('Location: ' . appUrl('/admin/usuarios'), true, 301);
     exit;
 }
 
@@ -167,21 +185,6 @@ if (in_array($request, $known_routes, true) && !in_array($requestMethod, ['GET',
 if (!$user_logged && in_array($request, $protected_routes, true)) {
     header('Location: ' . appUrl('/login'));
     exit;
-}
-
-// ============================================
-// Helper: redirect según rol
-// ============================================
-function getDashboardUrl($role) {
-    switch ($role) {
-        case 'admin':
-            return appUrl('/admin/inicio');
-        case 'docente':
-        case 'ti':
-            return appUrl('/docente/inicio');
-        default:
-            return appUrl('/egresado/inicio');
-    }
 }
 
 // ============================================

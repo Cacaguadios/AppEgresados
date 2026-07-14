@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || $_SESSION['usuario_rol'] !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -71,7 +71,7 @@ $msgCreada = isset($_GET['creada']);
               <h1 class="utp-h1 mb-1">Mis Ofertas</h1>
               <p class="text-muted mb-0"><?= count($ofertas) ?> oferta<?= count($ofertas) !== 1 ? 's' : '' ?> publicada<?= count($ofertas) !== 1 ? 's' : '' ?></p>
             </div>
-            <a href="publicar-oferta.php" class="btn btn-utp-green d-inline-flex align-items-center gap-2">
+            <a href="<?= appUrl('/egresado/publicar-oferta') ?>" class="btn btn-utp-green d-inline-flex align-items-center gap-2">
               <i class="bi bi-plus-lg"></i> Nueva oferta
             </a>
           </section>
@@ -90,7 +90,7 @@ $msgCreada = isset($_GET['creada']);
               </div>
               <h3 class="utp-empty-title">Aún no tienes ofertas publicadas</h3>
               <p class="utp-empty-text">Publica tu primera oferta para compartir una oportunidad con otros egresados.</p>
-              <a href="publicar-oferta.php" class="btn btn-utp-green mt-2">
+              <a href="<?= appUrl('/egresado/publicar-oferta') ?>" class="btn btn-utp-green mt-2">
                 <i class="bi bi-plus-lg me-2"></i> Crear oferta
               </a>
             </div>
@@ -166,16 +166,16 @@ $msgCreada = isset($_GET['creada']);
                 <!-- Acciones -->
                 <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
                   <?php if ($o['estado'] === 'aprobada' && !$expirada && $o['activo'] == 1): ?>
-                    <a href="oferta-detalle.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary utp-btn-compact">
+                    <a href="<?= appUrl('/egresado/oferta-detalle') ?>?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-secondary utp-btn-compact">
                       <i class="bi bi-eye me-1"></i> Ver
                     </a>
-                    <a href="editar-oferta.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary utp-btn-compact">
+                    <a href="<?= appUrl('/egresado/editar-oferta') ?>?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary utp-btn-compact">
                       <i class="bi bi-pencil me-1"></i> Editar
                     </a>
                     <button type="button" class="btn btn-sm btn-outline-danger utp-btn-compact" onclick="confirmarBaja(<?= (int)$o['id'] ?>, '<?= htmlspecialchars(addslashes($o['titulo']), ENT_QUOTES) ?>')">
                       <i class="bi bi-x-circle me-1"></i> Dar de baja
                     </button>
-                    <a href="postulantes.php?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto utp-btn-compact">
+                    <a href="<?= appUrl('/egresado/postulantes') ?>?oferta=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-info ms-auto utp-btn-compact">
                       <i class="bi bi-people me-1"></i> <?= (int)($o['postulantes_count'] ?? 0) ?> postulante<?= ($o['postulantes_count'] ?? 0) != 1 ? 's' : '' ?>
                     </a>
                   <?php elseif ($o['activo'] == 0): ?>
@@ -216,7 +216,7 @@ $msgCreada = isset($_GET['creada']);
           <input type="hidden" name="csrf_token" value="">
         `;
         
-        fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
+        fetch('<?= API_URL ?>/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -241,7 +241,7 @@ $msgCreada = isset($_GET['creada']);
 
     function confirmarActivacion(ofertaId, titulo) {
       if (confirm('Confirmas que deseas reactivar la oferta: ' + titulo + '?')) {
-        fetch('../../public/api/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
+        fetch('<?= API_URL ?>/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

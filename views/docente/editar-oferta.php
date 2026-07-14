@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../app/helpers/Security.php';
 
 $ofertaId = (int)($_GET['id'] ?? 0);
 if (!$ofertaId) {
-    header('Location: mis-ofertas.php');
+    header('Location: ' . appUrl('/docente/mis-ofertas'));
     exit;
 }
 
@@ -19,13 +19,13 @@ $oferta = $ofertaModel->getById($ofertaId);
 
 // Verificar que existe la oferta
 if (!$oferta) {
-    header('Location: mis-ofertas.php?error=no_existe');
+    header('Location: ' . appUrl('/docente/mis-ofertas') . '?error=no_existe');
     exit;
 }
 
 // Verificar que el usuario es el propietario
 if ($oferta['id_usuario_creador'] != $_SESSION['usuario_id']) {
-    header('Location: mis-ofertas.php?error=no_permiso');
+    header('Location: ' . appUrl('/docente/mis-ofertas') . '?error=no_permiso');
     exit;
 }
 
@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
 
           <!-- Header -->
           <section class="mb-4">
-            <a href="mis-ofertas.php" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
+            <a href="<?= appUrl('/docente/mis-ofertas') ?>" class="btn btn-link text-dark text-decoration-none p-0 mb-3 d-inline-flex align-items-center gap-2">
               <i class="bi bi-chevron-left"></i> Volver
             </a>
             <h1 class="utp-h1 mb-2">Editar Oferta</h1>
@@ -328,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
                   <button type="submit" class="btn btn-utp-green d-flex align-items-center justify-content-center gap-2">
                     <i class="bi bi-check-lg"></i> Guardar cambios
                   </button>
-                  <a href="mis-ofertas.php" class="btn btn-link text-dark">Cancelar</a>
+                  <a href="<?= appUrl('/docente/mis-ofertas') ?>" class="btn btn-link text-dark">Cancelar</a>
                 </div>
               </article>
 

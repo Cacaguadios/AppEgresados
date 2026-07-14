@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . appUrl('/login'));
     exit;
 }
 
@@ -254,7 +254,7 @@ $statusLabels = [
       if (!confirm('¿Deseas aceptar esta invitación y postularte a la vacante?')) return;
       
       try {
-        const response = await fetch('../../public/api/invitaciones.php?action=aceptar', {
+        const response = await fetch('<?= API_URL ?>/invitaciones.php?action=aceptar', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -282,7 +282,7 @@ $statusLabels = [
       if (!confirm('¿Deseas rechazar esta invitación?')) return;
       
       try {
-        const response = await fetch('../../public/api/invitaciones.php?action=rechazar', {
+        const response = await fetch('<?= API_URL ?>/invitaciones.php?action=rechazar', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
