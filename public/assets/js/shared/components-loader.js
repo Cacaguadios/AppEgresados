@@ -4,16 +4,18 @@
  * Los componentes se inyectan en contenedores con IDs específicos.
  */
 (function () {
-  'use strict';
+  "use strict";
 
   // Datos inyectados por PHP en la página
   const DATA = window.UTP_DATA || {};
+  const THEME_STORAGE_KEY = "utp-theme-mode";
+  let darkReaderPromise = null;
 
   /* ---------- Helpers de rutas ---------- */
 
   /** Raiz de la app, por ejemplo: /AppEgresados o '' en dominio raiz */
   function getAppBase() {
-    if (typeof DATA.appBase === 'string') {
+    if (typeof DATA.appBase === "string") {
       return DATA.appBase;
     }
 
@@ -22,7 +24,7 @@
     if (current && current.src) {
       try {
         var scriptPath = new URL(current.src, window.location.origin).pathname;
-        var marker = '/public/assets/';
+        var marker = "/public/assets/";
         var markerIdx = scriptPath.indexOf(marker);
         if (markerIdx !== -1) {
           return scriptPath.substring(0, markerIdx);
@@ -33,7 +35,7 @@
     }
 
     const path = window.location.pathname;
-    const markers = ['/views/', '/public/'];
+    const markers = ["/views/", "/public/"];
 
     for (const marker of markers) {
       const idx = path.indexOf(marker);
@@ -43,28 +45,28 @@
     }
 
     // Fallback para rutas limpias tipo /AppEgresados/egresado/inicio
-    var parts = path.split('/').filter(Boolean);
+    var parts = path.split("/").filter(Boolean);
     if (parts.length > 0) {
-      return '/' + parts[0];
+      return "/" + parts[0];
     }
 
-    return '';
+    return "";
   }
 
   /** Ruta a la carpeta compartido/ (componentes HTML) */
   function getComponentsBase() {
-    return getAppBase() + '/views/compartido/';
+    return getAppBase() + "/views/compartido/";
   }
 
   /** Ruta a public/assets/ */
   function getAssetBase() {
-    return getAppBase() + '/public/assets/';
+    return getAppBase() + "/public/assets/";
   }
 
   /** Ruta a la carpeta de vistas del rol activo */
   function getViewBase() {
-    const role = DATA.role || 'egresado';
-    return getAppBase() + '/' + role + '/';
+    const role = DATA.role || "egresado";
+    return getAppBase() + "/" + role + "/";
   }
 
   /* ---------- Cargador de componentes ---------- */
@@ -76,7 +78,8 @@
     try {
       const url = getComponentsBase() + componentFile;
       const resp = await fetch(url);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status + ' al cargar ' + componentFile);
+      if (!resp.ok)
+        throw new Error("HTTP " + resp.status + " al cargar " + componentFile);
 
       let html = await resp.text();
 
@@ -93,7 +96,7 @@
       // Llenar datos dinámicos
       fillDynamicData(container);
     } catch (err) {
-      console.warn('[ComponentsLoader]', componentFile, err);
+      console.warn("[ComponentsLoader]", componentFile, err);
     }
   }
 
@@ -101,58 +104,64 @@
 
   function fillDynamicData(container) {
     // Iniciales del usuario
-    const initialsEl = container.querySelector('#userInitials');
+    const initialsEl = container.querySelector("#userInitials");
     if (initialsEl && DATA.initials) {
       initialsEl.textContent = DATA.initials;
     }
 
     // Nombre completo
-    const nameEl = container.querySelector('#userName');
+    const nameEl = container.querySelector("#userName");
     if (nameEl && DATA.fullName) {
       nameEl.textContent = DATA.fullName;
     }
 
     // Rol
-    const roleEl = container.querySelector('#userRole');
+    const roleEl = container.querySelector("#userRole");
     if (roleEl && DATA.roleLabel) {
       roleEl.textContent = DATA.roleLabel;
     }
 
     // Imágenes con data-asset → src absoluta
-    container.querySelectorAll('[data-asset]').forEach(function (img) {
-      img.src = getAssetBase() + img.getAttribute('data-asset');
+    container.querySelectorAll("[data-asset]").forEach(function (img) {
+      img.src = getAssetBase() + img.getAttribute("data-asset");
     });
 
     // Links con data-link
-    container.querySelectorAll('[data-link]').forEach(function (el) {
-      const link = el.getAttribute('data-link');
+    container.querySelectorAll("[data-link]").forEach(function (el) {
+      const link = el.getAttribute("data-link");
       const appBase = getAppBase();
-      const roleBase = appBase + '/' + (DATA.role || 'egresado');
+      const roleBase = appBase + "/" + (DATA.role || "egresado");
 
       switch (link) {
-        case 'profile':
-          if ((DATA.role === 'docente' || DATA.role === 'ti') && el.closest('li')) {
-            el.closest('li').remove();
+        case "profile":
+          if (
+            (DATA.role === "docente" || DATA.role === "ti") &&
+            el.closest("li")
+          ) {
+            el.closest("li").remove();
             return;
           }
-          if (el.tagName === 'A') el.href = roleBase + '/perfil';
+          if (el.tagName === "A") el.href = roleBase + "/perfil";
           break;
-        case 'security':
-          if ((DATA.role === 'docente' || DATA.role === 'ti') && el.closest('li')) {
-            el.closest('li').remove();
+        case "security":
+          if (
+            (DATA.role === "docente" || DATA.role === "ti") &&
+            el.closest("li")
+          ) {
+            el.closest("li").remove();
             return;
           }
-          if (el.tagName === 'A') el.href = roleBase + '/seguridad';
+          if (el.tagName === "A") el.href = roleBase + "/seguridad";
           break;
-        case 'notifications':
-          if (el.tagName === 'A') el.href = appBase + '/notificaciones';
+        case "notifications":
+          if (el.tagName === "A") el.href = appBase + "/notificaciones";
           break;
-        case 'logout':
-          if (el.tagName === 'A') {
-            el.href = appBase + '/logout';
+        case "logout":
+          if (el.tagName === "A") {
+            el.href = appBase + "/logout";
           } else {
-            el.addEventListener('click', function () {
-              window.location.href = appBase + '/logout';
+            el.addEventListener("click", function () {
+              window.location.href = appBase + "/logout";
             });
           }
           break;
@@ -160,25 +169,134 @@
     });
 
     // Sidebar: marcar la página activa
-    const currentPage = DATA.currentPage || '';
-    container.querySelectorAll('[data-page]').forEach(function (item) {
-      if (item.getAttribute('data-page') === currentPage) {
-        item.classList.add('active');
+    const currentPage = DATA.currentPage || "";
+    container.querySelectorAll("[data-page]").forEach(function (item) {
+      if (item.getAttribute("data-page") === currentPage) {
+        item.classList.add("active");
       }
+    });
+  }
+
+  function ensureDarkReader() {
+    if (window.DarkReader) {
+      return Promise.resolve(window.DarkReader);
+    }
+
+    if (darkReaderPromise) {
+      return darkReaderPromise;
+    }
+
+    darkReaderPromise = new Promise(function (resolve, reject) {
+      var existing = document.querySelector("script[data-darkreader]");
+      if (existing && window.DarkReader) {
+        resolve(window.DarkReader);
+        return;
+      }
+
+      var script = document.createElement("script");
+      script.src =
+        "https://cdn.jsdelivr.net/npm/darkreader@4.9.128/darkreader.min.js";
+      script.async = true;
+      script.setAttribute("data-darkreader", "true");
+      script.onload = function () {
+        resolve(window.DarkReader);
+      };
+      script.onerror = function () {
+        reject(new Error("No se pudo cargar Dark Reader"));
+      };
+      document.head.appendChild(script);
+    });
+
+    return darkReaderPromise;
+  }
+
+  function getStoredThemeMode() {
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function setStoredThemeMode(mode) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, mode);
+    } catch (e) {
+      // Ignorar si el storage no está disponible
+    }
+  }
+
+  function updateThemeButtonState(button, enabled) {
+    if (!button) return;
+    button.classList.toggle("is-dark", enabled);
+    button.setAttribute("aria-pressed", enabled ? "true" : "false");
+  }
+
+  async function applyThemeMode(mode) {
+    var DarkReader = await ensureDarkReader();
+    var button = document.getElementById("themeToggleBtn");
+
+    if (mode === "dark") {
+      DarkReader.enable({ brightness: 100, contrast: 90, sepia: 10 });
+      updateThemeButtonState(button, true);
+      setStoredThemeMode("dark");
+      return;
+    }
+
+    if (mode === "auto") {
+      DarkReader.auto({ brightness: 100, contrast: 90, sepia: 10 });
+      updateThemeButtonState(button, DarkReader.isEnabled());
+      setStoredThemeMode("auto");
+      return;
+    }
+
+    DarkReader.disable();
+    updateThemeButtonState(button, false);
+    setStoredThemeMode("light");
+  }
+
+  async function initThemeToggle() {
+    var button = document.getElementById("themeToggleBtn");
+    if (!button) return;
+
+    var storedMode = getStoredThemeMode();
+    var systemPrefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    await ensureDarkReader();
+
+    if (storedMode === "dark") {
+      await applyThemeMode("dark");
+    } else if (storedMode === "auto") {
+      await applyThemeMode("auto");
+    } else if (storedMode === "light") {
+      await applyThemeMode("light");
+    } else if (systemPrefersDark) {
+      await applyThemeMode("auto");
+    } else {
+      await applyThemeMode("light");
+    }
+
+    button.addEventListener("click", async function () {
+      var enabled = window.DarkReader && window.DarkReader.isEnabled();
+      await applyThemeMode(enabled ? "light" : "dark");
     });
   }
 
   /* ---------- Inicializar notice ---------- */
 
   function initNotice() {
-    var dismissBtn = document.getElementById('btnDismissNotice');
-    var notice = document.getElementById('passwordNotice');
+    var dismissBtn = document.getElementById("btnDismissNotice");
+    var notice = document.getElementById("passwordNotice");
 
     if (dismissBtn && notice) {
-      dismissBtn.addEventListener('click', function () {
-        notice.style.transition = 'opacity .25s ease';
-        notice.style.opacity = '0';
-        setTimeout(function () { notice.style.display = 'none'; }, 260);
+      dismissBtn.addEventListener("click", function () {
+        notice.style.transition = "opacity .25s ease";
+        notice.style.opacity = "0";
+        setTimeout(function () {
+          notice.style.display = "none";
+        }, 260);
       });
     }
   }
@@ -187,17 +305,23 @@
 
   function reinitBootstrap(container) {
     // Dropdowns
-    container.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (el) {
-      new bootstrap.Dropdown(el);
-    });
+    container
+      .querySelectorAll('[data-bs-toggle="dropdown"]')
+      .forEach(function (el) {
+        new bootstrap.Dropdown(el);
+      });
     // Collapse (sidebar móvil)
-    container.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function (el) {
-      new bootstrap.Collapse(el, { toggle: false });
-    });
+    container
+      .querySelectorAll('[data-bs-toggle="collapse"]')
+      .forEach(function (el) {
+        new bootstrap.Collapse(el, { toggle: false });
+      });
     // Tooltips
-    container.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
-      new bootstrap.Tooltip(el);
-    });
+    container
+      .querySelectorAll('[data-bs-toggle="tooltip"]')
+      .forEach(function (el) {
+        new bootstrap.Tooltip(el);
+      });
   }
 
   /* ---------- Arranque ---------- */
@@ -207,36 +331,41 @@
 
     // Notice (solo si requiere cambio de contraseña)
     if (DATA.requirePasswordChange) {
-      loads.push(loadComponent('utp-notice-container', 'notice-password.html'));
+      loads.push(loadComponent("utp-notice-container", "notice-password.html"));
     }
 
     // Topbar
-    loads.push(loadComponent('utp-topbar-container', 'topbar.html'));
+    loads.push(loadComponent("utp-topbar-container", "topbar.html"));
 
     // Sidebar según rol
-    var sidebarFile = 'sidebar-' + (DATA.role || 'egresado') + '.html';
-    loads.push(loadComponent('utp-sidebar-container', sidebarFile));
+    var sidebarFile = "sidebar-" + (DATA.role || "egresado") + ".html";
+    loads.push(loadComponent("utp-sidebar-container", sidebarFile));
 
     await Promise.all(loads);
 
     // Re-inicializar componentes de Bootstrap dentro de los contenedores inyectados
-    document.querySelectorAll('#utp-topbar-container, #utp-sidebar-container').forEach(reinitBootstrap);
+    document
+      .querySelectorAll("#utp-topbar-container, #utp-sidebar-container")
+      .forEach(reinitBootstrap);
+
+    // Tema oscuro compartido
+    await initThemeToggle();
 
     // Marcar body como listo (para transiciones CSS)
-    document.body.classList.add('utp-ready');
+    document.body.classList.add("utp-ready");
 
     // Inicializar dismiss del notice
     initNotice();
 
     // Cargar script de notificaciones dinámicamente
-    var notifScript = document.createElement('script');
-    notifScript.src = getAssetBase() + 'js/shared/notifications.js';
+    var notifScript = document.createElement("script");
+    notifScript.src = getAssetBase() + "js/shared/notifications.js";
     document.body.appendChild(notifScript);
   }
 
   // Ejecutar cuando el DOM esté listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
