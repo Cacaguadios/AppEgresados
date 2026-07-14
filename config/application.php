@@ -4,6 +4,9 @@
  */
 
 require_once __DIR__ . '/environment.php';
+require_once dirname(__DIR__) . '/app/helpers/ErrorHandler.php';
+ErrorHandler::register();
+app_validate_environment();
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/helpers/Session.php';
 

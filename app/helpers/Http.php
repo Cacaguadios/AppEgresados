@@ -21,6 +21,7 @@ function api_error($status, $code, $message) {
         'success' => false,
         'code' => (string) $code,
         'error' => (string) $message,
+        'request_id' => class_exists('ErrorHandler') ? ErrorHandler::requestId() : '',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }

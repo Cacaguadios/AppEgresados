@@ -142,5 +142,3 @@ if (!function_exists('app_validate_environment')) {
         }
     }
 }
-
-app_validate_environment();

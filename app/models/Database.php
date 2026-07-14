@@ -40,7 +40,7 @@ class Database {
                 ]
             );
         } catch (PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
+            throw new RuntimeException('No fue posible conectar con la base de datos.', 0, $e);
         }
     }
     

@@ -135,10 +135,36 @@ $public_routes = [
     '/contacto'
 ];
 
+$protected_routes = [
+    '/logout', '/dashboard',
+    '/egresado/dashboard', '/egresado/inicio', '/egresado/perfil', '/egresado/ofertas',
+    '/egresado/publicar-oferta', '/egresado/mis-ofertas', '/egresado/postulantes',
+    '/egresado/oferta-detalle', '/egresado/editar-oferta', '/egresado/invitaciones',
+    '/egresado/postulaciones', '/egresado/mis-postulaciones', '/egresado/seguimiento',
+    '/egresado/seguridad',
+    '/docente/dashboard', '/docente/inicio', '/docente/publicar-oferta', '/docente/crear-oferta',
+    '/docente/mis-ofertas', '/docente/editar-oferta', '/docente/invitar-egresados',
+    '/docente/postulantes', '/docente/ver-postulantes', '/docente/directorio',
+    '/docente/perfil', '/docente/seguridad',
+    '/admin/dashboard', '/admin/inicio', '/admin/moderacion', '/admin/moderacion/list',
+    '/admin/ofertas-pendientes', '/admin/verificacion', '/admin/verificacion/list',
+    '/admin/seguimiento', '/admin/seguimiento/list', '/admin/egresados', '/admin/usuarios',
+    '/admin/estadisticas', '/admin/seguridad', '/admin/reportes',
+    '/api/notificaciones', '/notificaciones',
+];
+
+$known_routes = array_values(array_unique(array_merge($public_routes, $protected_routes)));
+$requestMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+if (in_array($request, $known_routes, true) && !in_array($requestMethod, ['GET', 'POST'], true)) {
+    header('Allow: GET, POST');
+    ErrorHandler::renderHttpError(405, 'method_not_allowed', 'El metodo solicitado no esta permitido.');
+    exit;
+}
+
 // ============================================
 // Verificar acceso a rutas protegidas
 // ============================================
-if (!$user_logged && !in_array($request, $public_routes, true)) {
+if (!$user_logged && in_array($request, $protected_routes, true)) {
     header('Location: ' . appUrl('/login'));
     exit;
 }
@@ -582,8 +608,7 @@ switch ($request) {
     // ============================================
     
     default:
-        http_response_code(404);
-        echo '<h1>404 - Página no encontrada</h1><p><a href="' . htmlspecialchars(appUrl('/login'), ENT_QUOTES, 'UTF-8') . '">Volver al inicio</a></p>';
+        ErrorHandler::renderHttpError(404, 'route_not_found', 'La pagina solicitada no existe.');
         break;
 }
 ?>
