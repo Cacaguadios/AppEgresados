@@ -4,11 +4,8 @@
  * Gestiona todas las rutas de la aplicación
  */
 
-// Cargar entorno validado y configuracion global.
-require_once dirname(__DIR__) . '/config/environment.php';
-require_once dirname(__DIR__) . '/config/bootstrap.php';
-
-session_start();
+// Bootstrap unico de entorno, autoload y sesion.
+require_once dirname(__DIR__) . '/config/application.php';
 
 // ============================================
 // Configurar ruta base (dominio raiz o subcarpeta)
@@ -141,13 +138,7 @@ $public_routes = [
 // ============================================
 // Verificar acceso a rutas protegidas
 // ============================================
-if (!$user_logged && !in_array($request, $public_routes) && 
-    !str_contains($request, '/login') && 
-    !str_contains($request, '/register') &&
-    !str_contains($request, '/forgot') &&
-    !str_contains($request, '/verify-code') &&
-    !str_contains($request, '/reset-password') &&
-    !str_contains($request, '/password-updated')) {
+if (!$user_logged && !in_array($request, $public_routes, true)) {
     header('Location: ' . appUrl('/login'));
     exit;
 }
@@ -568,10 +559,12 @@ switch ($request) {
 
     case '/api/notificaciones':
         if ($user_logged) {
+            require_once __DIR__ . '/../app/helpers/Http.php';
+            api_bootstrap('notificaciones.php');
             require __DIR__ . '/../app/controllers/NotificacionController.php';
         } else {
-            http_response_code(401);
-            echo json_encode(['error' => 'No autorizado']);
+            require_once __DIR__ . '/../app/helpers/Http.php';
+            api_error(401, 'authentication_required', 'Autenticacion requerida.');
         }
         break;
 

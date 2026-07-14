@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# Nunca publicar utilidades de diagnostico.
+RewriteRule ^test-bootstrap\.php$ - [F,L,NC]
+
+# Servir assets y endpoints fisicos autorizados.
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# El resto pasa por el front controller.
+RewriteRule ^ index.php [L,QSA]

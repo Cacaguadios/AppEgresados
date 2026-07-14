@@ -1,7 +1,8 @@
 RewriteEngine On
 
 # Bloquear acceso directo a carpetas sensibles
-RewriteRule ^(app|config|database|storage|tests|vendor|docs)/ - [F,L,NC]
+RewriteRule ^(app|config|database|storage|tests|vendor|docs|views)/ - [F,L,NC]
+RewriteRule ^(?:_.*\.php|test-bootstrap\.php|public/test-bootstrap\.php)$ - [F,L,NC]
 
 # Solo archivos físicos existentes se sirven directamente (NO directorios)
 RewriteCond %{REQUEST_FILENAME} -f

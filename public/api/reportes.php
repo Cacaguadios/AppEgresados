@@ -1,13 +1,6 @@
 <?php
-session_start();
-
-header('Content-Type: application/json; charset=utf-8');
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['ok' => false, 'message' => 'Acceso no autorizado']);
-    exit;
-}
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Oferta.php';
 require_once __DIR__ . '/../../app/models/Egresado.php';
@@ -24,7 +17,7 @@ $topCompanies = $egresadoModel->getTopEmpresasEmpleadoras(8);
 $postulacionSummary = $postulacionModel->getAdminStats();
 
 echo json_encode([
-    'ok' => true,
+    'success' => true,
     'data' => [
         'offersSummary' => [
             'liberadas' => (int)($offerSummary['liberadas'] ?? 0),

@@ -4,15 +4,8 @@
  * Acciones: crear, aceptar, rechazar, marcar_visto
  */
 
-session_start();
-header('Content-Type: application/json; charset=utf-8');
-
-// Validar sesión
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No está autenticado']);
-    exit;
-}
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Invitacion.php';
 require_once __DIR__ . '/../../app/models/Oferta.php';
@@ -21,15 +14,8 @@ require_once __DIR__ . '/../../app/models/Postulacion.php';
 require_once __DIR__ . '/../../app/models/Notificacion.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
 
-$input = json_decode(file_get_contents('php://input'), true) ?: [];
+$input = api_json_input();
 $action = $_GET['action'] ?? $_POST['action'] ?? ($input['action'] ?? null);
-
-$csrfToken = $_POST['csrf_token'] ?? ($input['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
-if (!Security::validateCsrfToken($csrfToken)) {
-    http_response_code(419);
-    echo json_encode(['success' => false, 'error' => 'Token CSRF inválido']);
-    exit;
-}
 
 $invitacionModel = new Invitacion();
 $ofertaModel = new Oferta();

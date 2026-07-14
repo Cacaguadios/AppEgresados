@@ -4,29 +4,15 @@
  * Acciones: retirar, restaurar, actualizar_estado, editar_mensaje, eliminar
  */
 
-session_start();
-header('Content-Type: application/json; charset=utf-8');
-
-// Validar sesión
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No está autenticado']);
-    exit;
-}
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Postulacion.php';
 require_once __DIR__ . '/../../app/models/Egresado.php';
 require_once __DIR__ . '/../../app/models/Notificacion.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
 
-$input = json_decode(file_get_contents('php://input'), true) ?: [];
-
-$csrfToken = $_POST['csrf_token'] ?? ($input['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
-if (!Security::validateCsrfToken($csrfToken)) {
-    http_response_code(419);
-    echo json_encode(['success' => false, 'error' => 'Token CSRF inválido']);
-    exit;
-}
+$input = api_json_input();
 
 $action = $_GET['action'] ?? $_POST['action'] ?? ($input['action'] ?? null);
 $postulacionId = (int)($_GET['postulacion_id'] ?? $_POST['postulacion_id'] ?? ($input['postulacion_id'] ?? 0));

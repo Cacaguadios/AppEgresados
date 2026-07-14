@@ -109,7 +109,7 @@
   fetch(apiUrl, { credentials: 'same-origin' })
     .then(function (response) { return response.json(); })
     .then(function (payload) {
-      if (!payload || !payload.ok || !payload.data) {
+      if (!payload || !payload.success || !payload.data) {
         return;
       }
 

@@ -4,29 +4,11 @@
  * Acciones: editar, baja, activar
  */
 
-session_start();
-header('Content-Type: application/json; charset=utf-8');
-
-// Validar sesión
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No está autenticado']);
-    exit;
-}
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Oferta.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
-
-function resolveCsrfTokenFromRequest() {
-    $input = json_decode(file_get_contents('php://input'), true) ?: [];
-
-    $headerToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-    $bodyToken = $input['csrf_token'] ?? '';
-    $postToken = $_POST['csrf_token'] ?? '';
-    $queryToken = $_GET['csrf_token'] ?? '';
-
-    return $postToken ?: $bodyToken ?: $headerToken ?: $queryToken;
-}
 
 $action = $_GET['action'] ?? $_POST['action'] ?? null;
 $ofertaId = (int)($_GET['oferta_id'] ?? $_POST['oferta_id'] ?? 0);
@@ -34,14 +16,6 @@ $ofertaId = (int)($_GET['oferta_id'] ?? $_POST['oferta_id'] ?? 0);
 if (!$ofertaId) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'ID de oferta faltante']);
-    exit;
-}
-
-// CSRF requerido para acciones mutables
-$csrfToken = resolveCsrfTokenFromRequest();
-if (!Security::validateCsrfToken($csrfToken)) {
-    http_response_code(419);
-    echo json_encode(['success' => false, 'error' => 'Token CSRF inválido']);
     exit;
 }
 

@@ -4,25 +4,13 @@
  * POST { postulacion_id, resultado, quedo_en_trabajo, comentario, csrf_token }
  */
 
-session_start();
-header('Content-Type: application/json; charset=utf-8');
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No autenticado']);
-    exit;
-}
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Postulacion.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
 
-$input = json_decode(file_get_contents('php://input'), true) ?: [];
-$csrfToken = $_POST['csrf_token'] ?? ($input['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
-if (!Security::validateCsrfToken($csrfToken)) {
-    http_response_code(419);
-    echo json_encode(['success' => false, 'error' => 'Token CSRF inválido']);
-    exit;
-}
+$input = api_json_input();
 
 $postulacionId = (int)($_POST['postulacion_id'] ?? ($input['postulacion_id'] ?? 0));
 $resultado     = trim($_POST['resultado']       ?? ($input['resultado']       ?? ''));

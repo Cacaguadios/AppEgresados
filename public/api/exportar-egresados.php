@@ -1,11 +1,6 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
-    http_response_code(403);
-    echo 'Acceso no autorizado';
-    exit;
-}
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Egresado.php';
 

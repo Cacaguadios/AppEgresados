@@ -5,22 +5,8 @@
  * POST: Marcar recordatorio como visto
  */
 
-session_start();
-
-// Guard: solo para egresados autenticados
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'No autenticado']);
-    exit;
-}
-
-if (($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
-    exit;
-}
-
-header('Content-Type: application/json');
+require_once __DIR__ . '/../../app/helpers/Http.php';
+api_bootstrap(__FILE__);
 
 require_once __DIR__ . '/../../app/models/Egresado.php';
 require_once __DIR__ . '/../../app/helpers/Security.php';
@@ -50,13 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 // Marcar recordatorio como visto
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $csrfToken = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
-    if (!Security::validateCsrfToken($csrfToken)) {
-        http_response_code(419);
-        echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
-        exit;
-    }
+    $data = api_json_input();
     $accion = $data['accion'] ?? '';
 
     if ($accion === 'marcar_visto') {

@@ -12,19 +12,6 @@
  *   - read_all: marcar todas como leídas
  */
 
-// Session should already be started by the router
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-header('Content-Type: application/json; charset=utf-8');
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No autorizado']);
-    exit;
-}
-
 require_once __DIR__ . '/../models/Notificacion.php';
 
 $notifModel = new Notificacion();
@@ -36,7 +23,7 @@ switch ($action) {
 
     case 'count':
         $count = $notifModel->contarNoLeidas($userId);
-        echo json_encode(['count' => $count]);
+        echo json_encode(['success' => true, 'count' => $count]);
         break;
 
     case 'list':
@@ -44,6 +31,7 @@ switch ($action) {
         $notificaciones = $notifModel->getByUsuario($userId, $limit);
         $count = $notifModel->contarNoLeidas($userId);
         echo json_encode([
+            'success'        => true,
             'count'          => $count,
             'notificaciones' => $notificaciones,
         ]);
@@ -51,32 +39,26 @@ switch ($action) {
 
     case 'read':
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Método no permitido']);
-            break;
+            api_error(405, 'method_not_allowed', 'Metodo no permitido.');
         }
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             $notifModel->marcarLeida($id, $userId);
-            echo json_encode(['ok' => true]);
+            echo json_encode(['success' => true]);
         } else {
-            http_response_code(400);
-            echo json_encode(['error' => 'ID inválido']);
+            api_error(400, 'notification_id_invalid', 'ID de notificacion invalido.');
         }
         break;
 
     case 'read_all':
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Método no permitido']);
-            break;
+            api_error(405, 'method_not_allowed', 'Metodo no permitido.');
         }
         $notifModel->marcarTodasLeidas($userId);
-        echo json_encode(['ok' => true]);
+        echo json_encode(['success' => true]);
         break;
 
     default:
-        http_response_code(400);
-        echo json_encode(['error' => 'Acción no válida']);
+        api_error(400, 'notification_action_invalid', 'Accion no valida.');
         break;
 }
