@@ -4,7 +4,9 @@
  * Incluir al inicio de cada página
  */
 
-$appBasePath = getenv('APP_BASE_PATH') ?: '/AppEgresados';
+require_once __DIR__ . '/environment.php';
+
+$appBasePath = app_env('APP_BASE_PATH', '/AppEgresados');
 $appBasePath = trim($appBasePath);
 
 if ($appBasePath === '' || $appBasePath === '/') {

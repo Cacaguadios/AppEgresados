@@ -93,7 +93,7 @@ composer install
 
 ### 2. Configurar el entorno
 
-El mecanismo utilizado por la aplicación es un archivo PHP local:
+En desarrollo local se puede utilizar un archivo PHP no versionado:
 
 ```bash
 cp config/env.example.php config/env.php
@@ -114,6 +114,8 @@ set_env_if_missing('APP_DB_PASS', 'contraseña_db');
 Usa `APP_BASE_PATH=''` cuando el `DocumentRoot` apunte directamente a `public/`. Si la aplicación se publica en `http://localhost/AppEgresados`, usa `/AppEgresados`.
 
 `config/env.php` contiene secretos y está excluido de Git. No debe incorporarse al repositorio.
+En producción este archivo se ignora: define las variables en el proceso de
+Apache siguiendo [docs/PRODUCTION_SECRETS.md](docs/PRODUCTION_SECRETS.md).
 
 ### 3. Preparar la base de datos
 

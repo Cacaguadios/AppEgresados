@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../../config/environment.php';
 
 class Database {
     private $connection;
@@ -14,32 +15,16 @@ class Database {
     private $db_pass;
     private $db_port;
 
-    private function envValue($primary, $secondary, $default = '') {
-        $candidates = [$primary, $secondary];
-        foreach ($candidates as $key) {
-            if (!$key) {
-                continue;
-            }
-            $fromGetEnv = getenv($key);
-            if ($fromGetEnv !== false && $fromGetEnv !== '') {
-                return $fromGetEnv;
-            }
-            if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
-                return $_ENV[$key];
-            }
-            if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-                return $_SERVER[$key];
-            }
-        }
-        return $default;
-    }
-    
     public function __construct() {
-        $this->host = $this->envValue('APP_DB_HOST', 'DB_HOST', 'localhost');
-        $this->db_name = $this->envValue('APP_DB_NAME', 'DB_NAME', 'bolsa_trabajo_utp');
-        $this->db_user = $this->envValue('APP_DB_USER', 'DB_USER', 'root');
-        $this->db_pass = $this->envValue('APP_DB_PASS', 'DB_PASS', '');
-        $this->db_port = $this->envValue('APP_DB_PORT', 'DB_PORT', '3306');
+        $this->host = (string) app_env('APP_DB_HOST', '127.0.0.1');
+        $this->db_name = (string) app_env('APP_DB_NAME', 'bolsa_trabajo_utp');
+        $this->db_user = (string) app_env('APP_DB_USER', '');
+        $this->db_pass = (string) app_env('APP_DB_PASS', '');
+        $this->db_port = (string) app_env('APP_DB_PORT', '3306');
+
+        if ($this->db_user === '') {
+            throw new RuntimeException('APP_DB_USER no esta configurado.');
+        }
 
         try {
             $dsn = "mysql:host=" . $this->host . ";port=" . $this->db_port . ";dbname=" . $this->db_name . ";charset=utf8mb4";

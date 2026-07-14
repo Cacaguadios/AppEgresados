@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/environment.php';
 /**
  * Controlador de Verificación por Email
  * Maneja códigos de verificación para registro y recuperación de contraseña
@@ -453,41 +454,7 @@ class VerificationController {
     }
 
     private function envValue($key, $default = '') {
-        $this->ensureEnvLoaded();
-
-        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
-            return $_ENV[$key];
-        }
-
-        $value = getenv($key);
-        if ($value !== false && $value !== '') {
-            return $value;
-        }
-
-        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-            return $_SERVER[$key];
-        }
-
-        return $default;
-    }
-
-    private function ensureEnvLoaded() {
-        static $loaded = false;
-        if ($loaded) {
-            return;
-        }
-        $loaded = true;
-
-        $mailDriverEnv = isset($_ENV['MAIL_DRIVER']) && $_ENV['MAIL_DRIVER'] !== '';
-        $mailDriverGetenv = getenv('MAIL_DRIVER');
-        if ($mailDriverEnv || ($mailDriverGetenv !== false && $mailDriverGetenv !== '')) {
-            return;
-        }
-
-        $envFile = __DIR__ . '/../../config/env.php';
-        if (file_exists($envFile)) {
-            require_once $envFile;
-        }
+        return app_env($key, $default);
     }
 
     private function logMailError($error) {

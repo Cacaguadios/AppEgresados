@@ -25,15 +25,15 @@ composer install --no-dev --classmap-authoritative
 
 ## 3) Configurar variables de entorno
 
-```bash
-cp config/env.example.php config/env.php
-nano config/env.php
-```
+Produccion no carga `config/env.php`. Configura un archivo protegido fuera del
+checkout y haz que el servicio Apache lo herede como se describe en
+[`PRODUCTION_SECRETS.md`](PRODUCTION_SECRETS.md).
 
 Configura al menos:
 - APP_BASE_PATH (vacío si usas VirtualHost con /public como DocumentRoot)
 - APP_DB_HOST, APP_DB_PORT, APP_DB_NAME, APP_DB_USER, APP_DB_PASS
 - MAIL_* (si usarás SMTP)
+- APP_ENV=production, APP_DEBUG=false, APP_URL con HTTPS y APP_KEY aleatoria
 
 ## 4) Permisos
 

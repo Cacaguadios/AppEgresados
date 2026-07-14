@@ -7,6 +7,8 @@
 
 $projectRoot = dirname(__DIR__);
 
+require_once $projectRoot . '/config/environment.php';
+
 $checks = [];
 
 function add_check(&$checks, $name, $ok, $detail) {
@@ -33,6 +35,14 @@ add_check(
     'PHP >= 7.4',
     version_compare(PHP_VERSION, '7.4.0', '>='),
     'Version detectada: ' . PHP_VERSION
+);
+
+$environment = strtolower((string) app_env('APP_ENV', 'development'));
+add_check(
+    $checks,
+    'Configuracion del entorno',
+    !app_is_production() || app_configuration_issues() === [],
+    'APP_ENV=' . $environment . (app_is_production() ? ' (validada)' : ' (modo local)')
 );
 
 $requiredExtensions = ['pdo', 'pdo_mysql', 'mbstring', 'openssl', 'json'];

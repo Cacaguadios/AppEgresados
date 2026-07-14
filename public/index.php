@@ -4,13 +4,8 @@
  * Gestiona todas las rutas de la aplicación
  */
 
-// Cargar variables de entorno desde archivo PHP (para Hostinger u otros hosts sin SetEnv)
-$envFile = dirname(__DIR__) . '/config/env.php';
-if (file_exists($envFile)) {
-    require_once $envFile;
-}
-
-// Cargar configuración global (define BASE_URL, ASSETS_URL, etc.)
+// Cargar entorno validado y configuracion global.
+require_once dirname(__DIR__) . '/config/environment.php';
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 session_start();
