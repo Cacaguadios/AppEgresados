@@ -261,7 +261,7 @@ switch ($request) {
         break;
         
     case '/logout':
-        session_destroy();
+        app_logout();
         header('Location: ' . appUrl('/'));
         exit;
         

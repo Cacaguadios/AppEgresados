@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
     header('Location: ../auth/login.php');
     exit;
@@ -34,6 +34,8 @@ $msgError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_perfil'])) {
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $msgError = 'Token de seguridad inválido. Recarga la página.';
+    } elseif (!Security::hasRecentAuthentication(900)) {
+        $msgError = 'Por seguridad, cierra sesion e inicia nuevamente antes de cambiar tu correo.';
     } else {
         $newEmail = trim($_POST['email'] ?? '');
         if (empty($newEmail) || !filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {

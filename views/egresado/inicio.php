@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../config/application.php';
 
 // ─── Guard: requiere autenticación + rol egresado ───
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {

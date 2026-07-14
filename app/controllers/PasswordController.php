@@ -80,6 +80,10 @@ class PasswordController {
         // Actualizar contraseña
         $this->usuarioModel->updatePassword($userId, $newPassword);
 
+        session_regenerate_id(true);
+        $_SESSION['authenticated_at'] = time();
+        $_SESSION['last_activity'] = time();
+
         // Quitar flag de cambio obligatorio
         $_SESSION['requiere_cambio_pass'] = false;
 

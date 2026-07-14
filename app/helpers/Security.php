@@ -3,6 +3,15 @@
  * Helper de seguridad: CSRF, sanitización, password
  */
 class Security {
+    public static function clientIp() {
+        return (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    }
+
+    public static function hasRecentAuthentication($maxAge = 900) {
+        $authenticatedAt = (int) ($_SESSION['authenticated_at'] ?? 0);
+        return $authenticatedAt > 0 && (time() - $authenticatedAt) <= (int) $maxAge;
+    }
+
     // Generar token CSRF (solo el string)
     public static function generateCsrfToken() {
         if (empty($_SESSION['csrf_token'])) {

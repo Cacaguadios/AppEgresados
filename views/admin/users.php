@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
     header('Location: ../auth/login.php');
     exit;
@@ -21,6 +21,11 @@ $msgError = '';
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
     $action = $_POST['action'] ?? '';
+
+    if (!Security::hasRecentAuthentication(900)) {
+        $msgError = 'Por seguridad, cierra sesion e inicia nuevamente antes de modificar cuentas.';
+        $action = '';
+    }
 
     if ($action === 'edit_user') {
         $uid = (int)$_POST['user_id'];
@@ -113,6 +118,13 @@ $verifBadge = [
           <?php if ($msgExito): ?>
             <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
               <i class="bi bi-check-circle me-2"></i><?= htmlspecialchars($msgExito) ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <?php endif; ?>
+
+          <?php if ($msgError): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+              <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($msgError) ?>
               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
           <?php endif; ?>

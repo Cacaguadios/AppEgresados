@@ -40,3 +40,5 @@ set_env_if_missing('MAIL_PASS', '');
 set_env_if_missing('MAIL_FROM', 'no-reply@example.test');
 set_env_if_missing('MAIL_FROM_NAME', 'Bolsa de Trabajo UTP');
 set_env_if_missing('MAIL_ALLOW_SELF_SIGNED', 'false');
+set_env_if_missing('SESSION_TIMEOUT', '3600');
+set_env_if_missing('SESSION_ABSOLUTE_TIMEOUT', '43200');

@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../../config/application.php';
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
     header('Location: ../../auth/login.php');
     exit;

@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/environment.php';
 require_once __DIR__ . '/bootstrap.php';
+require_once dirname(__DIR__) . '/app/helpers/Session.php';
 
 $composerAutoload = dirname(__DIR__) . '/vendor/autoload.php';
 if (file_exists($composerAutoload)) {
@@ -12,5 +13,5 @@ if (file_exists($composerAutoload)) {
 }
 
 if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
-    session_start();
+    app_session_start();
 }

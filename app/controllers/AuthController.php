@@ -6,9 +6,11 @@
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Egresado.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/RateLimiter.php';
 
 class AuthController {
     private $usuarioModel;
+    private const DUMMY_PASSWORD_HASH = '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG';
     
     public function __construct() {
         $this->usuarioModel = new Usuario();
@@ -44,6 +46,15 @@ class AuthController {
             $_SESSION['error'] = '❌ La contraseña es requerida';
             return false;
         }
+
+        $identityKey = strtolower(trim((string) $identifier)) . '|' . Security::clientIp();
+        $ipKey = Security::clientIp();
+        if (RateLimiter::tooManyAttempts('login_identity', $identityKey, 5, 900)
+            || RateLimiter::tooManyAttempts('login_ip', $ipKey, 20, 900)) {
+            http_response_code(429);
+            $_SESSION['error'] = 'Demasiados intentos. Espera 15 minutos antes de volver a intentar.';
+            return false;
+        }
         
         // Buscar usuario: primero por email, luego por username
         $usuario = null;
@@ -62,20 +73,18 @@ class AuthController {
         }
         
         if (!$usuario) {
-            $_SESSION['error'] = '❌ Usuario no encontrado';
-            return false;
+            password_verify($password, self::DUMMY_PASSWORD_HASH);
+            return $this->invalidCredentials($identityKey, $ipKey);
         }
         
         // Verificar contraseña
         if (!Security::verifyPassword($password, $usuario['contraseña'])) {
-            $_SESSION['error'] = '❌ Contraseña incorrecta';
-            return false;
+            return $this->invalidCredentials($identityKey, $ipKey);
         }
         
         // Verificar si la cuenta está activa
         if (!$usuario['activo']) {
-            $_SESSION['error'] = '❌ Tu cuenta ha sido desactivada';
-            return false;
+            return $this->invalidCredentials($identityKey, $ipKey);
         }
 
         $rol = $usuario['tipo_usuario'] ?? '';
@@ -83,6 +92,10 @@ class AuthController {
         // Actualizar último login
         $this->usuarioModel->updateLastLogin($usuario['id']);
         
+        // Evitar fijacion de sesion al elevar una sesion anonima a autenticada.
+        session_regenerate_id(true);
+        RateLimiter::clear('login_identity', $identityKey);
+
         // Crear variables de sesión
         $_SESSION['usuario_id']       = $usuario['id'];
         $_SESSION['usuario_email']    = $usuario['email'];
@@ -93,6 +106,9 @@ class AuthController {
         $_SESSION['usuario_verificacion_estado'] = $usuario['verificacion_estado'] ?? 'pendiente';
         $_SESSION['logged_in']        = true;
         $_SESSION['requiere_cambio_pass'] = !empty($usuario['requiere_cambio_pass']);
+        $_SESSION['authenticated_at'] = time();
+        $_SESSION['last_activity'] = time();
+        $_SESSION['session_created_at'] = time();
 
         if ($rol === 'egresado') {
             try {
@@ -107,6 +123,13 @@ class AuthController {
         $_SESSION['success'] = '✅ ¡Bienvenido ' . $usuario['nombre'] . '!';
         
         return true;
+    }
+
+    private function invalidCredentials($identityKey, $ipKey) {
+        RateLimiter::hit('login_identity', $identityKey, 900);
+        RateLimiter::hit('login_ip', $ipKey, 900);
+        $_SESSION['error'] = 'Usuario, correo o contraseña incorrectos.';
+        return false;
     }
 }
 ?>

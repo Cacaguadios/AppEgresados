@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../config/environment.php';
 
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/RateLimiter.php';
 require_once __DIR__ . '/../helpers/EmailTemplate.php';
 
 class VerificationController {
@@ -75,6 +76,13 @@ class VerificationController {
     public function sendVerificationCode($email, $tipo = 'registro') {
         $email = strtolower(trim($email));
 
+        $rateKey = $tipo . '|' . $email . '|' . Security::clientIp();
+        if (RateLimiter::tooManyAttempts('verification_send', $rateKey, 3, 900)) {
+            http_response_code(429);
+            return ['success' => false, 'message' => 'Demasiadas solicitudes. Espera 15 minutos antes de reenviar el codigo.'];
+        }
+        RateLimiter::hit('verification_send', $rateKey, 900);
+
         // Generar código de 6 dígitos
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
@@ -107,6 +115,13 @@ class VerificationController {
     public function verifyCode($email, $code, $tipo = 'registro') {
         $email = strtolower(trim($email));
         $code = trim($code);
+
+        $rateKey = $tipo . '|' . $email . '|' . Security::clientIp();
+        if (RateLimiter::tooManyAttempts('verification_check', $rateKey, 5, 900)) {
+            http_response_code(429);
+            return ['success' => false, 'message' => 'Demasiados intentos. Espera 15 minutos antes de continuar.'];
+        }
+        RateLimiter::hit('verification_check', $rateKey, 900);
 
         if (empty($code) || strlen($code) !== 6) {
             return ['success' => false, 'message' => 'El código debe tener 6 dígitos.'];
@@ -142,6 +157,7 @@ class VerificationController {
 
         // Marcar como usado
         $this->usuarioModel->markVerificationCodeUsed($record['id']);
+        RateLimiter::clear('verification_check', $rateKey);
 
         return ['success' => true, 'message' => 'Código verificado correctamente.'];
     }
@@ -186,6 +202,13 @@ class VerificationController {
      * ================================================================ */
     public function sendPasswordResetCode($email) {
         $email = strtolower(trim($email));
+
+        $rateKey = $email . '|' . Security::clientIp();
+        if (RateLimiter::tooManyAttempts('password_reset', $rateKey, 3, 900)) {
+            http_response_code(429);
+            return ['success' => false, 'message' => 'Demasiadas solicitudes. Espera 15 minutos antes de continuar.'];
+        }
+        RateLimiter::hit('password_reset', $rateKey, 900);
 
         if (empty($email)) {
             return ['success' => false, 'message' => 'El correo es requerido.'];

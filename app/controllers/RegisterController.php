@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/RateLimiter.php';
 
 class RegisterController {
 
@@ -35,6 +36,13 @@ class RegisterController {
      *  PASO 2 – Validar datos de verificación por rol
      * ================================================================ */
     public function validateVerification($role, $data) {
+
+        $rateKey = Security::clientIp();
+        if (RateLimiter::tooManyAttempts('registration', $rateKey, 5, 3600)) {
+            http_response_code(429);
+            return ['success' => false, 'message' => 'Demasiados intentos de registro. Intenta de nuevo mas tarde.'];
+        }
+        RateLimiter::hit('registration', $rateKey, 3600);
 
         // Sanitizar todo lo que entra
         $data = array_map(function ($v) {
