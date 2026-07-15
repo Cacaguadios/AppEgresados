@@ -1,264 +1,159 @@
 # AppEgresados
 
-Plataforma web de la Universidad Tecnológica de Puebla para gestionar la bolsa de trabajo y dar seguimiento laboral a sus egresados.
+Plataforma web para la Bolsa de Trabajo y seguimiento de egresados de la Universidad Tecnologica de Puebla.
 
-La aplicación permite publicar y moderar ofertas laborales, registrar postulaciones, invitar egresados a vacantes, mantener actualizado su perfil profesional y consultar indicadores administrativos.
+La aplicacion permite registrar egresados, verificar cuentas, publicar ofertas laborales, gestionar postulaciones, invitar candidatos, enviar notificaciones y consultar reportes administrativos.
 
-## Funcionalidades
+## Funcionalidades principales
 
-### Egresados
+- Registro, verificacion y recuperacion de cuentas.
+- Panel para egresados con perfil, ofertas, postulaciones, invitaciones y seguimiento.
+- Panel para docentes/TI con directorio, publicacion de ofertas e invitaciones.
+- Panel administrativo con usuarios, verificacion, moderacion, seguimiento y reportes.
+- APIs internas para notificaciones, postulaciones, ofertas, invitaciones y exportaciones.
+- Soporte para rutas limpias bajo subcarpeta, por ejemplo `/bttiutp`.
+- Modo oscuro en la interfaz compartida.
 
-- Registro y verificación de cuenta.
-- Perfil académico, profesional y datos de empleabilidad.
-- Consulta de ofertas aprobadas y activas.
-- Postulación, retiro y seguimiento de candidaturas.
-- Publicación y administración de ofertas propias.
-- Recepción de invitaciones y notificaciones.
-- Recordatorios periódicos para actualizar información laboral.
+## Tecnologias
 
-### Docentes y personal de TI
+- PHP 7.4 o posterior.
+- MySQL o MariaDB.
+- Apache con `mod_rewrite`.
+- PDO MySQL.
+- Composer.
+- PHPMailer 6.
+- Bootstrap 5.
+- JavaScript y CSS sin proceso de compilacion.
 
-- Publicación y administración de ofertas laborales.
-- Consulta del directorio de egresados.
-- Invitación de egresados a ofertas específicas.
-- Revisión de postulantes y actualización de su estado.
-- Registro de retroalimentación sobre postulaciones.
-
-### Administradores
-
-- Administración y activación de usuarios.
-- Verificación de perfiles de egresados.
-- Moderación de ofertas laborales.
-- Seguimiento de empleabilidad.
-- Reportes y exportación de datos en CSV o Excel.
-
-## Tecnologías
-
-- PHP 8.x
-- MySQL 8 o MariaDB compatible
-- Apache 2 con `mod_rewrite`
-- PDO MySQL
-- Composer
-- PHPMailer 6
-- Bootstrap 5
-- JavaScript y CSS sin proceso de compilación
-
-Aunque `composer.json` conserva compatibilidad declarada con PHP 7.4, las comprobaciones y la documentación de despliegue del proyecto requieren PHP 8.0 o posterior. Se recomienda PHP 8.2.
-
-## Estructura del proyecto
+## Estructura
 
 ```text
-AppEgresados/
-├── app/
-│   ├── controllers/       Controladores de autenticación y procesos
-│   ├── helpers/           Seguridad y plantillas de correo
-│   └── models/            Modelos y acceso a MySQL mediante PDO
-├── config/                Bootstrap y configuración de entorno
-├── database/
-│   ├── migrations/        Migraciones SQL
-│   └── *.php              Utilidades de instalación y mantenimiento
-├── docs/                  Documentación adicional de despliegue
-├── public/
-│   ├── api/               Endpoints HTTP
-│   ├── assets/            CSS, JavaScript, imágenes y archivos subidos
-│   └── index.php          Front controller y router principal
-├── tests/integration/     Pruebas de integración contra MySQL
-├── views/                 Vistas organizadas por rol
-├── composer.json
-└── .htaccess
+app/        Controladores, modelos y helpers
+config/     Bootstrap y plantillas de configuracion
+database/   Migraciones y utilidades de base de datos
+docs/       Documentacion adicional
+public/     Front controller, APIs y assets publicos
+storage/    Archivos privados, cache y logs
+tests/      Pruebas de integracion
+views/      Vistas por rol
+vendor/     Dependencias instaladas por Composer
 ```
 
-## Requisitos
+## Configuracion
 
-- PHP 8.0 o posterior.
-- Extensiones PHP: `pdo`, `pdo_mysql`, `mbstring`, `openssl` y `json`.
-- MySQL o MariaDB.
-- Composer.
-- Apache con `mod_rewrite` para usar las reglas incluidas.
-- Permisos de escritura en:
-  - `storage/`
-  - `storage/logs/`
-  - `storage/cache/`
-  - `public/assets/uploads/`
+La configuracion privada se carga desde:
 
-## Instalación local
+```text
+config/env.php
+```
 
-### 1. Obtener el proyecto
+Ese archivo no se versiona. Para servidor, copiar la plantilla segura:
 
 ```bash
-git clone <URL_DEL_REPOSITORIO> AppEgresados
+cp config/env.server.example.php config/env.php
+```
+
+Valores importantes para el despliegue institucional:
+
+```text
+APP_URL=https://ti.utpuebla.edu.mx/bttiutp
+APP_BASE_PATH=/bttiutp
+APP_DB_NAME=bttiutp
+APP_DB_USER=bttiutp
+MAIL_DRIVER=log
+```
+
+Completar `APP_DB_PASS` y, si se activa SMTP, completar `MAIL_USER`, `MAIL_PASS` y `MAIL_FROM` directamente en `config/env.php` del servidor.
+
+No subir credenciales reales, `.env`, `config/env.php` ni logs al repositorio.
+
+## Instalacion local
+
+```bash
+git clone https://github.com/Cacaguadios/AppEgresados.git
 cd AppEgresados
 composer install
+cp config/env.server.example.php config/env.php
 ```
 
-### 2. Configurar el entorno
+Ajustar `config/env.php` para la base de datos local y el `APP_BASE_PATH` correspondiente.
 
-El mecanismo utilizado por la aplicación es un archivo PHP local:
-
-```bash
-cp config/env.example.php config/env.php
-```
-
-Edita `config/env.php` y configura, como mínimo:
-
-```php
-set_env_if_missing('APP_BASE_PATH', '/AppEgresados');
-
-set_env_if_missing('APP_DB_HOST', '127.0.0.1');
-set_env_if_missing('APP_DB_PORT', '3306');
-set_env_if_missing('APP_DB_NAME', 'bolsa_trabajo_utp');
-set_env_if_missing('APP_DB_USER', 'usuario_db');
-set_env_if_missing('APP_DB_PASS', 'contraseña_db');
-```
-
-Usa `APP_BASE_PATH=''` cuando el `DocumentRoot` apunte directamente a `public/`. Si la aplicación se publica en `http://localhost/AppEgresados`, usa `/AppEgresados`.
-
-`config/env.php` contiene secretos y está excluido de Git. No debe incorporarse al repositorio.
-
-### 3. Preparar la base de datos
-
-El proyecto ofrece dos alternativas.
-
-#### Instalación limpia con Laragon
+Para una instalacion local desechable puede usarse:
 
 ```bash
 php database/setup_laragon.php
 ```
 
-> Advertencia: este comando elimina y reconstruye completamente la base configurada. Debe utilizarse únicamente en un entorno local o desechable.
+Este script puede eliminar y reconstruir datos. No debe ejecutarse contra produccion.
 
-#### Base existente y migraciones
+## Despliegue en UTP
 
-Configura primero las credenciales y ejecuta los scripts en el orden documentado:
+Destino esperado:
+
+```text
+https://ti.utpuebla.edu.mx/bttiutp/
+/var/www/html/bttiutp/
+```
+
+Subir el proyecto con estas carpetas y archivos principales:
+
+```text
+app/
+config/
+public/
+storage/
+vendor/
+views/
+.htaccess
+composer.json
+composer.lock
+```
+
+No subir `.git/`, `.env`, `config/env.php` local, logs, `database/`, `docker/`, `docs/` ni `tests/` salvo que sean necesarios para mantenimiento controlado.
+
+La guia puntual de despliegue esta en:
+
+```text
+DEPLOY_BTTIUTP.md
+```
+
+## Verificacion
+
+Validar sintaxis PHP:
 
 ```bash
-php database/_run_migration.php
-php database/_run_migration_003.php
-php _run_migration_004.php
-php database/run_011.php
-php database/run_013.php
-php database/run_014.php
-php database/run_015.php
-php database/run_016.php
+find app config public views -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 ```
 
-Antes de ejecutar migraciones en una instancia con información real, genera una copia de seguridad y revisa cada script pendiente.
-
-### 4. Verificar el entorno
+Validar dependencias:
 
 ```bash
-php database/_server_preflight.php
+composer validate --no-check-publish
+composer install --no-dev --optimize-autoloader
 ```
 
-El comando comprueba la versión de PHP, extensiones, dependencias, configuración y directorios escribibles.
+Rutas principales:
 
-### 5. Servir la aplicación
-
-La configuración recomendada usa Apache con `public/` como raíz pública:
-
-```apache
-<VirtualHost *:80>
-    ServerName appegresados.local
-    DocumentRoot /ruta/absoluta/AppEgresados/public
-
-    <Directory /ruta/absoluta/AppEgresados/public>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-```
-
-Activa la reescritura de URLs y recarga Apache:
-
-```bash
-sudo a2enmod rewrite
-sudo systemctl reload apache2
-```
-
-También es posible publicar la raíz completa del proyecto; el `.htaccess` principal redirige las solicitudes a `public/` y bloquea el acceso directo a carpetas sensibles. Usar `public/` como `DocumentRoot` sigue siendo la opción preferida.
-
-## Correo electrónico
-
-La aplicación admite dos modos:
-
-- `MAIL_DRIVER=log`: apropiado para desarrollo.
-- `MAIL_DRIVER=smtp`: envío mediante un servidor SMTP.
-
-Para SMTP, configura en `config/env.php`:
-
-```php
-set_env_if_missing('MAIL_DRIVER', 'smtp');
-set_env_if_missing('MAIL_HOST', 'smtp.example.com');
-set_env_if_missing('MAIL_PORT', '587');
-set_env_if_missing('MAIL_ENCRYPTION', 'tls');
-set_env_if_missing('MAIL_USER', 'usuario_smtp');
-set_env_if_missing('MAIL_PASS', 'contraseña_smtp');
-set_env_if_missing('MAIL_FROM', 'no-reply@example.com');
-set_env_if_missing('MAIL_FROM_NAME', 'Bolsa de Trabajo UTP');
-```
-
-No almacenes credenciales SMTP reales en archivos versionados.
-
-## Pruebas y verificaciones
-
-### Validación sintáctica
-
-```bash
-find app config public views tests database -type f -name '*.php' -print0 \
-  | xargs -0 -n1 php -l
-```
-
-### Smoke test de integración
-
-```bash
-php tests/integration/flujo_egresado_smoke.php
-```
-
-Esta prueba consulta una base MySQL real y actualmente espera una instancia local llamada `bolsa_trabajo_utp`, con usuario `root` sin contraseña. No debe ejecutarse contra producción y puede requerir adaptar su función `connect()` al entorno local.
-
-El proyecto incluye PHPUnit como dependencia de desarrollo, pero todavía no cuenta con una suite unitaria ni con un archivo `phpunit.xml`.
-
-## Rutas principales
-
-| Área | Ruta inicial |
+| Area | Ruta |
 |---|---|
-| Autenticación | `/login` |
+| Login | `/login` |
 | Registro | `/register-step-1` |
 | Egresado | `/egresado/inicio` |
 | Docente/TI | `/docente/inicio` |
-| Administración | `/admin/inicio` |
+| Administracion | `/admin/inicio` |
 | Notificaciones | `/notificaciones` |
 
-El router también mantiene compatibilidad con varias URLs antiguas terminadas en `.php`.
+En servidor con subcarpeta, las rutas quedan bajo `/bttiutp`, por ejemplo `/bttiutp/login`.
 
-## Seguridad y operación
+## Seguridad
 
-- Cambia inmediatamente cualquier contraseña incluida en datos de demostración o migraciones antiguas.
-- No expongas `config/`, `database/`, `tests/`, `vendor/` ni `storage/` desde el servidor web.
-- No ejecutes scripts de limpieza, seed o restablecimiento de contraseñas en producción sin revisar su contenido.
-- Usa HTTPS en producción.
-- Respalda la base de datos antes de aplicar migraciones.
-- Mantén `config/env.php` y los archivos generados fuera del control de versiones.
-- Revisa los permisos de `storage/` y `public/assets/uploads/`; evita permisos globales `777`.
-
-## Despliegue
-
-La guía detallada para Apache, MySQL y Ubuntu está disponible en [docs/DEPLOY_UBUNTU_20_04.md](docs/DEPLOY_UBUNTU_20_04.md).
-
-Flujo resumido:
-
-```bash
-composer install --no-dev --optimize-autoloader
-cp config/env.example.php config/env.php
-php database/_server_preflight.php
-# Respaldar la base y aplicar únicamente las migraciones pendientes
-sudo systemctl reload apache2
-```
-
-## Estado actual
-
-El proyecto cuenta con los flujos principales implementados y validación CSRF en la mayoría de las operaciones mutables. Antes de una puesta en producción se recomienda reforzar la configuración de sesiones, centralizar el bootstrap de los endpoints API, evitar mostrar errores internos de MySQL y ampliar la cobertura automatizada de pruebas.
+- Mantener `config/env.php` fuera de Git.
+- Usar HTTPS en produccion.
+- Proteger `storage/`; incluye `.htaccess` con `Require all denied`.
+- Respaldar la base antes de ejecutar migraciones.
+- No ejecutar scripts de seed, limpieza o reseteo de contrasenas en produccion sin revisarlos.
+- Revisar permisos de `storage/` y `public/assets/uploads/`.
 
 ## Licencia
 
-Este proyecto se distribuye bajo la Mozilla Public License 2.0. Consulta el archivo [LICENSE](LICENSE) para conocer los términos completos.
+Mozilla Public License 2.0. Ver [LICENSE](LICENSE).
