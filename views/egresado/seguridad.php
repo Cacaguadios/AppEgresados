@@ -1,13 +1,15 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // ─── Guard: requiere autenticación + rol egresado ───
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 if (($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 

@@ -168,7 +168,7 @@ function mostrarCamposFaltantes(camposFaltantes) {
  * Marcar el recordatorio como visto
  */
 function marcarRecordatorioVisto() {
-  fetch('../../public/api/marcar-recordatorio.php', {
+  fetch(<?= json_encode(app_url('/public/api/marcar-recordatorio.php')) ?>, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,7 +1,9 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -494,7 +496,7 @@ $estadoPostBadge = [
 
     function darDeBajaPostulacion(postulacionId) {
       if (confirm('¿Dar de baja esta postulación?')) {
-        postAction('../../public/api/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId,
+        postAction(<?= json_encode(app_url('/public/api/postulaciones-update.php')) ?> + '?action=retirar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación dada de baja correctamente');
       }
@@ -502,7 +504,7 @@ $estadoPostBadge = [
 
     function borrarPostulacion(postulacionId) {
       if (confirm('¿Eliminar permanentemente esta postulación? Esta acción no se puede deshacer.')) {
-        postAction('../../public/api/postulaciones-update.php?action=eliminar&postulacion_id=' + postulacionId,
+        postAction(<?= json_encode(app_url('/public/api/postulaciones-update.php')) ?> + '?action=eliminar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación eliminada correctamente');
       }
@@ -531,7 +533,7 @@ $estadoPostBadge = [
       var trabajo   = document.querySelector('input[name="fb_trabajo"]:checked')?.value ?? null;
       var postId    = document.getElementById('feedbackPostId').value;
       var comentario= document.getElementById('feedbackComentario').value;
-      fetch('../../public/api/feedback-postulacion.php', {
+      fetch(<?= json_encode(app_url('/public/api/feedback-postulacion.php')) ?>, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.UTP_CSRF_TOKEN || '' },
         body: JSON.stringify({

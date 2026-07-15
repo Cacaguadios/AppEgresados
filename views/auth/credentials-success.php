@@ -2,19 +2,18 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
-    header('Location: ' . $r);
+    header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
     exit;
 }
 
 // Verificar que existan credenciales generadas en sesión
 if (!isset($_SESSION['nuevas_credenciales'])) {
     // No hay credenciales, redirigir a paso 1
-    header('Location: ' . $baseUrl . '/register-step-1');
+    header('Location: ' . app_url('/register-step-1'));
     exit;
 }
 
@@ -149,7 +148,7 @@ unset($_SESSION['registro_verificacion']);
 
         <!-- Acciones -->
         <section class="mt-4">
-          <a class="btn btn-utp-green text-white w-100 auth-cta" href="/AppEgresados/login">
+          <a class="btn btn-utp-green text-white w-100 auth-cta" href="<?= e(app_url('/login')) ?>">
             Continuar al inicio de sesión
           </a>
 

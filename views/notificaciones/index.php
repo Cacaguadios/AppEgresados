@@ -1,9 +1,11 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // ─── Guard: requiere autenticación (cualquier rol) ───
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -29,7 +31,7 @@ $notifModel = new Notificacion();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $_SESSION['flash_error'] = 'Token de seguridad inválido.';
-        header('Location: index.php');
+        header('Location: ' . app_url('/notificaciones'));
         exit;
     }
 
@@ -41,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notifModel->marcarTodasLeidas($userId);
     }
 
-    header('Location: index.php');
+    header('Location: ' . app_url('/notificaciones'));
     exit;
 }
 
@@ -249,7 +251,7 @@ function getNotifColor($tipo) {
             <div class="notif-header">
               <h1>Notificaciones</h1>
               <?php if ($noLeidas > 0): ?>
-              <form method="POST" class="d-inline">
+              <form method="POST" action="<?= e(app_url('/notificaciones')) ?>" class="d-inline">
                 <?= Security::csrfField() ?>
                 <input type="hidden" name="action" value="mark_all_read">
                 <button type="submit" class="btn btn-outline-secondary btn-sm" style="border-radius:10px;">
@@ -320,7 +322,7 @@ function getNotifColor($tipo) {
   </div><!-- .utp-layout -->
 
   <!-- Hidden form for marking individual notifications as read -->
-  <form id="markReadForm" method="POST" style="display:none;">
+  <form id="markReadForm" method="POST" action="<?= e(app_url('/notificaciones')) ?>" style="display:none;">
     <?= Security::csrfField() ?>
     <input type="hidden" name="action" value="mark_read">
     <input type="hidden" name="notif_id" id="markReadNotifId" value="">
@@ -348,7 +350,7 @@ function getNotifColor($tipo) {
           if (url && url !== '#') {
             // Use fetch to mark read, then navigate
             var formData = new FormData(form);
-            fetch('index.php', {
+            fetch(<?= json_encode(app_url('/notificaciones')) ?>, {
               method: 'POST',
               body: formData
             }).then(function() {

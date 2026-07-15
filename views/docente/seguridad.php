@@ -1,13 +1,15 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Guard: requiere autenticación + rol docente
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 if (!in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 

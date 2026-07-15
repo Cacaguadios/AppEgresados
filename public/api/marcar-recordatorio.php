@@ -5,7 +5,11 @@
  * POST: Marcar recordatorio como visto
  */
 
-session_start();
+require_once __DIR__ . '/../../config/bootstrap.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Guard: solo para egresados autenticados
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {

@@ -18,25 +18,12 @@ session_start();
 // ============================================
 // Configurar ruta base (dominio raiz o subcarpeta)
 // ============================================
-$appBasePath = defined('BASE_URL') ? BASE_URL : '/AppEgresados';
+$appBasePath = defined('BASE_URL') ? BASE_URL : '';
 
-function appUrl($path = '/') {
-    global $appBasePath;
-
-    $path = '/' . ltrim((string) $path, '/');
-    if ($path === '//') {
-        $path = '/';
+if (!function_exists('appUrl')) {
+    function appUrl($path = '/') {
+        return app_url((string) $path);
     }
-
-    if ($appBasePath === '') {
-        return $path;
-    }
-
-    if ($path === '/') {
-        return $appBasePath . '/';
-    }
-
-    return $appBasePath . $path;
 }
 
 // ============================================
@@ -147,6 +134,7 @@ $public_routes = [
 // Verificar acceso a rutas protegidas
 // ============================================
 if (!$user_logged && !in_array($request, $public_routes) && 
+    !str_starts_with($request, '/api/') &&
     !str_contains($request, '/login') && 
     !str_contains($request, '/register') &&
     !str_contains($request, '/forgot') &&
@@ -161,11 +149,7 @@ if (!$user_logged && !in_array($request, $public_routes) &&
 // Helper: redirect según rol
 // ============================================
 function getDashboardUrl($role) {
-    return match($role) {
-        'admin' => appUrl('/admin/inicio'),
-        'docente', 'ti' => appUrl('/docente/inicio'),
-        default => appUrl('/egresado/inicio'),
-    };
+    return dashboard_url($role);
 }
 
 // ============================================
@@ -527,6 +511,7 @@ switch ($request) {
         break;
         
     case '/admin/usuarios':
+    case '/admin/users':
     case '/admin/estadisticas':
         if ($user_logged && $user_role === 'admin') {
             require __DIR__ . '/../views/admin/users.php';

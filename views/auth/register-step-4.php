@@ -2,18 +2,17 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
-    header('Location: ' . $r);
+    header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
     exit;
 }
 
 // Verificar que venga del paso 3 (credenciales deben existir en sesión)
 if (!isset($_SESSION['nuevas_credenciales'])) {
-    header('Location: ' . $baseUrl . '/register-step-1');
+    header('Location: ' . app_url('/register-step-1'));
     exit;
 }
 
@@ -61,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Redirigir a credenciales exitosas
-            header('Location: ' . $baseUrl . '/credentials-success');
+            header('Location: ' . app_url('/credentials-success'));
             exit;
         } else {
             $errorMsg = $result['message'];
@@ -102,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container py-4 py-md-5">
 
       <!-- Back to login -->
-      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="/AppEgresados/login">
+      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="<?= e(app_url('/login')) ?>">
         <i class="bi bi-chevron-left"></i>
         <span>Volver al inicio de sesión</span>
       </a>

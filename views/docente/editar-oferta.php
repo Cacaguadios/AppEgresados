@@ -1,7 +1,9 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -42,6 +44,18 @@ $msgError = '';
 $requisitos = json_decode($oferta['requisitos'] ?? '[]', true) ?: [];
 $beneficios = json_decode($oferta['beneficios'] ?? '[]', true) ?: [];
 $habilidades = json_decode($oferta['habilidades'] ?? '[]', true) ?: [];
+$estadoColor = '#6c757d';
+switch ($oferta['estado'] ?? '') {
+    case 'pendiente_aprobacion':
+        $estadoColor = '#ffc107';
+        break;
+    case 'aprobada':
+        $estadoColor = '#28a745';
+        break;
+    case 'rechazada':
+        $estadoColor = '#dc3545';
+        break;
+}
 
 // Handle POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
@@ -330,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_oferta'])) {
                 <h3 class="utp-form-card-subtitle">Estado de la oferta</h3>
                 <div class="utp-info-box">
                   <p class="mb-2"><strong>Estado:</strong></p>
-                  <span class="badge" style="background-color: <?= match($oferta['estado']) { 'pendiente_aprobacion' => '#ffc107', 'aprobada' => '#28a745', 'rechazada' => '#dc3545', default => '#6c757d' } ?>">
+                  <span class="badge" style="background-color: <?= e($estadoColor) ?>">
                     <?= ucfirst(str_replace('_', ' ', $oferta['estado'])) ?>
                   </span>
                   <?php if ($oferta['estado'] === 'pendiente_aprobacion'): ?>

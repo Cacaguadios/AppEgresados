@@ -1,7 +1,9 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || $_SESSION['usuario_rol'] !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -216,7 +218,7 @@ $msgCreada = isset($_GET['creada']);
           <input type="hidden" name="csrf_token" value="">
         `;
         
-        fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
+        fetch(<?= json_encode(app_url('/public/api/ofertas-update.php')) ?> + '?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -241,7 +243,7 @@ $msgCreada = isset($_GET['creada']);
 
     function confirmarActivacion(ofertaId, titulo) {
       if (confirm('Confirmas que deseas reactivar la oferta: ' + titulo + '?')) {
-        fetch('../../public/api/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
+        fetch(<?= json_encode(app_url('/public/api/ofertas-update.php')) ?> + '?action=activar&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

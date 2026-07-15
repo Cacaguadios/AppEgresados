@@ -3,7 +3,7 @@
     "description": "Plataforma de bolsa de trabajo y seguimiento de egresados",
     "type": "project",
     "require": {
-        "php": ">=8.0",
+        "php": ">=7.4",
         "phpmailer/phpmailer": "^6.5"
     },
     "require-dev": {

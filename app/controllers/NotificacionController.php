@@ -26,11 +26,21 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
 }
 
 require_once __DIR__ . '/../models/Notificacion.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
 $notifModel = new Notificacion();
 $userId = $_SESSION['usuario_id'];
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if (!Security::validateCsrfToken($csrfToken)) {
+        http_response_code(419);
+        echo json_encode(['error' => 'Token CSRF inválido']);
+        exit;
+    }
+}
 
 switch ($action) {
 

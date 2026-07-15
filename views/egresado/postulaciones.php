@@ -1,7 +1,9 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'egresado') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -300,7 +302,7 @@ $statusMap = [
 
     function confirmarRetiro(postulacionId, titulo) {
       if (confirm('Confirmas que deseas retirar tu postulación a: ' + titulo + '?\n\nNo podrás deshacer esta acción.')) {
-        postAction('../../public/api/postulaciones-update.php?action=retirar&postulacion_id=' + postulacionId,
+        postAction(<?= json_encode(app_url('/public/api/postulaciones-update.php')) ?> + '?action=retirar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación dada de baja correctamente');
       }
@@ -308,7 +310,7 @@ $statusMap = [
 
     function restaurarPostulacion(postulacionId) {
       if (confirm('¿Deseas restaurar esta postulación?')) {
-        postAction('../../public/api/postulaciones-update.php?action=restaurar&postulacion_id=' + postulacionId,
+        postAction(<?= json_encode(app_url('/public/api/postulaciones-update.php')) ?> + '?action=restaurar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación restaurada correctamente');
       }
@@ -316,7 +318,7 @@ $statusMap = [
 
     function eliminarPostulacion(postulacionId, titulo) {
       if (confirm('¿Eliminar permanentemente la postulación a ' + titulo + '?\n\nEsta acción no se puede deshacer.')) {
-        postAction('../../public/api/postulaciones-update.php?action=eliminar&postulacion_id=' + postulacionId,
+        postAction(<?= json_encode(app_url('/public/api/postulaciones-update.php')) ?> + '?action=eliminar&postulacion_id=' + postulacionId,
           {postulacion_id: postulacionId},
           'Postulación eliminada correctamente');
       }
@@ -326,7 +328,7 @@ $statusMap = [
       var nuevoMensaje = prompt('Edita tu mensaje de postulación:', mensajeActual || '');
       if (nuevoMensaje === null) return;
 
-      postAction('../../public/api/postulaciones-update.php?action=editar_mensaje&postulacion_id=' + postulacionId,
+      postAction(<?= json_encode(app_url('/public/api/postulaciones-update.php')) ?> + '?action=editar_mensaje&postulacion_id=' + postulacionId,
         {postulacion_id: postulacionId, mensaje: nuevoMensaje},
         'Mensaje actualizado correctamente');
     }

@@ -2,17 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 // Si ya está autenticado, redirigir según rol
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $redirect = match($_SESSION['usuario_rol'] ?? '') {
-        'egresado' => '/AppEgresados/egresado/inicio',
-        'docente', 'ti' => '/AppEgresados/docente/inicio',
-        'admin' => '/AppEgresados/admin/inicio',
-        default => '/AppEgresados/egresado/inicio'
-    };
-    header('Location: ' . $redirect);
+    header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
     exit;
 }
 
@@ -24,15 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $auth = new AuthController();
     if ($auth->processLogin()) {
-        // Redirigir según rol
-        $redirect = match($_SESSION['usuario_rol']) {
-            'egresado' => '/AppEgresados/egresado/inicio',
-            'docente', 'ti' => '/AppEgresados/docente/inicio',
-            'admin' => '/AppEgresados/admin/inicio',
-          default => '/AppEgresados/'
-        };
-        
-        header('Location: ' . $redirect);
+        header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
         exit;
     }
 }
@@ -184,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               </div>
 
               <div>
-                <a class="link-utp" href="/AppEgresados/forgot" style="font-size:16px; line-height:24px; font-weight:500;">¿Olvidaste tu contraseña?</a>
+                <a class="link-utp" href="<?= e(app_url('/forgot')) ?>" style="font-size:16px; line-height:24px; font-weight:500;">¿Olvidaste tu contraseña?</a>
               </div>
 
               <button class="btn btn-utp-green text-white w-100" type="submit" style="height: 48px; border-radius: 20px; font-size: 16px; font-weight: 500; line-height: 24px;">
@@ -195,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span style="color:var(--muted); font-size:14px; line-height:20px; font-weight:400;">
                   ¿No tienes cuenta?
                 </span>
-                <a class="link-utp" href="/AppEgresados/register-step-1" style="font-size:16px; line-height:24px; font-weight:500;">
+                <a class="link-utp" href="<?= e(app_url('/register-step-1')) ?>" style="font-size:16px; line-height:24px; font-weight:500;">
                   Regístrate aquí
                 </a>
               </div>

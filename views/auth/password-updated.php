@@ -2,18 +2,17 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
-    header('Location: ' . $r);
+    header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
     exit;
 }
 
 // Verificar que venga del flujo de recuperación
 if (empty($_SESSION['password_updated'])) {
-    header('Location: ' . $baseUrl . '/login');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -57,7 +56,7 @@ unset($_SESSION['password_updated']);
         </header>
 
         <!-- CTA -->
-        <a class="btn btn-utp-green text-white w-100 auth-cta" href="/AppEgresados/login">
+        <a class="btn btn-utp-green text-white w-100 auth-cta" href="<?= e(app_url('/login')) ?>">
           <i class="bi bi-box-arrow-in-right me-2"></i>Ir al inicio de sesión
         </a>
       </section>

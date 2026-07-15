@@ -2,12 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
-    header('Location: ' . $r);
+    header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
     exit;
 }
 
@@ -37,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['reset_email'] = $email;
 
             // Redirigir a verificación de código
-            header('Location: ' . $baseUrl . '/verify-code');
+            header('Location: ' . app_url('/verify-code'));
             exit;
           }
 
@@ -69,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container py-4 py-md-5">
 
       <!-- Back to login -->
-      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="/AppEgresados/login">
+      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="<?= e(app_url('/login')) ?>">
         <i class="bi bi-chevron-left"></i>
         <span>Volver al inicio de sesión</span>
       </a>
@@ -122,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- Link volver -->
         <div class="text-center mt-4">
-          <a class="link-utp" href="/AppEgresados/login">
+          <a class="link-utp" href="<?= e(app_url('/login')) ?>">
             <i class="bi bi-arrow-left me-1"></i>Volver al inicio de sesión
           </a>
         </div>

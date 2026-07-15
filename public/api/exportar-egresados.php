@@ -1,5 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../config/bootstrap.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
     http_response_code(403);

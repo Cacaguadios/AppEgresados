@@ -2,18 +2,17 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$baseUrl = '/AppEgresados';
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $r = match($_SESSION['usuario_rol'] ?? '') { 'admin' => '/AppEgresados/admin/inicio', 'docente','ti' => '/AppEgresados/docente/inicio', default => '/AppEgresados/egresado/inicio' };
-    header('Location: ' . $r);
+    header('Location: ' . dashboard_url($_SESSION['usuario_rol'] ?? null));
     exit;
 }
 
 // Verificar que venga del paso anterior (email debe estar en sesión)
 if (empty($_SESSION['reset_email'])) {
-    header('Location: ' . $baseUrl . '/forgot');
+    header('Location: ' . app_url('/forgot'));
     exit;
 }
 
@@ -49,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result['success']) {
             // Marcar que el código fue verificado
             $_SESSION['reset_code_verified'] = true;
-            header('Location: ' . $baseUrl . '/reset-password');
+            header('Location: ' . app_url('/reset-password'));
             exit;
         } else {
             $errorMsg = $result['message'];
@@ -87,7 +86,7 @@ $maskedEmail = $masked . '@' . $domainPart;
     <div class="container py-4 py-md-5">
 
       <!-- Back -->
-      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="/AppEgresados/forgot">
+      <a class="auth-back d-inline-flex align-items-center gap-2 mb-3" href="<?= e(app_url('/forgot')) ?>">
         <i class="bi bi-chevron-left"></i>
         <span>Volver</span>
       </a>

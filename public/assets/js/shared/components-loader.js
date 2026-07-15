@@ -8,26 +8,37 @@
 
   // Datos inyectados por PHP en la página
   const DATA = window.UTP_DATA || {};
+  const SCRIPT_SRC = document.currentScript && document.currentScript.src;
   const THEME_STORAGE_KEY = "utp-theme-mode";
   let darkReaderPromise = null;
 
   /* ---------- Helpers de rutas ---------- */
 
-  /** Raiz de la app, por ejemplo: /AppEgresados o '' en dominio raiz */
+  /** Raiz de la app, por ejemplo: /subcarpeta o '' en dominio raiz */
+  function normalizeBase(base) {
+    if (typeof base !== "string") return "";
+    base = base.trim().replace(/\/+$/, "");
+    if (!base || base === "/") return "";
+    return "/" + base.replace(/^\/+/, "");
+  }
+
   function getAppBase() {
+    if (typeof window.APP_BASE_PATH === "string") {
+      return normalizeBase(window.APP_BASE_PATH);
+    }
+
     if (typeof DATA.appBase === "string") {
-      return DATA.appBase;
+      return normalizeBase(DATA.appBase);
     }
 
     // Derivar desde la URL del script cargado
-    var current = document.currentScript;
-    if (current && current.src) {
+    if (SCRIPT_SRC) {
       try {
-        var scriptPath = new URL(current.src, window.location.origin).pathname;
+        var scriptPath = new URL(SCRIPT_SRC, window.location.origin).pathname;
         var marker = "/public/assets/";
         var markerIdx = scriptPath.indexOf(marker);
         if (markerIdx !== -1) {
-          return scriptPath.substring(0, markerIdx);
+          return normalizeBase(scriptPath.substring(0, markerIdx));
         }
       } catch (e) {
         // continuar con otros metodos
@@ -44,29 +55,27 @@
       }
     }
 
-    // Fallback para rutas limpias tipo /AppEgresados/egresado/inicio
-    var parts = path.split("/").filter(Boolean);
-    if (parts.length > 0) {
-      return "/" + parts[0];
-    }
-
     return "";
+  }
+
+  function appPath(path) {
+    return getAppBase() + "/" + String(path || "").replace(/^\/+/, "");
   }
 
   /** Ruta a la carpeta compartido/ (componentes HTML) */
   function getComponentsBase() {
-    return getAppBase() + "/views/compartido/";
+    return appPath("/views/compartido/");
   }
 
   /** Ruta a public/assets/ */
   function getAssetBase() {
-    return getAppBase() + "/public/assets/";
+    return appPath("/public/assets/");
   }
 
   /** Ruta a la carpeta de vistas del rol activo */
   function getViewBase() {
     const role = DATA.role || "egresado";
-    return getAppBase() + "/" + role + "/";
+    return appPath("/" + role + "/");
   }
 
   /* ---------- Cargador de componentes ---------- */
@@ -129,15 +138,11 @@
     // Links con data-link
     container.querySelectorAll("[data-link]").forEach(function (el) {
       const link = el.getAttribute("data-link");
-      const appBase = getAppBase();
-      const roleBase = appBase + "/" + (DATA.role || "egresado");
+      const roleBase = appPath("/" + (DATA.role || "egresado"));
 
       switch (link) {
         case "profile":
-          if (
-            (DATA.role === "docente" || DATA.role === "ti") &&
-            el.closest("li")
-          ) {
+          if (DATA.role !== "egresado" && el.closest("li")) {
             el.closest("li").remove();
             return;
           }
@@ -154,19 +159,21 @@
           if (el.tagName === "A") el.href = roleBase + "/seguridad";
           break;
         case "notifications":
-          if (el.tagName === "A") el.href = appBase + "/notificaciones";
+          if (el.tagName === "A") el.href = appPath("/notificaciones");
           break;
         case "logout":
           if (el.tagName === "A") {
-            el.href = appBase + "/logout";
+            el.href = appPath("/logout");
           } else {
             el.addEventListener("click", function () {
-              window.location.href = appBase + "/logout";
+              window.location.href = appPath("/logout");
             });
           }
           break;
       }
     });
+
+    cleanupDropdownDividers(container);
 
     // Sidebar: marcar la página activa
     const currentPage = DATA.currentPage || "";
@@ -174,6 +181,28 @@
       if (item.getAttribute("data-page") === currentPage) {
         item.classList.add("active");
       }
+    });
+  }
+
+  function cleanupDropdownDividers(container) {
+    container.querySelectorAll(".dropdown-menu").forEach(function (menu) {
+      var items = Array.from(menu.children);
+
+      items.forEach(function (item, index) {
+        var isDivider = !!item.querySelector(".dropdown-divider");
+        if (!isDivider) return;
+
+        var hasPreviousItem = items
+          .slice(0, index)
+          .some(function (prev) { return !prev.querySelector(".dropdown-divider"); });
+        var hasNextItem = items
+          .slice(index + 1)
+          .some(function (next) { return !next.querySelector(".dropdown-divider"); });
+
+        if (!hasPreviousItem || !hasNextItem) {
+          item.remove();
+        }
+      });
     });
   }
 
@@ -230,6 +259,10 @@
     if (!button) return;
     button.classList.toggle("is-dark", enabled);
     button.setAttribute("aria-pressed", enabled ? "true" : "false");
+    var icon = button.querySelector("i");
+    if (icon) {
+      icon.className = enabled ? "bi bi-sun utp-theme-icon" : "bi bi-circle-half utp-theme-icon";
+    }
   }
 
   async function applyThemeMode(mode) {
@@ -259,29 +292,38 @@
     var button = document.getElementById("themeToggleBtn");
     if (!button) return;
 
+    button.addEventListener("click", async function () {
+      try {
+        var enabled = window.DarkReader && window.DarkReader.isEnabled();
+        await applyThemeMode(enabled ? "light" : "dark");
+      } catch (e) {
+        console.warn("[ThemeToggle] No se pudo cambiar el tema", e);
+      }
+    });
+
     var storedMode = getStoredThemeMode();
     var systemPrefersDark =
       window.matchMedia &&
       window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    await ensureDarkReader();
+    try {
+      await ensureDarkReader();
 
-    if (storedMode === "dark") {
-      await applyThemeMode("dark");
-    } else if (storedMode === "auto") {
-      await applyThemeMode("auto");
-    } else if (storedMode === "light") {
-      await applyThemeMode("light");
-    } else if (systemPrefersDark) {
-      await applyThemeMode("auto");
-    } else {
-      await applyThemeMode("light");
+      if (storedMode === "dark") {
+        await applyThemeMode("dark");
+      } else if (storedMode === "auto") {
+        await applyThemeMode("auto");
+      } else if (storedMode === "light") {
+        await applyThemeMode("light");
+      } else if (systemPrefersDark) {
+        await applyThemeMode("auto");
+      } else {
+        await applyThemeMode("light");
+      }
+    } catch (e) {
+      updateThemeButtonState(button, false);
+      console.warn("[ThemeToggle] DarkReader no disponible", e);
     }
-
-    button.addEventListener("click", async function () {
-      var enabled = window.DarkReader && window.DarkReader.isEnabled();
-      await applyThemeMode(enabled ? "light" : "dark");
-    });
   }
 
   /* ---------- Inicializar notice ---------- */

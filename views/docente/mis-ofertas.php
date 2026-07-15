@@ -1,7 +1,9 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !in_array($_SESSION['usuario_rol'] ?? '', ['docente', 'ti'])) {
-    header('Location: ../auth/login.php');
+    header('Location: ' . app_url('/login'));
     exit;
 }
 
@@ -212,7 +214,7 @@ $publicarOfertaUrl = appUrl('/docente/publicar-oferta');
   <script>
     function confirmarBaja(ofertaId, titulo) {
       if (confirm('Confirmas que deseas dar de baja la oferta: ' + titulo + '?\n\nEsto ocultará la oferta pero podrás reactivarla después.')) {
-        fetch('../../public/api/ofertas-update.php?action=baja&oferta_id=' + ofertaId, {
+        fetch(<?= json_encode(app_url('/public/api/ofertas-update.php')) ?> + '?action=baja&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -237,7 +239,7 @@ $publicarOfertaUrl = appUrl('/docente/publicar-oferta');
 
     function confirmarActivacion(ofertaId, titulo) {
       if (confirm('Confirmas que deseas reactivar la oferta: ' + titulo + '?')) {
-        fetch('../../public/api/ofertas-update.php?action=activar&oferta_id=' + ofertaId, {
+        fetch(<?= json_encode(app_url('/public/api/ofertas-update.php')) ?> + '?action=activar&oferta_id=' + ofertaId, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
