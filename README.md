@@ -66,7 +66,7 @@ Rutas principales:
 | Administracion | `/admin/inicio` |
 | Notificaciones | `/notificaciones` |
 
-En servidor con subcarpeta, las rutas quedan bajo `/bttiutp`, por ejemplo `/bttiutp/login`.
+
 
 ## Seguridad
 
